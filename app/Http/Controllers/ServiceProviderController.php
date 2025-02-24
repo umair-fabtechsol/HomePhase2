@@ -14,6 +14,7 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\SocialProfile;
+use App\Models\PaymentHistory;
 use Illuminate\Support\Facades\Auth;
 
 class ServiceProviderController extends Controller
@@ -1199,6 +1200,18 @@ class ServiceProviderController extends Controller
         $Offer = Offer::create($data);
 
         return response()->json(['message' => 'Offer created successfully', 'Offer' => $Offer]);
+        
+    }
+
+    public function PaymentHistory(Request $request){
+
+
+
+        $data=$request->all();
+
+        $payment=PaymentHistory::create($data);
+        
+        return response()->json(['message' => 'Payment History created successfully', 'payment' => $payment]);
         
     }
 }

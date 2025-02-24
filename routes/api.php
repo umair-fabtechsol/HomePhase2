@@ -76,6 +76,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('OrdeAfterImages', 'OrdeAfterImages')->name('OrdeAfterImages');
 
         Route::post('CreateOffer', 'CreateOffer')->name('CreateOffer');
+        Route::post('PaymentHistory', 'PaymentHistory')->name('PaymentHistory');
+
         
         
     });
@@ -125,6 +127,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('UpdatePersonal', 'UpdatePersonal')->name('UpdatePersonal');
             Route::post('Security', 'Security')->name('Security');
             Route::post('NotificationSetting', 'NotificationSetting')->name('NotificationSetting');
+            Route::post('AddPriceDetails', 'AddPriceDetails')->name('AddPriceDetails');
+            
             
         });
     });

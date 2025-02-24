@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BusinessProfile;
 use App\Models\Deal;
 use App\Models\User;
+use App\Models\Price;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -17,7 +18,7 @@ class SuperAdminController extends Controller
         $GetNumberOfDeals=Deal::all()->count();
         $GetTotalServiceProvider=User::where('role',2)->count();
         $GetTotalClient=User::where('role',1)->count();
-        dd($GetTotalClient);
+      
         
     }
     public function ServiceProviders()
@@ -191,5 +192,16 @@ class SuperAdminController extends Controller
         } else {
             return response()->json(['message' => 'No user found'], 200);
         }
-    }  
+    }
+    
+    public function AddPriceDetails(Request $request){
+
+        
+        $data = $request()->all();
+        $price = Price::create($data);
+        return response()->json(['message' => 'Price Details create successfully', 'price' => $price], 200);
+        
+
+        
+    }
 }
