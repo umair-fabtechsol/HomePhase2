@@ -13,9 +13,15 @@ class Price extends Model
         'instant_chat',
         'email_pro',
         'get_direction',
-        'referral_commission',
-        'transection_fee',
+        'customer_call_commission',
+        'customer_text_commission',
+        'customer_chat_commission',
+        'customer_email_commission',
+        'customer_transaction_commission',
         'customer_service_fee',
         'provider_service_fee',
+
+
+        
     ];
 }
