@@ -114,6 +114,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('GetPaymentHistory', 'GetPaymentHistory')->name('GetPaymentHistory');
 
             Route::post('FavoritDeal', 'FavoritDeal')->name('FavoritDeal');
+
+            Route::get('OrderStatus/{id}', 'OrderStatus')->name('OrderStatus');
         });
     });
 

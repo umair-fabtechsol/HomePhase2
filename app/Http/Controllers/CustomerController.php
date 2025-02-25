@@ -461,4 +461,23 @@ class CustomerController extends Controller
             return response()->json(['message' => 'No user found'], 200);
         }
     }
+
+    public function OrderStatus($id)
+    {
+        $order = Order::find($id);    
+        if ($order) {
+            $order->update(['status'=> 'completed']);
+            $notification = [
+                'title' => 'Order Completed',  
+                'message' => 'Order has been completed successfully',
+                'created_by' => $order->customer_id,
+                'status' => 0,
+                'clear' => 'no',
+            ];
+            Notification::create($notification);
+            return response()->json(['message' => 'Order completed successfully','order' => $order], 200);
+        } else {
+            return response()->json(['message' => 'No Order found'], 200);
+        }
+    }
 }
