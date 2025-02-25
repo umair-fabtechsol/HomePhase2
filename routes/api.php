@@ -112,6 +112,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('AskForRevison', 'AskForRevison')->name('AskForRevison');
 
             Route::get('GetPaymentHistory', 'GetPaymentHistory')->name('GetPaymentHistory');
+
+            Route::post('FavoritDeal', 'FavoritDeal')->name('FavoritDeal');
         });
     });
 
