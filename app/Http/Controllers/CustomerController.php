@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\Review;
 use App\Models\User;
+use App\Models\PaymentHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\SocialProfile;
@@ -411,6 +412,18 @@ class CustomerController extends Controller
             return response()->json(['message' => 'Added revision successfully', 'afterImages' => $afterImages], 200);
         } else {
             return response()->json(['message' => 'No order found'], 200);
+        }
+    }
+
+    public function GetPaymentHistory(){
+        $paymentHistory = PaymentHistory::orderBy('id', 'desc')->get();
+        if ($paymentHistory) {
+            $totalPayouts = PaymentHistory::where('payment_type', 'payout')->sum('amount');
+            $totalReceiveable = PaymentHistory::where('payment_type', 'receivable')->sum('amount');
+            $pendingPayments = PaymentHistory::where('status', 'pending')->sum('amount');
+            return response()->json(['paymentHistory' => $paymentHistory, 'totalPayouts' => $totalPayouts, 'totalReceiveable' => $totalReceiveable, 'pendingPayments' => $pendingPayments], 200);
+        } else {
+            return response()->json(['message' => 'no history available'], 200);
         }
     }
 }

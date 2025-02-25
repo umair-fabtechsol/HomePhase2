@@ -108,6 +108,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('FilterService', 'FilterService')->name('FilterService');
 
             Route::post('AskForRevison', 'AskForRevison')->name('AskForRevison');
+
+            Route::get('GetPaymentHistory', 'GetPaymentHistory')->name('GetPaymentHistory');
         });
     });
 
