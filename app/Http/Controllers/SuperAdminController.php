@@ -204,4 +204,73 @@ class SuperAdminController extends Controller
 
         
     }
+    public function GetProvidersSummary()
+    {
+       
+        $providers = User::where('role',3) 
+            ->selectRaw('QUARTER(created_at) as quarter, COUNT(id) as total')
+            ->groupBy('quarter')
+            ->orderBy('quarter')
+            ->get();
+
+      
+        $report = [];
+        $cumulativeTotal = 0;
+
+        for ($i = 1; $i <= 4; $i++) {
+            $monthlyTotal = $providers->where('quarter', $i)->first()->total ?? 0;
+            $cumulativeTotal += $monthlyTotal;
+            $report[] = [
+                'period' => "Q{$i}",
+                'new_providers' => $monthlyTotal,
+                'total_providers' => $cumulativeTotal
+            ];
+        }
+
+        // Yearly summary
+        $totalYearly = array_sum(array_column($report, 'new_providers'));
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'report' => $report,
+                'total_yearly' => $totalYearly
+            ]
+        ], 200);
+    }
+
+    public function GetClientsSummary()
+    {
+       
+        $providers = User::where('role',2) 
+            ->selectRaw('QUARTER(created_at) as quarter, COUNT(id) as total')
+            ->groupBy('quarter')
+            ->orderBy('quarter')
+            ->get();
+
+      
+        $report = [];
+        $cumulativeTotal = 0;
+
+        for ($i = 1; $i <= 4; $i++) {
+            $monthlyTotal = $providers->where('quarter', $i)->first()->total ?? 0;
+            $cumulativeTotal += $monthlyTotal;
+            $report[] = [
+                'period' => "Q{$i}",
+                'new_clients' => $monthlyTotal,
+                'total_clients' => $cumulativeTotal
+            ];
+        }
+
+        // Yearly summary
+        $totalYearly = array_sum(array_column($report, 'new_clients'));
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'report' => $report,
+                'total_yearly' => $totalYearly
+            ]
+        ], 200);
+    }
 }

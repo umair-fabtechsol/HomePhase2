@@ -10,6 +10,8 @@ class DeliveryImage extends Model
         'order_id',
         'type',
         'comments',
-        'images',
+        'before_images',
+        'after_images',
+        'Schedule_date_time',
     ];
 }

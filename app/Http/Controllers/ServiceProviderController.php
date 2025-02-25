@@ -1126,11 +1126,11 @@ class ServiceProviderController extends Controller
 
     public function OrdeAfterImages(Request $request){
 
-        $order = Order::find($request->order_id);
-        if ($order) {
+    
+        if ($request->order_id) {
             $data = $request->all();
-            if ($request->hasFile('images')) {
-                foreach($request->file('images') as $image){
+            if ($request->hasFile('after_images')) {
+                foreach($request->file('after_images') as $image){
                     $photo1 = $image;
                     $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
                     $photo_destination = public_path('uploads');
@@ -1139,7 +1139,7 @@ class ServiceProviderController extends Controller
                 }
             }
 
-            $data['images'] =  json_encode($images);
+            $data['after_images'] =  json_encode($images);
             $data['type'] =  'after';
             $afterImages = DeliveryImage::create($data);
             return response()->json(['message' => 'Added after delivey images successfully', 'afterImages' => $afterImages], 200);
@@ -1150,21 +1150,25 @@ class ServiceProviderController extends Controller
     public function OrderBeforeImages(Request $request){
         $imageNames = [];
 
-        if ($request->hasFile('before_image')) {
-            foreach ($request->file('before_image') as $beforeImage) {
+     
+        if ($request->hasFile('before_images')) {
+            foreach ($request->file('before_images') as $beforeImage) {
                 $photo_name1 = time() . '-' . $beforeImage->getClientOriginalName();
                 $photo_destination = public_path('uploads');
                 $beforeImage->move($photo_destination, $photo_name1);
         
                 $imageNames[] = $photo_name1; 
+                
             }
+            
         }
         
-      
+     
+        $data['order_id'] = $request->order_id;
         $data['type'] = 'before';
-        $data['images'] = json_encode($imageNames);
+        $data['before_images'] = json_encode($imageNames);
         
-        $BeforeDeliveryImage = DeliveryImage::create($data);
+        // $BeforeDeliveryImage = DeliveryImage::create($data);
         
         return response()->json(['message' => 'Before Delivery Image created successfully', 'BeforeDeliveryImage' => $BeforeDeliveryImage]);
 
@@ -1172,21 +1176,34 @@ class ServiceProviderController extends Controller
     
     public function OrderConfirmImages(Request $request){
 
-        $imageNames = [];
+        $beforeimageNames = [];
+        $afterimageNames = [];
+        
 
-        if ($request->hasFile('confirm_image')) {
-            foreach ($request->file('confirm_image') as $beforeImage) {
+        if ($request->hasFile('before_images')) {
+            foreach ($request->file('before_images') as $beforeImage) {
                 $photo_name1 = time() . '-' . $beforeImage->getClientOriginalName();
                 $photo_destination = public_path('uploads');
                 $beforeImage->move($photo_destination, $photo_name1);
         
-                $imageNames[] = $photo_name1; 
+                $beforeimageNames[] = $photo_name1; 
             }
         }
         
+        if ($request->hasFile('after_images')) {
+            foreach ($request->file('after_images') as $afterImage) {
+                $photo_name2 = time() . '-' . $afterImage->getClientOriginalName();
+                $after_photo_destination = public_path('uploads');
+                $afterImage->move($afterphoto_destination, $photo_name2);
+        
+                $afterimageNames[] = $photo_name2; 
+            }
+        }
       
         $data['type'] = 'confirm';
-        $data['images'] = json_encode($imageNames);
+        $data['before_images'] = json_encode($beforeimageNames);
+        $data['after_images'] = json_encode($afterimageNames);
+        
         
         $BeforeDeliveryImage = DeliveryImage::create($data);
         
@@ -1226,5 +1243,17 @@ class ServiceProviderController extends Controller
         
         return response()->json(['GetHistory' => $GetHistory,'GetReceivablePayment' =>$GetReceivablePayment,'GetPendingPayment' => $GetPendingPayment, 'GetPayoutPayment' => $GetPayoutPayment]);
         
+    }
+
+    public function GetOrderDetails($id){
+
+
+        $GetOrderDetails=Deal::leftjoin('orders','orders.deal_id','=','deals.id')
+        ->leftjoin('delivery_images','delivery_images.order_id','=','orders.id')
+        ->leftjoin('users','users.id','=','orders.customer_id')
+        ->where('orders.id','=',$id)->first();
+
+    
+        return response()->json(['GetOrderDetails' => $GetOrderDetails]);
     }
 }

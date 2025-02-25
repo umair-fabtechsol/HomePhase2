@@ -15,8 +15,10 @@ return new class extends Migration
             $table->id();
             $table->Integer('order_id');
             $table->string('type');
-            $table->text('comments');
-            $table->text('images');           
+            $table->text('comments')->nullable();
+            $table->text('before_images')->nullable();
+            $table->text('after_images')->nullable();
+            $table->datetime('Schedule_date_time')->nullable();                                            
             $table->timestamps();
         });
     }

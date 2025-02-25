@@ -78,6 +78,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('CreateOffer', 'CreateOffer')->name('CreateOffer');
         Route::post('PaymentHistory', 'PaymentHistory')->name('PaymentHistory');
         Route::get('GetProviderPaymentHistory', 'GetProviderPaymentHistory')->name('GetProviderPaymentHistory');
+        Route::get('GetOrderDetails/{id}', 'GetOrderDetails')->name('GetOrderDetails');
+
         
 
         
@@ -132,7 +134,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('Security', 'Security')->name('Security');
             Route::post('NotificationSetting', 'NotificationSetting')->name('NotificationSetting');
             Route::post('AddPriceDetails', 'AddPriceDetails')->name('AddPriceDetails');
-            
+            Route::get('GetProvidersSummary', 'GetProvidersSummary')->name('GetProvidersSummary');
+            Route::get('GetClientsSummary', 'GetClientsSummary')->name('GetClientsSummary');
+
             
         });
     });
