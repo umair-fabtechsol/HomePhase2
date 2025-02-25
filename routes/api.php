@@ -77,6 +77,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('CreateOffer', 'CreateOffer')->name('CreateOffer');
         Route::post('PaymentHistory', 'PaymentHistory')->name('PaymentHistory');
+        Route::get('GetProviderPaymentHistory', 'GetProviderPaymentHistory')->name('GetProviderPaymentHistory');
+        
 
         
         

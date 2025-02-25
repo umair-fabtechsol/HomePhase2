@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ServiceProviderController extends Controller
 {
+    
     public function Deals(Request $request)
     {
         $userId = Auth::id();
@@ -1212,6 +1213,18 @@ class ServiceProviderController extends Controller
         $payment=PaymentHistory::create($data);
         
         return response()->json(['message' => 'Payment History created successfully', 'payment' => $payment]);
+        
+    }
+    public function GetProviderPaymentHistory(){
+
+
+        $GetHistory=PaymentHistory::all();
+        $GetPayoutPayment=PaymentHistory::where('payment_type','=','payout')->count();
+        $GetReceivablePayment=PaymentHistory::where('payment_type','=','receivable')->count();
+        $GetPendingPayment=PaymentHistory::where('status','=','pending')->count();
+
+        
+        return response()->json(['GetHistory' => $GetHistory,'GetReceivablePayment' =>$GetReceivablePayment,'GetPendingPayment' => $GetPendingPayment, 'GetPayoutPayment' => $GetPayoutPayment]);
         
     }
 }
