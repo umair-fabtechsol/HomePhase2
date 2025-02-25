@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BusinessProfile;
 use App\Models\Deal;
 use App\Models\DeliveryImage;
+use App\Models\FavoritDeal;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\PaymentMethod;
@@ -262,7 +263,7 @@ class CustomerController extends Controller
             $notification = [
                 'title' => 'Added New Order',  
                 'message' => 'New Order has been added successfully',
-                'created_by' => $user->user_id,
+                'created_by' => $order->customer_id,
                 'status' => 0,
                 'clear' => 'no',
             ];
@@ -424,6 +425,40 @@ class CustomerController extends Controller
             return response()->json(['paymentHistory' => $paymentHistory, 'totalPayouts' => $totalPayouts, 'totalReceiveable' => $totalReceiveable, 'pendingPayments' => $pendingPayments], 200);
         } else {
             return response()->json(['message' => 'no history available'], 200);
+        }
+    }
+
+    public function FavoritDeal(Request $request)
+    {
+        $user = User::find($request->user_id);
+        if ($user) {
+            $getFavorit = FavoritDeal::where('user_id', $request->user_id)->where('deal_id', $request->deal_id)->first();
+            if($getFavorit){
+                FavoritDeal::where('user_id', $request->user_id)->where('deal_id', $request->deal_id)->delete();
+                $notification = [
+                    'title' => 'Remove Favorit Service',  
+                    'message' => 'favorit Service has been remove successfully',
+                    'created_by' => $user->id,
+                    'status' => 0,
+                    'clear' => 'no',
+                ];
+                Notification::create($notification);
+                return response()->json(['message' => 'Remove Favorit Service', 'favoritService' => $getFavorit], 200);
+            } else{
+                $data = $request->all();
+                $favoritService = FavoritDeal::create($data);
+                $notification = [
+                    'title' => 'Added Favorit Service',  
+                    'message' => 'Service has been favorit successfully',
+                    'created_by' => $user->id,
+                    'status' => 0,
+                    'clear' => 'no',
+                ];
+                Notification::create($notification);
+                return response()->json(['message' => 'Added Favorit Service', 'favoritService' => $favoritService], 200);
+            }
+        } else {
+            return response()->json(['message' => 'No user found'], 200);
         }
     }
 }
