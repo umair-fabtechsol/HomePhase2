@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BusinessProfile;
 use App\Models\Deal;
 use App\Models\DeliveryImage;
+use App\Models\FavoritDeal;
 use App\Models\User;
 use App\Models\PaymentDetail;
 use App\Models\Hour;
@@ -1104,7 +1105,7 @@ class ServiceProviderController extends Controller
             $notifications = [
                 'title' => 'Setting Publish',
                 'message' => 'Setting Publish successfully',
-                'created_by' => $payment->id,
+                'created_by' => $setting->id,
                 'status' => 0,
                 'clear' => 'no',
     
@@ -1168,7 +1169,7 @@ class ServiceProviderController extends Controller
         $data['type'] = 'before';
         $data['before_images'] = json_encode($imageNames);
         
-        // $BeforeDeliveryImage = DeliveryImage::create($data);
+        $BeforeDeliveryImage = DeliveryImage::create($data);
         
         return response()->json(['message' => 'Before Delivery Image created successfully', 'BeforeDeliveryImage' => $BeforeDeliveryImage]);
 
@@ -1194,7 +1195,7 @@ class ServiceProviderController extends Controller
             foreach ($request->file('after_images') as $afterImage) {
                 $photo_name2 = time() . '-' . $afterImage->getClientOriginalName();
                 $after_photo_destination = public_path('uploads');
-                $afterImage->move($afterphoto_destination, $photo_name2);
+                $afterImage->move($after_photo_destination, $photo_name2);
         
                 $afterimageNames[] = $photo_name2; 
             }
@@ -1255,5 +1256,53 @@ class ServiceProviderController extends Controller
 
     
         return response()->json(['GetOrderDetails' => $GetOrderDetails]);
+    }
+
+    public function FavoritService(Request $request)
+    {
+        $user = User::find($request->user_id);
+        if ($user) {
+            $getFavorit = FavoritDeal::where('user_id', $request->user_id)->where('deal_id', $request->deal_id)->first();
+            if($getFavorit){
+                FavoritDeal::where('user_id', $request->user_id)->where('deal_id', $request->deal_id)->delete();
+                $notification = [
+                    'title' => 'Remove Favorit Service',  
+                    'message' => 'favorit Service has been remove successfully',
+                    'created_by' => $user->id,
+                    'status' => 0,
+                    'clear' => 'no',
+                ];
+                Notification::create($notification);
+                return response()->json(['message' => 'Remove Favorit Service', 'favoritService' => $getFavorit], 200);
+            } else{
+                $data = $request->all();
+                $favoritService = FavoritDeal::create($data);
+                $notification = [
+                    'title' => 'Added Favorit Service',  
+                    'message' => 'Service has been favorit successfully',
+                    'created_by' => $user->id,
+                    'status' => 0,
+                    'clear' => 'no',
+                ];
+                Notification::create($notification);
+                return response()->json(['message' => 'Added Favorit Service', 'favoritService' => $favoritService], 200);
+            }
+        } else {
+            return response()->json(['message' => 'No user found'], 200);
+        }
+    }
+
+    public function SearchDealLocation(Request $request){
+        $deals = Deal::query();
+        if($request->service){
+            $deals = $deals->where('service_category','like','%'.$request->service.'%');
+        }
+
+        if($request->location){
+            $location = BusinessProfile::where('service_location', 'like', '%' . $request->location . '%')->pluck('user_id')->toArray();
+            $deals = $deals->whereIn('user_id', $location);  
+        }
+        $deals = $deals->get();
+        return response()->json(['message' => 'No user found', 'services' => $deals], 200);
     }
 }

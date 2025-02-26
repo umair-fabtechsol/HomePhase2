@@ -80,9 +80,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('GetProviderPaymentHistory', 'GetProviderPaymentHistory')->name('GetProviderPaymentHistory');
         Route::get('GetOrderDetails/{id}', 'GetOrderDetails')->name('GetOrderDetails');
 
-        
+        Route::post('FavoritService', 'FavoritService')->name('FavoritService');
 
-        
+        Route::post('SearchDealLocation', 'SearchDealLocation')->name('SearchDealLocation');
         
     });
 
