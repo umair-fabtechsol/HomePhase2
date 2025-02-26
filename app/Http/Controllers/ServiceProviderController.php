@@ -927,7 +927,7 @@ class ServiceProviderController extends Controller
                 'message' => 'Social Link updated successfully',
                 'created_by' => $social->user_id,
                 'status' => 0,
-                'clear' => 'no',
+                'clear' => 'no', 
     
             ];
             Notification::create($notifications);
