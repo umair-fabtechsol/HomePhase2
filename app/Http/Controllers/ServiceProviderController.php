@@ -29,7 +29,7 @@ class ServiceProviderController extends Controller
         ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
         ->where('deals.user_id', $userId)
         ->orderBy('deals.id', 'desc')
-        ->select('deals.*', 'users.name as user_name','', 'orders.id as order_id', 'reviews.rating as review_rating')
+        ->select('deals.*', 'users.name as user_name','users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
         ->get();
         if ($deals) {
             return response()->json(['deals' => $deals], 200);
