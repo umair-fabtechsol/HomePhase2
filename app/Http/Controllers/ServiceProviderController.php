@@ -23,7 +23,13 @@ class ServiceProviderController extends Controller
     public function Deals(Request $request)
     {
         $userId = Auth::id();
-        $deals = Deal::where('user_id', $userId)->orderBy('id', 'desc')->get();
+        $deals = $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+        ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+        ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+        ->where('deals.user_id', $userId)
+        ->orderBy('deals.id', 'desc')
+        ->select('deals.*', 'users.name as user_name','', 'orders.id as order_id', 'reviews.rating as review_rating')
+        ->get();
         if ($deals) {
             return response()->json(['deals' => $deals], 200);
         } else {
@@ -198,7 +204,7 @@ class ServiceProviderController extends Controller
             $notifications = [
                 'title' => 'Added Package',
                 'message' => '"' . $deal->pricing_model . '" Added new package deal successfully',
-                'created_by' => $deal->user_id,
+                'created_by' => $request->user_id,
                 'status' => 0,
                 'clear' => 'no',
 
@@ -214,16 +220,26 @@ class ServiceProviderController extends Controller
             $deal = Deal::find($request->id);
             if ($deal) {
                 $data = [];
-                if ($request->hasFile('image')) {
-                    $imagePath = public_path('uploads/' . $deal->image);
-                    if (!empty($deal->image) && file_exists($imagePath)) {
-                        unlink($imagePath);
+               
+                 $existingImages = json_decode($deal->images, true) ?? [];
+                 $existingVideos = json_decode($deal->videos, true) ?? [];
+                 
+                if ($request->hasFile('images') || $request->hasFile('videos')) {
+                   
+                    foreach ($request->file('images') as $photo) {
+                        $photo_name = time() . '-' . $photo->getClientOriginalName();
+                        $photo_destination = public_path('uploads');
+                        $photo->move($photo_destination, $photo_name);
+                        $existingImages[] = $photo_name; // Append new image to the array
                     }
-                    $photo1 = $request->file('image');
-                    $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo1->move($photo_destination, $photo_name1);
-                    $data['image'] = $photo_name1;
+                     foreach ($request->file('videos') as $videos) {
+                        $video_name = time() . '-' . $videos->getClientOriginalName();
+                        $video_destination = public_path('uploads');
+                        $videos->move($video_destination, $video_name);
+                        $existingVideos[] = $video_name; // Append new image to the array
+                    }
+                    $data['images'] =json_encode($existingImages);
+                    $data['videos'] =json_encode($existingVideos);
                     $data['id'] = $request->id;
                     $deal->update($data);
                     $notifications = [
@@ -241,27 +257,41 @@ class ServiceProviderController extends Controller
                 return response()->json(['message' => 'No deals found'], 200);
             }
         } else {
-            if ($request->hasFile('image')) {
-                $photo1 = $request->file('image');
-
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['image'] = $photo_name1;
+            if ($request->hasFile('images') || $request->hasFile('videos')) {
+                $images = [];
+                foreach ($request->file('images') as $photo) {
+                    $photo_name = time() . '-' . $photo->getClientOriginalName();
+                    $photo_destination = public_path('uploads');
+                    $photo->move($photo_destination, $photo_name);
+                    $images[] = $photo_name; 
+                }
+                
+                    $videos = [];
+                    foreach ($request->file('videos') as $video) {
+                        $video_name = time() . '-' . $video->getClientOriginalName();
+                        $video_destination = public_path('uploads');
+                        $video->move($video_destination, $video_name);
+                        $videos[] = $photo_name; 
+                    }
+               
+                $data['images'] = json_encode($images); 
+                $data['videos'] = json_encode($videos); 
                 $data['publish'] = 0;
                 $userId = Auth::id();
                 $data['user_id'] = $userId;
+            
                 $deal = Deal::create($data);
+            
                 $notifications = [
-                    'title' => 'Added Image',
-                    'message' => 'Added Image successfully',
+                    'title' => 'Added Images',
+                    'message' => 'Added Images successfully',
                     'created_by' => $deal->user_id,
                     'status' => 0,
                     'clear' => 'no',
-
                 ];
                 Notification::create($notifications);
-                return response()->json(['message' => 'Added new deal with Image successfully', 'deal' => $deal], 200);
+            
+                return response()->json(['message' => 'Added new deal with Images successfully', 'deal' => $deal], 200);
             } else {
                 return response()->json(['message' => 'image field required'], 422);
             }
@@ -383,11 +413,26 @@ class ServiceProviderController extends Controller
     public function DeleteDeal($id)
     {
         $deal = Deal::find($id);
+        $images = json_decode($deal->images, true);
+        $videos = json_decode($deal->videos, true);
+        
         if ($deal) {
-            $imagePath = public_path('uploads/' . $deal->image);
-            if (!empty($deal->image) && file_exists($imagePath)) {
+            if (!empty($images)) {
+           foreach ($images as $image) {
+            $imagePath = public_path('uploads/' . $image);
+            if (file_exists($imagePath)) {
                 unlink($imagePath);
             }
+          }
+         }
+         if (!empty($videos)) {
+            foreach ($videos as $video) {
+             $videoPath = public_path('uploads/' . $video);
+             if (file_exists($videoPath)) {
+                 unlink($videoPath);
+             }
+           }
+          }
             $deal->delete();
             $notifications = [
                 'title' => 'Delete Deal',
@@ -520,7 +565,7 @@ class ServiceProviderController extends Controller
     public function AddPaymentDetails(Request $request)
     {
         $data = $request->all();
-        $payment = PaymentDetail::where('user_id',$request->id)->first();
+        $payment = PaymentDetail::where('user_id',$request->user_id)->first();
         if($payment){
            
          $payment->update($data);
