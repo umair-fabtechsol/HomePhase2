@@ -132,7 +132,13 @@ class CustomerController extends Controller
 
     public function ListDeals(Request $request)
     {
-        $deals = Deal::orderBy('id', 'desc')->get();
+        // $deals = Deal::orderBy('id', 'desc')->get();
+       $deals= Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+        ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+        ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+        ->orderBy('deals.id', 'desc')
+        ->select('deals.*', 'users.name as user_name','users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+        ->get();
         if ($deals) {
             return response()->json(['deals' => $deals], 200);
         } else {
@@ -142,7 +148,14 @@ class CustomerController extends Controller
 
     public function SingleDeal($id)
     {
-        $deal = Deal::where('id', $id)->get();
+        // $deal = Deal::where('id', $id)->get();
+        $deal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+        ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+        ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+        ->where('deals.id', $id)
+        ->orderBy('deals.id', 'desc')
+        ->select('deals.*', 'users.name as user_name','users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+        ->get();
         if ($deal) {
             return response()->json(['deal' => $deal], 200);
         } else {
@@ -479,5 +492,23 @@ class CustomerController extends Controller
         } else {
             return response()->json(['message' => 'No Order found'], 200);
         }
+    }
+
+    public function GetCustomerInprogressOrder($id){
+
+
+        $GetInprogressOrder=Order::leftJoin('deals', 'deals.id', '=', 'orders.deal_id')
+    ->where('orders.status', 'in progress')
+    ->where('orders.customer_id', $id)
+    ->select('orders.*', 'deals.service_title as deal_name')
+    ->get();
+        if($GetInprogressOrder->isNotEmpty()){
+            
+            return response()->json(['GetInprogressOrder' => $GetInprogressOrder], 200);
+        }else{
+            return response()->json(['message' => 'Order Not Found'], 200);
+            
+        }
+        
     }
 }
