@@ -79,6 +79,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('PaymentHistory', 'PaymentHistory')->name('PaymentHistory');
         Route::get('GetProviderPaymentHistory', 'GetProviderPaymentHistory')->name('GetProviderPaymentHistory');
         Route::get('GetOrderDetails/{id}', 'GetOrderDetails')->name('GetOrderDetails');
+        Route::get('GetInprogressOrder/{id}', 'GetInprogressOrder')->name('GetInprogressOrder');
+
 
         Route::post('FavoritService', 'FavoritService')->name('FavoritService');
 
@@ -118,6 +120,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('FavoritDeal', 'FavoritDeal')->name('FavoritDeal');
 
             Route::get('OrderStatus/{id}', 'OrderStatus')->name('OrderStatus');
+            Route::get('GetCustomerInprogressOrder/{id}', 'GetCustomerInprogressOrder')->name('GetCustomerInprogressOrder');
+            
         });
     });
 

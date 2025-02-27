@@ -1150,7 +1150,7 @@ class ServiceProviderController extends Controller
             $notifications = [
                 'title' => 'Setting Publish',
                 'message' => 'Setting Publish successfully',
-                'created_by' => $setting->id,
+                'created_by' => $setting->user_id,
                 'status' => 0,
                 'clear' => 'no',
     
@@ -1349,5 +1349,17 @@ class ServiceProviderController extends Controller
         }
         $deals = $deals->get();
         return response()->json(['message' => 'No user found', 'services' => $deals], 200);
+    }
+
+    public function GetInprogressOrder($id){
+
+
+        $GetInprogressOrder=Order::leftJoin('deals', 'deals.id', '=', 'orders.deal_id')
+    ->where('orders.status', 'in progress')
+    ->where('orders.customer_id', $id)
+    ->select('orders.*', 'deals.service_title as deal_name')
+    ->get();
+        
+        return response()->json(['GetInprogressOrder' => $GetInprogressOrder], 200);
     }
 }
