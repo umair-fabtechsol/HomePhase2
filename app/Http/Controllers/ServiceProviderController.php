@@ -537,7 +537,7 @@ class ServiceProviderController extends Controller
                 ];
                 Notification::create($notifications);
               
-                return response()->json(['message' => 'User Business Profile Updated successfully',   'data' => array_merge($user->toArray(), $businessProfile->toArray())], 200);
+                return response()->json(['message' => 'User Business Profile Updated successfully','user' => $user,'businessProfile' => $businessProfile], 200);
             } else {
                 if ($request->hasFile('business_logo')) {
                     $photo1 = $request->file('business_logo');
