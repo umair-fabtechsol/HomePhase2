@@ -55,8 +55,8 @@ return new class extends Migration
             $table->string('final_list_price3')->nullable();
             $table->string('estimated_service_timing3')->nullable();
 
-            $table->text('images')->nullable();
-            $table->text('videos')->nullable();
+            $table->binary('images')->nullable();
+            $table->binary('videos')->nullable();
 
 
             $table->integer('publish')->nullable();
