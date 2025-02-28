@@ -1356,10 +1356,10 @@ class ServiceProviderController extends Controller
 
 
         $GetInprogressOrder=Order::leftJoin('deals', 'deals.id', '=', 'orders.deal_id')
-    ->where('orders.status', 'in progress')
-    ->where('orders.customer_id', $id)
-    ->select('orders.*', 'deals.service_title as deal_name')
-    ->get();
+        ->where('orders.status', 'in progress')
+        ->where('orders.customer_id', $id)
+        ->select('orders.*', 'deals.service_title as deal_name')
+        ->get();
         
         return response()->json(['GetInprogressOrder' => $GetInprogressOrder], 200);
     }
