@@ -132,6 +132,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('ServiceProviders', 'ServiceProviders')->name('ServiceProviders');
             Route::get('ProviderDetail/{user_id}', 'ProviderDetail')->name('ProviderDetail');
             Route::get('Customers', 'Customers')->name('Customers');
+            Route::post('UpdateCustomer', 'UpdateCustomer')->name('UpdateCustomer');
+            Route::get('DeleteCustomer/{id}', 'DeleteCustomer')->name('DeleteCustomer');
     
             Route::get('GetAllSaleRep', 'GetAllSaleRep')->name('GetAllSaleRep');
             Route::post('AddSalesReps', 'AddSalesReps')->name('AddSalesReps');

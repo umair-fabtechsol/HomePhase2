@@ -47,12 +47,12 @@ class DatabaseSeeder extends Seeder
             'terms' => 1,
             'password' => 'aszx1234',
             'created_by' => 0,
-            'permission_1' => '1',
-            'permission_2' => '2',
-            'permission_3' => '3',
-            
-            
-            
+            'client_permission_1' => 1,
+            'client_permission_2' => 0,
+            'client_permission_3' => 1,
+            'assign_permission_1' => 0,
+            'assign_permission_2' => 1,
+            'assign_permission_3' => 0,
         ]);
 
         User::factory()->create([
@@ -63,12 +63,12 @@ class DatabaseSeeder extends Seeder
             'terms' => 1,
             'password' => 'aszx1234',
             'created_by' => 0,
-            'permission_1' => '1',
-            'permission_2' => '2',
-            'permission_3' => '3',
-            
-            
-            
+            'client_permission_1' => 1,
+            'client_permission_2' => 0,
+            'client_permission_3' => 1,
+            'assign_permission_1' => 0,
+            'assign_permission_2' => 1,
+            'assign_permission_3' => 0,
         ]);
 
         User::factory()->create([
@@ -79,12 +79,12 @@ class DatabaseSeeder extends Seeder
             'terms' => 1,
             'password' => 'aszx1234',
             'created_by' => 0,
-            'permission_1' => '1',
-            'permission_2' => '2',
-            'permission_3' => '3',
-            
-            
-            
+            'client_permission_1' => 1,
+            'client_permission_2' => 0,
+            'client_permission_3' => 1,
+            'assign_permission_1' => 0,
+            'assign_permission_2' => 1,
+            'assign_permission_3' => 0,
         ]);
 
         User::factory()->create([
@@ -95,12 +95,12 @@ class DatabaseSeeder extends Seeder
             'terms' => 1,
             'password' => 'aszx1234',
             'created_by' => 0,
-            'permission_1' => '1',
-            'permission_2' => '2',
-            'permission_3' => '3',
-            
-            
-            
+            'client_permission_1' => 1,
+            'client_permission_2' => 0,
+            'client_permission_3' => 1,
+            'assign_permission_1' => 0,
+            'assign_permission_2' => 1,
+            'assign_permission_3' => 0,
         ]);
 
         User::factory()->create([
@@ -111,12 +111,12 @@ class DatabaseSeeder extends Seeder
             'terms' => 1,
             'password' => 'aszx1234',
             'created_by' => 0,
-            'permission_1' => '1',
-            'permission_2' => '2',
-            'permission_3' => '3',
-            
-            
-            
+            'client_permission_1' => 1,
+            'client_permission_2' => 0,
+            'client_permission_3' => 1,
+            'assign_permission_1' => 0,
+            'assign_permission_2' => 1,
+            'assign_permission_3' => 0,
         ]);
     }
 }
