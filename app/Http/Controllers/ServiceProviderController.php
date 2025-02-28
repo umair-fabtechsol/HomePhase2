@@ -34,7 +34,7 @@ class ServiceProviderController extends Controller
         if ($deals) {
             return response()->json(['deals' => $deals], 200);
         } else {
-            return response()->json(['message' => 'No deals found'], 200);
+            return response()->json(['message' => 'No deals found'], 401);
         }
     }
 
@@ -44,7 +44,7 @@ class ServiceProviderController extends Controller
         if ($deal) {
             return response()->json(['deal' => $deal], 200);
         } else {
-            return response()->json(['message' => 'No deal found'], 200);
+            return response()->json(['message' => 'No deal found'], 401);
         }
     }
 
@@ -65,7 +65,7 @@ class ServiceProviderController extends Controller
             Notification::create($notifications);
             return response()->json(['message' => 'Deal Publish successfully', 'deal' => $deal], 200);
         } else {
-            return response()->json(['message' => 'No deals found'], 200);
+            return response()->json(['message' => 'No deals found'], 401);
         }
     }
 
@@ -98,7 +98,7 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Deal updated successfully', 'deal' => $deal], 200);
             } else {
-                return response()->json(['message' => 'No deals found'], 200);
+                return response()->json(['message' => 'No deals found'], 401);
             }
         } else {
             $userId = Auth::id();
@@ -195,7 +195,7 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Package deal updated successfully', 'deal' => $deal], 200);
             } else {
-                return response()->json(['message' => 'No deals found'], 200);
+                return response()->json(['message' => 'No deals found'], 401);
             }
         } else {
             $userId = Auth::id();
@@ -250,7 +250,7 @@ class ServiceProviderController extends Controller
                 
                 return response()->json(['message' => 'Image updated successfully', 'deal' => $deal], 200);
             } else {
-                return response()->json(['message' => 'No deals found'], 200);
+                return response()->json(['message' => 'No deals found'], 401);
             }
         } else {
            
@@ -275,6 +275,7 @@ class ServiceProviderController extends Controller
             }
             
             
+
             $deal = Deal::create([
                 'user_id' => $request->user_id,
                 'images' => json_encode($images),
@@ -285,6 +286,7 @@ class ServiceProviderController extends Controller
          return response()->json(['message' => 'Added new deal with Images successfully', 'deal' => $deal], 200);
             
              
+
         }
     }
 
@@ -304,7 +306,7 @@ class ServiceProviderController extends Controller
             $deal->update($data);
             return response()->json(['message' => 'Deal updated successfully', 'deal' => $deal], 200);
         } else {
-            return response()->json(['message' => 'No deals found'], 200);
+            return response()->json(['message' => 'No deals found'], 401);
         }
     }
 
@@ -372,7 +374,7 @@ class ServiceProviderController extends Controller
             $deal->update($data);
             return response()->json(['deal' => $deal], 200);
         } else {
-            return response()->json(['message' => 'No deals found'], 200);
+            return response()->json(['message' => 'No deals found'], 401);
         }
     }
 
@@ -396,7 +398,7 @@ class ServiceProviderController extends Controller
             }
             return response()->json(['deal' => $deal], 200);
         } else {
-            return response()->json(['message' => 'No deals found'], 200);
+            return response()->json(['message' => 'No deals found'], 401);
         }
     }
 
@@ -435,7 +437,7 @@ class ServiceProviderController extends Controller
             Notification::create($notifications);
             return response()->json(['message' => 'Deal deleted successfully', 'deal' => $deal], 200);
         } else {
-            return response()->json(['message' => 'No deal found'], 200);
+            return response()->json(['message' => 'No deal found'], 401);
         }
     }
 
@@ -467,7 +469,7 @@ class ServiceProviderController extends Controller
             Notification::create($notifications);
             return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 200);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -491,7 +493,7 @@ class ServiceProviderController extends Controller
             Notification::create($notifications);
             return response()->json(['message' => 'User Password Updated successfully', 'user' => $user], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 200);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -550,7 +552,7 @@ class ServiceProviderController extends Controller
 
             return response()->json(['message' => 'User Business Profile created successfully', 'user' => $user, 'BusinessProfile' => $businessProfile], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 200);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
     public function AddPaymentDetails(Request $request)
@@ -586,7 +588,7 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'Added Payment details successfully', 'payment' => $payment], 200);
         }
     }
-        return response()->json(['message' => 'User not found'], 200);
+        return response()->json(['message' => 'User not found'], 401);
     }
 
     public function UpdatePaymentDetails(Request $request)
@@ -735,7 +737,7 @@ class ServiceProviderController extends Controller
 
             return response()->json(['message' => 'User Business Additional Info created successfully', 'user' => $user, 'BusinessProfile' => $businessProfile], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 200);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -1127,7 +1129,7 @@ class ServiceProviderController extends Controller
         if ($orders) {
             return response()->json(['message' => 'Orders List', 'orders' => $orders], 200);
         } else {
-            return response()->json(['message' => 'No order available'], 200);
+            return response()->json(['message' => 'No order available'], 401);
         }
     }
     public function SettingPublish($id){
@@ -1148,7 +1150,7 @@ class ServiceProviderController extends Controller
             Notification::create($notifications);
             return response()->json(['message' => 'Setting Publish successfully', 'setting' => $setting], 200);
         } else {
-            return response()->json(['message' => 'No Setting found'], 200);
+            return response()->json(['message' => 'No Setting found'], 401);
         }
     }
 
@@ -1180,7 +1182,7 @@ class ServiceProviderController extends Controller
             $afterImages = DeliveryImage::create($data);
             return response()->json(['message' => 'Added after delivey images successfully', 'afterImages' => $afterImages], 200);
         } else {
-            return response()->json(['message' => 'No order found'], 200);
+            return response()->json(['message' => 'No order found'], 401);
         }
     }
     public function OrderBeforeImages(Request $request){
@@ -1323,7 +1325,7 @@ class ServiceProviderController extends Controller
                 return response()->json(['message' => 'Added Favorit Service', 'favoritService' => $favoritService], 200);
             }
         } else {
-            return response()->json(['message' => 'No user found'], 200);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -1338,7 +1340,7 @@ class ServiceProviderController extends Controller
             $deals = $deals->whereIn('user_id', $location);  
         }
         $deals = $deals->get();
-        return response()->json(['message' => 'No user found', 'services' => $deals], 200);
+        return response()->json(['message' => 'No user found', 'services' => $deals], 401);
     }
 
     public function GetInprogressOrder($id){
