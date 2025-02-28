@@ -332,7 +332,13 @@ class CustomerController extends Controller
     {
         $user = User::find($request->user_id);
         if ($user) {
+            $order = Order::find($request->order_id);
+            $dealId = $order->deal_id;
+            $deal = Deal::find($dealId);
+            $providerId = $deal->user_id;
             $data = $request->all();
+            $data['provider_id'] = $providerId;
+            $data['deal_id'] = $dealId;
             $review = Review::create($data);
             $notification = [
                 'title' => 'Added Review',  

@@ -23,22 +23,23 @@ class SuperAdminController extends Controller
     }
     public function ServiceProviders()
     {
-        $serviceProviders = DB::table('users')
-            ->leftJoin('deals', 'users.id', '=', 'deals.user_id')
-            ->select(
-                'users.id',
-                'users.personal_image',
-                'users.name',
-                'users.email',
-                'users.phone',
-                DB::raw('COUNT(deals.id) as total_deals')
-            )
-            ->where('users.role', 2)
-            ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.phone')
-            ->get();
+        $serviceProviders = DB::table('users')->leftJoin(DB::raw('(SELECT user_id, COUNT(id) as total_deals FROM deals GROUP BY user_id) as deals'), 'users.id', '=', 'deals.user_id')->leftJoin('reviews', 'users.id', '=', 'reviews.provider_id')->select(
+        'users.id',
+        'users.personal_image',
+        'users.name',
+        'users.email',
+        'users.phone',
+        DB::raw('COALESCE(deals.total_deals, 0) as total_deals'),
+        DB::raw('AVG(reviews.rating) as rating')
+    )
+    ->where('users.role', 2)
+    ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.phone', 'deals.total_deals')
+    ->paginate(8);
+            
+        $totalProviders = User::where('role', 2)->count();
 
         if ($serviceProviders) {
-            return response()->json(['serviceProviders' => $serviceProviders], 200);
+            return response()->json(['totalProviders' => $totalProviders, 'serviceProviders' => $serviceProviders], 200);
         } else {
             return response()->json(['message' => 'No Service Provider Available'], 200);
         }
