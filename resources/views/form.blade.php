@@ -17,7 +17,7 @@
 
         <!-- Deal ID (for updating an existing record) -->
         <label for="id">Deal ID (Optional for Update):</label>
-        <input type="text" name="user_id" id="id" placeholder="Enter Deal ID"><br><br>
+        <input type="text" name="deal_id" id="id" placeholder="Enter Deal ID"><br><br>
 
         <!-- Image Upload -->
         <label for="images">Select Images:</label>
