@@ -254,7 +254,7 @@ class ServiceProviderController extends Controller
                 return response()->json(['message' => 'No deals found'], 401);
             }
         } else {
-           
+          
             $images = [];
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $photo) {
@@ -275,7 +275,7 @@ class ServiceProviderController extends Controller
                 }
             }
             
-        
+          
             
             $deal = new Deal();
             $deal->user_id = $request->user_id;
