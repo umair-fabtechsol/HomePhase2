@@ -217,80 +217,76 @@ class ServiceProviderController extends Controller
 
     public function MediaUpload(Request $request)
     {
+   
         if (!empty($request->id)) {
             $deal = Deal::find($request->id);
             if ($deal) {
-                $data = [];
-               
-                 $existingImages = json_decode($deal->images, true) ?? [];
-                 $existingVideos = json_decode($deal->videos, true) ?? [];
-                 
-              
+            
+                $existingImages = json_decode($deal->images, true) ?? [];
+                $existingVideos = json_decode($deal->videos, true) ?? [];
+
                    
-                    foreach ($request->file('images') as $photo) {
-                        $photo_name = time() . '-' . $photo->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo->move($photo_destination, $photo_name);
-                        $existingImages[] = $photo_name; 
+                    if ($request->hasFile('images')) {
+                        foreach ($request->file('images') as $photo) {
+                            $photo_name = time() . '-' . $photo->getClientOriginalName();
+                            $photo->move(public_path('uploads'), $photo_name);
+                            $existingImages[] = $photo_name;
+                        }
                     }
-                     
-                    $data['images'] =json_encode($existingImages);
-                    $data['videos'] =json_encode($existingVideos);
-                    $data['id'] = $request->id;
-                    $deal->update($data);
-                    $notifications = [
-                        'title' => 'Update Image',
-                        'message' => 'Image updated successfully',
-                        'created_by' => $deal->user_id,
-                        'status' => 0,
-                        'clear' => 'no',
-    
-                    ];
-                    Notification::create($notifications);
+
+                    if ($request->hasFile('videos')) {
+                        foreach ($request->file('videos') as $video) {
+                            $video_name = time() . '-' . $video->getClientOriginalName();
+                            $video->move(public_path('uploads'), $video_name);
+                            $existingVideos[] = $video_name;
+                        }
+                    }
+
+                 
+                    $deal->update([
+                        'images' => json_encode($existingImages),
+                        'videos' => json_encode($existingVideos),
+                    ]);
                 
                 return response()->json(['message' => 'Image updated successfully', 'deal' => $deal], 200);
             } else {
                 return response()->json(['message' => 'No deals found'], 401);
             }
         } else {
-            if ($request->hasFile('images') || $request->hasFile('videos')) {
-                $images = [];
+           
+            $images = [];
+            if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $photo) {
                     $photo_name = time() . '-' . $photo->getClientOriginalName();
                     $photo_destination = public_path('uploads');
                     $photo->move($photo_destination, $photo_name);
                     $images[] = $photo_name; 
                 }
-                
-                    $videos = [];
-                    foreach ($request->file('videos') as $video) {
-                        $video_name = time() . '-' . $video->getClientOriginalName();
-                        $video_destination = public_path('uploads');
-                        $video->move($video_destination, $video_name);
-                        $videos[] = $photo_name; 
-                    }
-               
-                $data['images'] = json_encode($images); 
-                $data['videos'] = json_encode($videos); 
-                $data['publish'] = 0;
-                $userId = Auth::id();
-                $data['user_id'] = $userId;
-            
-                $deal = Deal::create($data);
-            
-                $notifications = [
-                    'title' => 'Added Images',
-                    'message' => 'Added Images successfully',
-                    'created_by' => $deal->user_id,
-                    'status' => 0,
-                    'clear' => 'no',
-                ];
-                Notification::create($notifications);
-            
-                return response()->json(['message' => 'Added new deal with Images successfully', 'deal' => $deal], 200);
-            } else {
-                return response()->json(['message' => 'image field required'], 401);
             }
+            
+            $videos = [];
+            if ($request->hasFile('videos')) {
+                foreach ($request->file('videos') as $video) {
+                    $video_name = time() . '-' . $video->getClientOriginalName();
+                    $video_destination = public_path('uploads');
+                    $video->move($video_destination, $video_name);
+                    $videos[] = $video_name;  
+                }
+            }
+            
+            
+
+            $deal = Deal::create([
+                'user_id' => $request->user_id,
+                'images' => json_encode($images),
+                'videos' => json_encode($videos),
+            ]);
+            
+            
+         return response()->json(['message' => 'Added new deal with Images successfully', 'deal' => $deal], 200);
+            
+             
+
         }
     }
 
