@@ -205,7 +205,7 @@ class SuperAdminController extends Controller
     public function AddPriceDetails(Request $request){
         
         $data = $request()->all();
-        dd($getPrice);
+     
         $getPrice=Price::where('user_id','=',$request->user_id)->first();
        
         if($getPrice){

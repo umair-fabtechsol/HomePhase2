@@ -11,6 +11,7 @@ use App\Models\PaymentDetail;
 use App\Models\Hour;
 use App\Models\Order;
 use App\Models\Offer;
+use App\Models\DealUpload;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -218,9 +219,9 @@ class ServiceProviderController extends Controller
     public function MediaUpload(Request $request)
     {
        
-   
+        $deal = Deal::find($request->id);
         if (!empty($request->id)) {
-            $deal = Deal::find($request->id);
+           
             if ($deal) {
             
                 $existingImages = json_decode($deal->images, true) ?? [];
@@ -255,38 +256,36 @@ class ServiceProviderController extends Controller
             }
         } else {
           
-            $images = [];
+     
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $photo) {
                     $photo_name = time() . '-' . $photo->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo->move($photo_destination, $photo_name);
-                    $images[] = $photo_name; 
+                    $photo->move(public_path('uploads'), $photo_name);
+    
+                 
+                    DealUpload::create([
+                        'deal_id' => $request->deal_id,
+                        'images' => $photo_name,
+                      
+                    ]);
                 }
             }
-            
-            $videos = [];
             if ($request->hasFile('videos')) {
                 foreach ($request->file('videos') as $video) {
                     $video_name = time() . '-' . $video->getClientOriginalName();
-                    $video_destination = public_path('uploads');
-                    $video->move($video_destination, $video_name);
-                    $videos[] = $video_name;  
+                    $video->move(public_path('uploads'), $video_name);
+                    DealUpload::create([
+                        'deal_id' => $request->deal_id,
+                        'videos' => $video_name,
+                    ]);
                 }
             }
             
-          
-            
-            $deal = new Deal();
-            $deal->user_id = $request->user_id;
-            $deal->images = json_encode($images);
-            $deal->videos = json_encode($videos);
-            $deal->publish = 0;
-            $deal->save();
+       
             
             
             
-         return response()->json(['message' => 'Added new deal with Images successfully', 'deal' => $deal], 200);
+        return response()->json(['message' => 'Added new deal with Images successfully', 'deal' => $deal], 200);
             
              
 
