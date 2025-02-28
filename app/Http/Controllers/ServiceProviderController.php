@@ -217,6 +217,7 @@ class ServiceProviderController extends Controller
 
     public function MediaUpload(Request $request)
     {
+       
    
         if (!empty($request->id)) {
             $deal = Deal::find($request->id);
@@ -274,13 +275,15 @@ class ServiceProviderController extends Controller
                 }
             }
             
+        
             
-
-            $deal = Deal::create([
-                'user_id' => $request->user_id,
-                'images' => json_encode($images),
-                'videos' => json_encode($videos),
-            ]);
+            $deal = new Deal();
+            $deal->user_id = $request->user_id;
+            $deal->images = json_encode($images);
+            $deal->videos = json_encode($videos);
+            $deal->publish = 0;
+            $deal->save();
+            
             
             
          return response()->json(['message' => 'Added new deal with Images successfully', 'deal' => $deal], 200);
