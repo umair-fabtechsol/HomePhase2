@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->Integer('user_id');
             $table->Integer('order_id');
+            $table->Integer('deal_id');
+            $table->Integer('provider_id');
             $table->Integer('rating');
             $table->text('desciption')->nullable();
             $table->timestamps();
