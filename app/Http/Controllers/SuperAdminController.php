@@ -124,6 +124,13 @@ class SuperAdminController extends Controller
         return response()->json(['message' => 'Sales Reps deleted successfully', 'GetSaleRep' => $GetSaleRep], 200);
     }
 
+    public function GetAllSaleRep(){
+
+        $GetSaleRep = User::where('role','=',3)->get();
+
+        
+        return response()->json(['GetSaleRep' => $GetSaleRep], 200);
+    }
     public function UpdatePersonal(Request $request)
     {
         $user = User::find($request->id);
@@ -198,9 +205,13 @@ class SuperAdminController extends Controller
 
         
         $data = $request()->all();
+        $getPrice=Price::where('user_id','=',$request->user_id)->first();
+        if($getPrice){
+            
+        }else{
         $price = Price::create($data);
         return response()->json(['message' => 'Price Details create successfully', 'price' => $price], 200);
-        
+        }
 
         
     }
