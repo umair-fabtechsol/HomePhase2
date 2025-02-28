@@ -28,9 +28,12 @@ return new class extends Migration
 
             $table->text('location')->nullable();
             $table->integer('created_by')->nullable();
-            $table->string('permission_1')->nullable();
-            $table->string('permission_2')->nullable();
-            $table->string('permission_3')->nullable();
+            $table->integer('client_permission_1')->nullable();
+            $table->integer('client_permission_2')->nullable();
+            $table->integer('client_permission_3')->nullable();
+            $table->integer('assign_permission_1')->nullable();
+            $table->integer('assign_permission_2')->nullable();
+            $table->integer('assign_permission_3')->nullable();
 
             $table->integer('general_notification')->nullable();
             $table->integer('provider_notification')->nullable();

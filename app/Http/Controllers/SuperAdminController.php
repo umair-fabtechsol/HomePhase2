@@ -6,6 +6,7 @@ use App\Models\BusinessProfile;
 use App\Models\Deal;
 use App\Models\User;
 use App\Models\Price;
+use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -50,7 +51,20 @@ class SuperAdminController extends Controller
         $user = User::find($user_id);
         $deals = Deal::where('user_id', $user_id)->get();
         $business = BusinessProfile::where('user_id', $user_id)->first();
-        return response()->json(['message' => 'Provider Details', 'user' => $user, 'deals' => $deals, 'business' => $business], 200);
+        $averageRating = DB::table('reviews')->where('provider_id', $user_id)->avg('rating');
+        $totalReview = DB::table('reviews')->where('provider_id', $user_id)->count();
+
+        $stars = Review::select(
+            DB::raw('SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_star'),
+            DB::raw('SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_star'),
+            DB::raw('SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_star'),
+            DB::raw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star'),
+            DB::raw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star')
+        )
+            ->where('provider_id', $user_id)
+            ->first();
+
+        return response()->json(['message' => 'Provider Details', 'user' => $user, 'deals' => $deals, 'business' => $business, 'averageRating' => $averageRating,'totalReview' => $totalReview,'stars' => $stars], 200);
     }
 
     public function Customers()
@@ -123,6 +137,41 @@ class SuperAdminController extends Controller
 
         $GetSaleRep->delete();
         return response()->json(['message' => 'Sales Reps deleted successfully', 'GetSaleRep' => $GetSaleRep], 200);
+    }
+
+    public function UpdateCustomer(Request $request)
+    {
+
+        $data = $request->all();
+
+        $GetSaleRep = User::find($request->id);
+        if ($request->hasFile('personal_image')) {
+            $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
+            if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+            $photo1 = $request->file('personal_image');
+            $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+            $photo_destination = public_path('uploads');
+            $photo1->move($photo_destination, $photo_name1);
+            $data['personal_image'] = $photo_name1;
+        }
+        $GetSaleRep->update($data);
+
+        return response()->json(['message' => 'Customer updated successfully', 'GetSaleRep' => $GetSaleRep], 200);
+    }
+
+    public function DeleteCustomer($id)
+    {
+
+        $GetSaleRep = User::find($id);
+        $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
+        if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
+            unlink($imagePath);
+        }
+
+        $GetSaleRep->delete();
+        return response()->json(['message' => 'Customer deleted successfully', 'GetSaleRep' => $GetSaleRep], 200);
     }
 
     public function GetAllSaleRep(){
