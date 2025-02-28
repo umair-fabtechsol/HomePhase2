@@ -53,7 +53,7 @@ class AuthController extends Controller
 
         }
         $token=$user->createToken('auth_token')->plainTextToken;
-
+           
         return [
 
             'user'=>$user,
@@ -72,7 +72,9 @@ class AuthController extends Controller
   
         try{
             $user=Socialite::driver('google')->stateless()->user();
+            dd($user);
            $findUser=User::where('email',$user->email)->first();
+        
            if(!$findUser){
             
             $createUser=new User();
