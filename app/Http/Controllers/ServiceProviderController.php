@@ -225,20 +225,15 @@ class ServiceProviderController extends Controller
                  $existingImages = json_decode($deal->images, true) ?? [];
                  $existingVideos = json_decode($deal->videos, true) ?? [];
                  
-                if ($request->hasFile('images') || $request->hasFile('videos')) {
+              
                    
                     foreach ($request->file('images') as $photo) {
                         $photo_name = time() . '-' . $photo->getClientOriginalName();
                         $photo_destination = public_path('uploads');
                         $photo->move($photo_destination, $photo_name);
-                        $existingImages[] = $photo_name; // Append new image to the array
+                        $existingImages[] = $photo_name; 
                     }
-                     foreach ($request->file('videos') as $videos) {
-                        $video_name = time() . '-' . $videos->getClientOriginalName();
-                        $video_destination = public_path('uploads');
-                        $videos->move($video_destination, $video_name);
-                        $existingVideos[] = $video_name; // Append new image to the array
-                    }
+                     
                     $data['images'] =json_encode($existingImages);
                     $data['videos'] =json_encode($existingVideos);
                     $data['id'] = $request->id;
@@ -252,7 +247,7 @@ class ServiceProviderController extends Controller
     
                     ];
                     Notification::create($notifications);
-                }
+                
                 return response()->json(['message' => 'Image updated successfully', 'deal' => $deal], 200);
             } else {
                 return response()->json(['message' => 'No deals found'], 401);
