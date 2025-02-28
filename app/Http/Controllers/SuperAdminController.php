@@ -253,17 +253,11 @@ class SuperAdminController extends Controller
     
     public function AddPriceDetails(Request $request){
         
-        $data = $request()->all();
-     
-        $getPrice=Price::where('user_id','=',$request->user_id)->first();
+        $data = $request->all();
        
-        if($getPrice){
-            $getPrice->update($data);
-            return response()->json(['message' => 'Price Details updated successfully', 'price' => $getPrice], 200);
-        }else{
         $price = Price::create($data);
         return response()->json(['message' => 'Price Details create successfully', 'price' => $price], 200);
-        }
+        
 
         
     }
