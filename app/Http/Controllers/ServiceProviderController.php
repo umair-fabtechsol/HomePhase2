@@ -256,36 +256,36 @@ class ServiceProviderController extends Controller
             }
         } else {
           
-     
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $photo) {
                     $photo_name = time() . '-' . $photo->getClientOriginalName();
                     $photo->move(public_path('uploads'), $photo_name);
-    
-                 
-                    $DealUpload[]=DealUpload::create([
+            
+                   
+                    $DealUpload[] = DealUpload::create([
                         'deal_id' => $request->deal_id,
                         'images' => $photo_name,
-                      
-                    ]);
+                    ])->toArray();
                 }
             }
+            
             if ($request->hasFile('videos')) {
                 foreach ($request->file('videos') as $video) {
                     $video_name = time() . '-' . $video->getClientOriginalName();
                     $video->move(public_path('uploads'), $video_name);
-                    $DealUpload[]=DealUpload::create([
+            
+                    $DealUpload[] = DealUpload::create([
                         'deal_id' => $request->deal_id,
                         'videos' => $video_name,
-                    ]);
+                    ])->toArray(); 
                 }
             }
             
-       
             
-            
-            
-        return response()->json(['message' => 'Added new deal with Images successfully', 'deal' => $DealUpload], 200);
+            return response()->json([
+                'message' => 'Added new deal with Images successfully',
+                'deal' => $DealUpload
+            ], 200);
             
              
 
