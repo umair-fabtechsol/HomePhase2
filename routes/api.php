@@ -8,8 +8,10 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SaleRapController;
+use App\Http\Controllers\PaymentController;
 
-
+Route::post('createPayout', [PaymentController::class, 'createPayout'])->name('createPayout');
+Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('checkBalance');
 Route::controller(AuthController::class)->group(function () {
     Route::post('Register', 'Register')->name('Register');
     Route::post('UpdateUser', 'UpdateUser')->name('UpdateUser');

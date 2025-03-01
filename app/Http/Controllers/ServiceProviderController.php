@@ -25,12 +25,13 @@ class ServiceProviderController extends Controller
     public function Deals(Request $request)
     {
         $userId = Auth::id();
-        $deals = $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+       $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
         ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
         ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+        ->leftJoin('deal_uploads', 'deal_uploads.deal_id', '=', 'deals.id')
         ->where('deals.user_id', $userId)
         ->orderBy('deals.id', 'desc')
-        ->select('deals.*', 'users.name as user_name','users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+        ->select('deals.*', 'users.name as user_name','users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating','deal_uploads.images','deal_uploads.videos')
         ->get();
         if ($deals) {
             return response()->json(['deals' => $deals], 200);
