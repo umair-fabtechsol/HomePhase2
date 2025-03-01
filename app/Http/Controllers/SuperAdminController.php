@@ -13,31 +13,45 @@ use Illuminate\Support\Facades\Hash;
 
 class SuperAdminController extends Controller
 {
-    public function SuperAdminDashboard(){
-
-
-        $GetNumberOfDeals=Deal::all()->count();
-        $GetTotalServiceProvider=User::where('role',2)->count();
-        $GetTotalClient=User::where('role',1)->count();
-      
-        
-    }
-    public function ServiceProviders()
+    public function SuperAdminDashboard()
     {
-        $serviceProviders = DB::table('users')->leftJoin(DB::raw('(SELECT user_id, COUNT(id) as total_deals FROM deals GROUP BY user_id) as deals'), 'users.id', '=', 'deals.user_id')->leftJoin('reviews', 'users.id', '=', 'reviews.provider_id')->select(
-        'users.id',
-        'users.personal_image',
-        'users.name',
-        'users.email',
-        'users.phone',
-        DB::raw('COALESCE(deals.total_deals, 0) as total_deals'),
-        DB::raw('AVG(reviews.rating) as rating')
-    )
-    ->where('users.role', 2)
-    ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.phone', 'deals.total_deals')
-    ->paginate(8);
-            
-        $totalProviders = User::where('role', 2)->count();
+
+
+        $GetNumberOfDeals = Deal::all()->count();
+        $GetTotalServiceProvider = User::where('role', 2)->count();
+        $GetTotalClient = User::where('role', 1)->count();
+    }
+    public function ServiceProviders(Request $request)
+    {
+
+        $serviceProviders = DB::table('users')
+            ->leftJoin(DB::raw('(SELECT user_id, COUNT(id) as total_deals FROM deals GROUP BY user_id) as deals'), 'users.id', '=', 'deals.user_id')
+            ->leftJoin('reviews', 'users.id', '=', 'reviews.provider_id')
+            ->select(
+                'users.id',
+                'users.personal_image',
+                'users.name',
+                'users.email',
+                'users.phone',
+                DB::raw('COALESCE(deals.total_deals, 0) as total_deals'),
+                DB::raw('AVG(reviews.rating) as rating')
+            )
+            ->where('users.role', 2)
+            ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.phone', 'deals.total_deals', 'reviews.provider_id');
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $serviceProviders->where(function ($query) use ($search) {
+                $query->where('users.name', 'like', "%{$search}%")
+                    ->orWhere('users.email', 'like', "%{$search}%")
+                    ->orWhere('users.phone', 'like', "%{$search}%");
+            });
+        }
+
+        $serviceProviders = $serviceProviders->paginate($request->providers ?? 8);
+
+
+        $totalProviders = $serviceProviders->total();
 
         if ($serviceProviders) {
             return response()->json(['totalProviders' => $totalProviders, 'serviceProviders' => $serviceProviders], 200);
@@ -64,14 +78,26 @@ class SuperAdminController extends Controller
             ->where('provider_id', $user_id)
             ->first();
 
-        return response()->json(['message' => 'Provider Details', 'user' => $user, 'deals' => $deals, 'business' => $business, 'averageRating' => $averageRating,'totalReview' => $totalReview,'stars' => $stars], 200);
+        return response()->json(['message' => 'Provider Details', 'user' => $user, 'deals' => $deals, 'business' => $business, 'averageRating' => $averageRating, 'totalReview' => $totalReview, 'stars' => $stars], 200);
     }
 
-    public function Customers()
+    public function Customers(Request $request)
     {
-        $customers = User::where('role', 1)->get();
+        $customers = User::where('role', 1);
+        if ($request->has('search')) {
+            $search = $request->search;
+            $customers->where(function ($query) use ($search) {
+                $query->where('users.name', 'like', "%{$search}%")
+                    ->orWhere('users.email', 'like', "%{$search}%")
+                    ->orWhere('users.phone', 'like', "%{$search}%");
+            });
+        }
+
+        $customers = $customers->paginate($request->clients ?? 8);
+        
+        $total_customers = $customers->total();
         if ($customers) {
-            return response()->json(['Customers' => $customers], 200);
+            return response()->json(['total_customers' => $total_customers, 'Customers' => $customers], 200);
         } else {
             return response()->json(['message' => 'No Customer Available'], 401);
         }
@@ -185,12 +211,25 @@ class SuperAdminController extends Controller
         return response()->json(['message' => 'Customer deleted successfully', 'GetSaleRep' => $GetSaleRep], 200);
     }
 
-    public function GetAllSaleRep(){
+    public function GetAllSaleRep(Request $request)
+    {
 
-        $GetSaleRep = User::where('role','=',3)->get();
+        $GetSaleRep = User::where('role', '=', 3);
+        if ($request->has('search')) {
+            $search = $request->search;
+            $GetSaleRep->where(function ($query) use ($search) {
+                $query->where('users.name', 'like', "%{$search}%")
+                    ->orWhere('users.email', 'like', "%{$search}%")
+                    ->orWhere('users.phone', 'like', "%{$search}%");
+            });
+        }
 
+        $GetSaleRep = $GetSaleRep->paginate($request->sales_rap ?? 8);
         
-        return response()->json(['GetSaleRep' => $GetSaleRep], 200);
+        $total_sales_rap = $GetSaleRep->total();
+
+
+        return response()->json(['total_sales_rap' => $total_sales_rap, 'GetSaleRep' => $GetSaleRep], 200);
     }
     public function UpdatePersonal(Request $request)
     {
@@ -261,27 +300,25 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'No user found'], 200);
         }
     }
-    
-    public function AddPriceDetails(Request $request){
-        
+
+    public function AddPriceDetails(Request $request)
+    {
+
         $data = $request->all();
-       
+
         $price = Price::create($data);
         return response()->json(['message' => 'Price Details create successfully', 'price' => $price], 200);
-        
-
-        
     }
     public function GetProvidersSummary()
     {
-       
-        $providers = User::where('role',3) 
+
+        $providers = User::where('role', 3)
             ->selectRaw('QUARTER(created_at) as quarter, COUNT(id) as total')
             ->groupBy('quarter')
             ->orderBy('quarter')
             ->get();
 
-      
+
         $report = [];
         $cumulativeTotal = 0;
 
@@ -309,14 +346,14 @@ class SuperAdminController extends Controller
 
     public function GetClientsSummary()
     {
-       
-        $providers = User::where('role',2) 
+
+        $providers = User::where('role', 2)
             ->selectRaw('QUARTER(created_at) as quarter, COUNT(id) as total')
             ->groupBy('quarter')
             ->orderBy('quarter')
             ->get();
 
-      
+
         $report = [];
         $cumulativeTotal = 0;
 
