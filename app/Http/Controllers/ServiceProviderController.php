@@ -187,43 +187,6 @@ class ServiceProviderController extends Controller
     public function MediaUpload(Request $request)
     {
        
-        $deal = Deal::find($request->id);
-        if (!empty($request->id)) {
-           
-            if ($deal) {
-            
-                $existingImages = json_decode($deal->images, true) ?? [];
-                $existingVideos = json_decode($deal->videos, true) ?? [];
-
-                   
-                    if ($request->hasFile('images')) {
-                        foreach ($request->file('images') as $photo) {
-                            $photo_name = time() . '-' . $photo->getClientOriginalName();
-                            $photo->move(public_path('uploads'), $photo_name);
-                            $existingImages[] = $photo_name;
-                        }
-                    }
-
-                    if ($request->hasFile('videos')) {
-                        foreach ($request->file('videos') as $video) {
-                            $video_name = time() . '-' . $video->getClientOriginalName();
-                            $video->move(public_path('uploads'), $video_name);
-                            $existingVideos[] = $video_name;
-                        }
-                    }
-
-                 
-                    $deal->update([
-                        'images' => json_encode($existingImages),
-                        'videos' => json_encode($existingVideos),
-                    ]);
-                
-                return response()->json(['message' => 'Image updated successfully', 'deal' => $deal], 200);
-            } else {
-                return response()->json(['message' => 'No deals found'], 401);
-            }
-        } else {
-          
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $photo) {
                     $photo_name = time() . '-' . $photo->getClientOriginalName();
@@ -257,7 +220,7 @@ class ServiceProviderController extends Controller
             
              
 
-        }
+        
     }
 
     public function UpdateBasicInfo(Request $request)
