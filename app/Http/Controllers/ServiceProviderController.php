@@ -26,12 +26,36 @@ class ServiceProviderController extends Controller
     {
         $userId = Auth::id();
        $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-        ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
-        ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
-        ->where('deals.user_id', $userId)
-        ->orderBy('deals.id', 'desc')
-        ->select('deals.*', 'users.name as user_name','users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
-        ->get();
+       ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+       ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+       ->leftJoin('deal_uploads', 'deal_uploads.deal_id', '=', 'deals.id') 
+       ->where('deals.user_id', $userId)
+       ->groupBy(
+           'deals.id', 
+           'deals.user_id', 
+           'deals.service_title', 
+           'deals.created_at', 
+           'deals.updated_at', 
+           'users.name', 
+           'users.personal_image', 
+           'orders.id', 
+           'reviews.rating'
+       )
+       ->orderBy('deals.id', 'desc')
+       ->select(
+           'deals.id',
+           'deals.user_id',
+           'deals.service_title',
+           'deals.created_at',
+           'deals.updated_at',
+           'users.name as user_name',
+           'users.personal_image', 
+           'orders.id as order_id', 
+           'reviews.rating as review_rating',
+           \DB::raw("GROUP_CONCAT(deal_uploads.images) as images"),  
+           \DB::raw("GROUP_CONCAT(deal_uploads.videos) as videos")   
+       )
+       ->get();
         if ($deals) {
             return response()->json(['deals' => $deals], 200);
         } else {
