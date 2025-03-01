@@ -73,9 +73,20 @@ class SuperAdminController extends Controller
         if ($customers) {
             return response()->json(['Customers' => $customers], 200);
         } else {
-            return response()->json(['message' => 'No Customer Available'], 200);
+            return response()->json(['message' => 'No Customer Available'], 401);
         }
     }
+
+    public function Customer($id)
+    {
+        $customer = User::find($id);
+        if ($customer) {
+            return response()->json(['Customer' => $customer], 200);
+        } else {
+            return response()->json(['message' => 'No Customer Available'], 401);
+        }
+    }
+
     public function AddSalesReps(Request $request)
     {
 

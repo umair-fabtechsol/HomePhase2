@@ -16,6 +16,7 @@ return new class extends Migration
             $table->integer('user_id');
             $table->string('account_holder_name');
             $table->string('bank');
+            $table->string('branch_name');
             $table->string('ssn');
             $table->string('account_number');
             $table->string('bank_routing_number');
