@@ -187,6 +187,7 @@ class ServiceProviderController extends Controller
     public function MediaUpload(Request $request)
     {
        
+    
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $photo) {
                     $photo_name = time() . '-' . $photo->getClientOriginalName();
@@ -211,11 +212,11 @@ class ServiceProviderController extends Controller
                     ])->toArray(); 
                 }
             }
-            
-            
+            $deals=DealUpload::where('deal_id',$request->deal_id)->get();
+          
             return response()->json([
                 'message' => 'Added new deal with Images successfully',
-                'deal' => $DealUpload
+                'deals' => $deals
             ], 200);
             
              
