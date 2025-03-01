@@ -10,11 +10,9 @@ class PaymentDetail extends Model
         'user_id',
         'account_holder_name',
         'bank',
+        'branch_name',
         'ssn',
         'account_number',
         'bank_routing_number',
-
-
-
     ];
 }
