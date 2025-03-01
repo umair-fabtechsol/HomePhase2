@@ -189,7 +189,7 @@ class ServiceProviderController extends Controller
     public function MediaUpload(Request $request)
     {
        
-        
+    
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
                 $photo_name = time() . '-' . $photo->getClientOriginalName();
@@ -217,7 +217,8 @@ class ServiceProviderController extends Controller
           
             return response()->json([
                 'message' => 'Added new deal with Images successfully',
-                'deals' => $deals
+                'deals' => $deals,
+                'uploads' =>$DealUpload 
             ], 200);
             
         }   
