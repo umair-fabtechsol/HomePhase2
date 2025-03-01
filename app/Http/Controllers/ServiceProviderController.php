@@ -212,7 +212,7 @@ class ServiceProviderController extends Controller
                     ])->toArray(); 
                 }
             }
-            $deals=DealUpload::where('deal_id',$request->deal_id)->get();
+            $deals=DealUpload::leftjoin('deals','deals.id','=','deal_uploads.deal_id')->where('deals.id',$request->deal_id)->get();
           
             return response()->json([
                 'message' => 'Added new deal with Images successfully',
