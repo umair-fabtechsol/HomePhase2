@@ -148,6 +148,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('AddPriceDetails', 'AddPriceDetails')->name('AddPriceDetails');
             Route::get('GetProvidersSummary', 'GetProvidersSummary')->name('GetProvidersSummary');
             Route::get('GetClientsSummary', 'GetClientsSummary')->name('GetClientsSummary');
+            Route::post('sendInvite','sendInvite')->name('sendInvite');
+            
 
             
         });

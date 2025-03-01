@@ -10,7 +10,8 @@ use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-
+use Illuminate\Support\Facades\Mail;
+use App\Mail\InviteSalesRepMail;
 class SuperAdminController extends Controller
 {
     public function SuperAdminDashboard(){
@@ -340,5 +341,22 @@ class SuperAdminController extends Controller
                 'total_yearly' => $totalYearly
             ]
         ], 200);
+    }
+    
+    public function sendInvite(Request $request)
+    {
+
+        $request->validate([
+            'name'  => 'required|string',
+            'email' => 'required|email',
+        ]);
+
+    
+        $signupUrl = url('/register?email=' . urlencode($request->email));
+
+      
+        Mail::to($request->email)->send(new InviteSalesRepMail($signupUrl));
+
+        return response()->json(['message' => 'Invitation sent successfully!']);
     }
 }

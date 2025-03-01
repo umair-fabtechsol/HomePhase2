@@ -41,8 +41,10 @@ class ServiceProviderController extends Controller
 
     public function Deal($id)
     {
-        $deal = Deal::where('id', $id)->get();
+        $deal = Deal::where('id', $id)->first();
+        $getUpload=DealUpload::where('deal_id',$id)->get();
         if ($deal) {
+            $deal->setAttribute('uploads', $getUpload);
             return response()->json(['deal' => $deal], 200);
         } else {
             return response()->json(['message' => 'No deal found'], 401);
@@ -187,17 +189,14 @@ class ServiceProviderController extends Controller
     public function MediaUpload(Request $request)
     {
        
-    
+        
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $photo) {
                     $photo_name = time() . '-' . $photo->getClientOriginalName();
                     $photo->move(public_path('uploads'), $photo_name);
             
                    
-                    $DealUpload[] = DealUpload::create([
-                        'deal_id' => $request->deal_id,
-                        'images' => $photo_name,
-                    ])->toArray();
+                    $Dealimages[] = $photo_name;
                 }
             }
             
@@ -206,13 +205,14 @@ class ServiceProviderController extends Controller
                     $video_name = time() . '-' . $video->getClientOriginalName();
                     $video->move(public_path('uploads'), $video_name);
             
-                    $DealUpload[] = DealUpload::create([
-                        'deal_id' => $request->deal_id,
-                        'videos' => $video_name,
-                    ])->toArray(); 
+                    $Dealvideos[] = $video_name;
                 }
             }
-            
+            $data=array_merge();
+            DealUpload::create([
+                'deal_id' => $request->deal_id,
+                'videos' => $video_name,
+            ])->toArray(); 
             $deals=Deal::where('id',$request->deal_id)->get();
           
             return response()->json([
