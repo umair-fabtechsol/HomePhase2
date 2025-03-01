@@ -40,4 +40,9 @@ return [
     'client_secret' => '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',
     'redirect' =>'http://127.0.0.1:8000/api/auth/google/callback',
      ],
+
+     'stripe' => [
+     'secret' => 'sk_test_51QwklEASiga6U8fgPIqEWaBAqWclcPr52gwnvQXisH7qZ3fAAxAyuw41UfRxPvJJh7BBTGcNgnrf47RffNlIgIzc00nq805BE3',
+     'public' => 'pk_test_51QwklEASiga6U8fg5MHNBeoNWjD4p3KfCQZRfK19QWovhHQGzeZnWvL7asOEqc7mKNKCOkyG8KaaztmTKN5bMXNL00FbGpBGmh',
+     ],
 ];

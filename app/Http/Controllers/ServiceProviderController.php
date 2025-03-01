@@ -190,29 +190,29 @@ class ServiceProviderController extends Controller
     {
        
         
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $photo) {
-                    $photo_name = time() . '-' . $photo->getClientOriginalName();
-                    $photo->move(public_path('uploads'), $photo_name);
-            
-                   
-                    $Dealimages[] = $photo_name;
-                }
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $photo) {
+                $photo_name = time() . '-' . $photo->getClientOriginalName();
+                $photo->move(public_path('uploads'), $photo_name);
+        
+               
+                $DealUpload[] = DealUpload::create([
+                    'deal_id' => $request->deal_id,
+                    'images' => $photo_name,
+                ])->toArray();
             }
-            
-            if ($request->hasFile('videos')) {
-                foreach ($request->file('videos') as $video) {
-                    $video_name = time() . '-' . $video->getClientOriginalName();
-                    $video->move(public_path('uploads'), $video_name);
-            
-                    $Dealvideos[] = $video_name;
-                }
+        }
+        
+        if ($request->hasFile('videos')) {
+            foreach ($request->file('videos') as $video) {
+                $video_name = time() . '-' . $video->getClientOriginalName();
+                $video->move(public_path('uploads'), $video_name);
+        
+                $DealUpload[] = DealUpload::create([
+                    'deal_id' => $request->deal_id,
+                    'videos' => $video_name,
+                ])->toArray(); 
             }
-            $data=array_merge();
-            DealUpload::create([
-                'deal_id' => $request->deal_id,
-                'videos' => $video_name,
-            ])->toArray(); 
             $deals=Deal::where('id',$request->deal_id)->get();
           
             return response()->json([
@@ -220,7 +220,7 @@ class ServiceProviderController extends Controller
                 'deals' => $deals
             ], 200);
             
-             
+        }   
 
         
     }
