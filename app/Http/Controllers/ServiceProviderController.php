@@ -189,7 +189,7 @@ class ServiceProviderController extends Controller
     public function MediaUpload(Request $request)
     {
        
-    
+        $DealUpload=[];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
                 $photo_name = time() . '-' . $photo->getClientOriginalName();
