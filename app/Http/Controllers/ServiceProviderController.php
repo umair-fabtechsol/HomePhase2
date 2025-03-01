@@ -263,7 +263,7 @@ class ServiceProviderController extends Controller
                     $photo->move(public_path('uploads'), $photo_name);
     
                  
-                    DealUpload::create([
+                    $DealUpload[]=DealUpload::create([
                         'deal_id' => $request->deal_id,
                         'images' => $photo_name,
                       
@@ -274,7 +274,7 @@ class ServiceProviderController extends Controller
                 foreach ($request->file('videos') as $video) {
                     $video_name = time() . '-' . $video->getClientOriginalName();
                     $video->move(public_path('uploads'), $video_name);
-                    DealUpload::create([
+                    $DealUpload[]=DealUpload::create([
                         'deal_id' => $request->deal_id,
                         'videos' => $video_name,
                     ]);
@@ -285,7 +285,7 @@ class ServiceProviderController extends Controller
             
             
             
-        return response()->json(['message' => 'Added new deal with Images successfully', 'deal' => $deal], 200);
+        return response()->json(['message' => 'Added new deal with Images successfully', 'deal' => $DealUpload], 200);
             
              
 
