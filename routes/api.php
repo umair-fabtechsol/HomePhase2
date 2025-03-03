@@ -149,9 +149,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('Security', 'Security')->name('Security');
             Route::post('NotificationSetting', 'NotificationSetting')->name('NotificationSetting');
             Route::post('AddPriceDetails', 'AddPriceDetails')->name('AddPriceDetails');
+            Route::get('GetPriceDetails', 'GetPriceDetails')->name('GetPriceDetails');
             Route::get('GetProvidersSummary', 'GetProvidersSummary')->name('GetProvidersSummary');
             Route::get('GetClientsSummary', 'GetClientsSummary')->name('GetClientsSummary');
             Route::post('sendInvite','sendInvite')->name('sendInvite');
+            Route::get('GetSettingDetail/{id}', 'GetSettingDetail')->name('GetSettingDetail');
             
 
             

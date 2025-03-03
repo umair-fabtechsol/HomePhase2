@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 use App\Mail\InviteSalesRepMail;
 class SuperAdminController extends Controller
 {
@@ -326,12 +327,44 @@ class SuperAdminController extends Controller
 
     public function AddPriceDetails(Request $request)
     {
-
+        $getPriceDetail = Price::where('user_id', $request->user_id)->first();
+        if ($getPriceDetail) {
+            $getPriceDetail->update($request->all());
+            return response()->json(['message' => 'Price Details updated successfully', 'price' => $getPriceDetail], 200);
+        }
         $data = $request->all();
 
         $price = Price::create($data);
         return response()->json(['message' => 'Price Details create successfully', 'price' => $price], 200);
     }
+
+    public function GetPriceDetails()
+    {
+        $userId = Auth::id();
+        $GetPriceDetails = Price::where('user_id', $userId)->first();
+        if($GetPriceDetails){
+            return response()->json(['GetPriceDetails' => $GetPriceDetails], 200);
+        }
+        return response()->json(['message' => 'price not available'], 401);
+        
+    }
+
+    public function GetSettingDetail($id)
+    {
+        $GetSettingDetail = User::find($id);
+        if($GetSettingDetail){
+            $setting = [
+                'name' => $GetSettingDetail->name,
+                'email' => $GetSettingDetail->email,
+                'phone' => $GetSettingDetail->phone,
+                'personal_image' => $GetSettingDetail->personal_image,
+            ];
+            return response()->json(['setting' => $setting], 200);
+        }
+        return response()->json(['message' => 'Setting not available'], 401);
+    }
+
+
     public function GetProvidersSummary()
     {
 
