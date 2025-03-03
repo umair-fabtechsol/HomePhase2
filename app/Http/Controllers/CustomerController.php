@@ -46,7 +46,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 404);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -55,7 +55,7 @@ class CustomerController extends Controller
         $user = User::find($request->id);
         if ($user) {
             if (!Hash::check($request->current_password, $user->password)) {
-                return response()->json(['message' => 'Current password is incorrect'], 200);
+                return response()->json(['message' => 'Current password is incorrect'], 422);
             }
             $user->password = Hash::make($request->password);
             $user->save();
@@ -69,7 +69,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'User Password Updated successfully', 'user' => $user], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 404);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -89,7 +89,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'Added New Payment Method successfully', 'user' => $user, 'Payment Method' => $paymentMethod], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 404);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -107,7 +107,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'Payment Method deleted successfully', 'PaymentMethod' => $paymentMethod], 200);
         } else {
-            return response()->json(['message' => 'No Payment Method found'], 404);
+            return response()->json(['message' => 'No Payment Method found'], 401);
         }
     }
 
@@ -126,7 +126,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'Payment Method Updated successfully', 'PaymentMethod' => $paymentMethod], 200);
         } else {
-            return response()->json(['message' => 'No Payment Method found'], 404);
+            return response()->json(['message' => 'No Payment Method found'], 401);
         }
     }
 
@@ -142,7 +142,7 @@ class CustomerController extends Controller
         if ($deals) {
             return response()->json(['deals' => $deals], 200);
         } else {
-            return response()->json(['message' => 'No deals found'], 404);
+            return response()->json(['message' => 'No deals found'], 401);
         }
     }
 
@@ -159,7 +159,7 @@ class CustomerController extends Controller
         if ($deal) {
             return response()->json(['deal' => $deal], 200);
         } else {
-            return response()->json(['message' => 'No deal found'], 404);
+            return response()->json(['message' => 'No deal found'], 401);
         }
     }
     public function AddSocial(Request $request)
@@ -192,7 +192,7 @@ class CustomerController extends Controller
             }
             return response()->json(['message' => 'Added Social successfully', 'user' => $user, 'Social' => $social], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 404);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -283,7 +283,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'Added Order successfully', 'user' => $user, 'order' => $order], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 404);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -303,7 +303,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'Updated Order successfully', 'order' => $order], 200);
         } else {
-            return response()->json(['message' => 'No order found'], 404);
+            return response()->json(['message' => 'No order found'], 401);
         }
     }
 
@@ -314,7 +314,7 @@ class CustomerController extends Controller
         if ($orders) {
             return response()->json(['message' => 'Orders List', 'orders' => $orders], 200);
         } else {
-            return response()->json(['message' => 'No order available'], 404);
+            return response()->json(['message' => 'No order available'], 401);
         }
     }
 
@@ -324,7 +324,7 @@ class CustomerController extends Controller
         if ($order) {
             return response()->json(['message' => 'Order Detail', 'order' => $order], 200);
         } else {
-            return response()->json(['message' => 'No order available'], 404);
+            return response()->json(['message' => 'No order available'], 401);
         }
     }
 
@@ -350,7 +350,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'Added Review successfully', 'user' => $user, 'review' => $review], 200);
         } else {
-            return response()->json(['message' => 'No user login'], 404);
+            return response()->json(['message' => 'No user login'], 401);
         }
     }
 
@@ -370,7 +370,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'Review updated successfully', 'review' => $review], 200);
         } else {
-            return response()->json(['message' => 'No review found'], 404);
+            return response()->json(['message' => 'No review found'], 401);
         }
     }
 
@@ -389,7 +389,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'Review delete successfully','review' => $review], 200);
         } else {
-            return response()->json(['message' => 'No review found'], 404);
+            return response()->json(['message' => 'No review found'], 401);
         }
     }
 
@@ -399,7 +399,7 @@ class CustomerController extends Controller
         if ($services) {
             return response()->json(['message' => 'Services List','services' => $services], 200);
         } else {
-            return response()->json(['message' => 'No service available'], 404);
+            return response()->json(['message' => 'No service available'], 401);
         }
     }
 
@@ -431,7 +431,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'Added revision successfully', 'afterImages' => $afterImages], 200);
         } else {
-            return response()->json(['message' => 'No order found'], 404);
+            return response()->json(['message' => 'No order found'], 401);
         }
     }
 
@@ -443,7 +443,7 @@ class CustomerController extends Controller
             $pendingPayments = PaymentHistory::where('status', 'pending')->sum('amount');
             return response()->json(['paymentHistory' => $paymentHistory, 'totalPayouts' => $totalPayouts, 'totalReceiveable' => $totalReceiveable, 'pendingPayments' => $pendingPayments], 200);
         } else {
-            return response()->json(['message' => 'no history available'], 404);
+            return response()->json(['message' => 'no history available'], 401);
         }
     }
 
@@ -477,7 +477,7 @@ class CustomerController extends Controller
                 return response()->json(['message' => 'Added Favorit Service', 'favoritService' => $favoritService], 200);
             }
         } else {
-            return response()->json(['message' => 'No user found'], 404);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -496,7 +496,7 @@ class CustomerController extends Controller
             Notification::create($notification);
             return response()->json(['message' => 'Order completed successfully','order' => $order], 200);
         } else {
-            return response()->json(['message' => 'No Order found'], 404);
+            return response()->json(['message' => 'No Order found'], 401);
         }
     }
 
@@ -512,7 +512,7 @@ class CustomerController extends Controller
             
             return response()->json(['GetInprogressOrder' => $GetInprogressOrder], 200);
         }else{
-            return response()->json(['message' => 'Order Not Found'], 404);
+            return response()->json(['message' => 'Order Not Found'], 401);
             
         }
         

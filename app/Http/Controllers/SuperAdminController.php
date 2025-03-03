@@ -57,7 +57,7 @@ class SuperAdminController extends Controller
         if ($serviceProviders) {
             return response()->json(['totalProviders' => $totalProviders, 'serviceProviders' => $serviceProviders], 200);
         } else {
-            return response()->json(['message' => 'No Service Provider Available'], 200);
+            return response()->json(['message' => 'No Service Provider Available'], 401);
         }
     }
 
@@ -251,7 +251,7 @@ class SuperAdminController extends Controller
             }
             return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 200);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -266,7 +266,7 @@ class SuperAdminController extends Controller
             $user->save();
             return response()->json(['message' => 'User Password Updated successfully', 'user' => $user], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 200);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -298,7 +298,7 @@ class SuperAdminController extends Controller
             $user->update($data);
             return response()->json(['message' => 'Notificaiton Setting Updated successfully', 'user' => $user], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 200);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
