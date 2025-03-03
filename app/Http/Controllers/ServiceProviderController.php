@@ -223,44 +223,50 @@ class ServiceProviderController extends Controller
     {
         $userId = Auth::id();
         $userRole = Auth::user()->role;
-        
-        // if ($userRole != 2) {
-        //     return response()->json(['message' => 'Access denied. Only providers can perform this action.'], 400);
-        // }
-       $data=$request->all();
-       $DealImages=[];
-       $DealVideos=[];
-       
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $photo) {
-                $photo_name = time() . '-' . $photo->getClientOriginalName();
-                $photo->move(public_path('uploads'), $photo_name);
-        
-               
-                $DealImages[] = $photo_name;
-            }
-        }
-        
-        if ($request->hasFile('videos')) {
-            foreach ($request->file('videos') as $video) {
-                $video_name = time() . '-' . $video->getClientOriginalName();
-                $video->move(public_path('uploads'), $video_name);
-        
-                $DealVideos[] = $video_name; 
-            }
-           
-            $data['images']=json_encode($DealImages);
-            $data['videos']=json_encode($DealVideos);
-            $data['user_id']=$userId;
-            $deals=Deal::create($data);
-          
-            return response()->json([
-                'message' => 'Added new deal with Images successfully',
-                'deals' => $deals,
-            ], 200);
+        $validator = Validator::make($request->all(), [
             
-        }   
-
+            'images' => 'required',
+            'videos' => 'required',
+         
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        if ($userRole != 2) {
+            return response()->json(['message' => 'Access denied. Only providers can perform this action.'], 400);
+        }
+       $data=$request->all();
+       $DealImages = [];
+       $DealVideos = [];
+       
+       if ($request->hasFile('images')) {
+           foreach ($request->file('images') as $photo) {
+               $photo_name = time() . '-' . $photo->getClientOriginalName();
+               $photo->move(public_path('uploads'), $photo_name);
+               $DealImages[] = $photo_name;
+           }
+       }
+       
+       if ($request->hasFile('videos')) {
+           foreach ($request->file('videos') as $video) {
+               $video_name = time() . '-' . $video->getClientOriginalName();
+               $video->move(public_path('uploads'), $video_name);
+               $DealVideos[] = $video_name;
+           }
+       }
+       
+       
+       $data['images'] = json_encode($DealImages);
+       $data['videos'] = json_encode($DealVideos);
+       
+       $userId = auth()->id();
+       $data['user_id'] = 3;
+       
+       $deals = Deal::create($data);
+       return response()->json([
+        'message' => 'Added new deal with Images successfully',
+        'deals' => $deals,
+    ], 200);
         
     }
 
