@@ -78,6 +78,7 @@ class ServiceProviderController extends Controller
     public function BasicInfo(Request $request)
     {
         $userId = Auth::id();
+        $userRole = Auth::user()->role;
         $validator = Validator::make($request->all(), [
             'service_title' => 'required',
             'service_category' => 'required',
@@ -99,38 +100,47 @@ class ServiceProviderController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
         $data = $request->all();
-        if (!empty($request->id)) {
-            $deal = Deal::find($request->id);
-            if ($deal) {
-                $data = $request->all();
-                if ($request->has('commercial')) {
-                } else {
-                    $data['commercial'] = null;
-                }
-                if ($request->has('residential')) {
-                } else {
-                    $data['residential'] = null;
-                }
-                $deal->update($data);
-                
-                return response()->json(['message' => 'Deal updated successfully', 'deal' => $deal], 200);
-            } else {
-                return response()->json(['message' => 'No deals found'], 401);
-            }
-        } else {
-            
-            $data['user_id'] = $userId;
-            $data['publish'] = 0;
-            $deal = Deal::create($data);
-           
-            return response()->json(['message' => 'Added new deal successfully', 'deal' => $deal], 200);
+        if ($userRole != 2) {
+            return response()->json(['message' => 'Access denied. Only providers can perform this action.'], 400);
         }
+            if (!empty($request->id)) {
+                $deal = Deal::find($request->id);
+                if ($deal) {
+                    $data = $request->all();
+                    if ($request->has('commercial')) {
+                    } else {
+                        $data['commercial'] = null;
+                    }
+                    if ($request->has('residential')) {
+                    } else {
+                        $data['residential'] = null;
+                    }
+                    $deal->update($data);
+                    
+                    return response()->json(['message' => 'Deal updated successfully', 'deal' => $deal], 200);
+                } else {
+                    return response()->json(['message' => 'No deals found'], 401);
+                }
+            } else {
+                
+                $data['user_id'] = $userId;
+                $data['publish'] = 0;
+                $deal = Deal::create($data);
+               
+                return response()->json(['message' => 'Added new deal successfully', 'deal' => $deal], 200);
+            }
+        
+        
     }
 
     public function PriceAndPackage(Request $request)
     {
+        $userId = Auth::id();
+        $userRole = Auth::user()->role;
         $data = $request->all();
-
+        if ($userRole != 2) {
+            return response()->json(['message' => 'Access denied. Only providers can perform this action.'], 400);
+        }
         if (!empty($request->id)) {
             $deal = Deal::find($request->id);
 
@@ -199,7 +209,7 @@ class ServiceProviderController extends Controller
                 return response()->json(['message' => 'No deals found'], 401);
             }
         } else {
-            $userId = Auth::id();
+            
             $data['user_id'] = $userId;
             $data['publish'] = 0;
             $deal = Deal::create($data);
@@ -1145,38 +1155,14 @@ class ServiceProviderController extends Controller
     
     public function OrderConfirmImages(Request $request){
 
-        $beforeimageNames = [];
-        $afterimageNames = [];
-        
-
-        if ($request->hasFile('before_images')) {
-            foreach ($request->file('before_images') as $beforeImage) {
-                $photo_name1 = time() . '-' . $beforeImage->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $beforeImage->move($photo_destination, $photo_name1);
-        
-                $beforeimageNames[] = $photo_name1; 
-            }
-        }
-        
-        if ($request->hasFile('after_images')) {
-            foreach ($request->file('after_images') as $afterImage) {
-                $photo_name2 = time() . '-' . $afterImage->getClientOriginalName();
-                $after_photo_destination = public_path('uploads');
-                $afterImage->move($after_photo_destination, $photo_name2);
-        
-                $afterimageNames[] = $photo_name2; 
-            }
-        }
       
-        $data['type'] = 'confirm';
-        $data['before_images'] = json_encode($beforeimageNames);
-        $data['after_images'] = json_encode($afterimageNames);
-        
-        
+        $data=$request->all();
+      
+        $data['type'] = 'delivered';
+     
         $BeforeDeliveryImage = DeliveryImage::create($data);
         
-        return response()->json(['message' => 'Before Delivery Image created successfully', 'BeforeDeliveryImage' => $BeforeDeliveryImage]);
+        return response()->json(['message' => 'Before Delivery created successfully', 'BeforeDeliveryImage' => $BeforeDeliveryImage]);
         
     }
 
