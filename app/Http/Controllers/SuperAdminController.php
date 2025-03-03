@@ -82,6 +82,28 @@ class SuperAdminController extends Controller
         return response()->json(['message' => 'Provider Details', 'user' => $user, 'deals' => $deals, 'business' => $business, 'averageRating' => $averageRating, 'totalReview' => $totalReview, 'stars' => $stars], 200);
     }
 
+    public function UpdateProvider(Request $request)
+    {
+
+        $data = $request->all();
+
+        $getProvider = User::find($request->id);
+        if ($request->hasFile('personal_image')) {
+            $imagePath = public_path('uploads/' . $getProvider->personal_image);
+            if (!empty($getProvider->personal_image) && file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+            $photo1 = $request->file('personal_image');
+            $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+            $photo_destination = public_path('uploads');
+            $photo1->move($photo_destination, $photo_name1);
+            $data['personal_image'] = $photo_name1;
+        }
+        $getProvider->update($data);
+
+        return response()->json(['message' => 'Provider updated successfully', 'getProvider' => $getProvider], 200);
+    }
+
     public function Customers(Request $request)
     {
         $customers = User::where('role', 1);
