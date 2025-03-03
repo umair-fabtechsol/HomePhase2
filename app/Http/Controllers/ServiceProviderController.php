@@ -28,33 +28,27 @@ class ServiceProviderController extends Controller
        $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
        ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
        ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
-       ->leftJoin('deal_uploads', 'deal_uploads.deal_id', '=', 'deals.id') 
-       ->where('deals.user_id', $userId)
+       ->leftJoin('deal_uploads', 'deal_uploads.deal_id', '=', 'deals.id')
        ->groupBy(
            'deals.id', 
            'deals.user_id', 
            'deals.service_title', 
-           'deals.created_at', 
-           'deals.updated_at', 
-           'users.name', 
-           'users.personal_image', 
-           'orders.id', 
-           'reviews.rating'
+           'deals.commercial',  
+           'users.name'
        )
-       ->orderBy('deals.id', 'desc')
        ->select(
            'deals.id',
            'deals.user_id',
            'deals.service_title',
-           'deals.created_at',
-           'deals.updated_at',
+           'deals.commercial',  
            'users.name as user_name',
-           'users.personal_image', 
-           'orders.id as order_id', 
-           'reviews.rating as review_rating',
-           \DB::raw("GROUP_CONCAT(deal_uploads.images) as images"),  
-           \DB::raw("GROUP_CONCAT(deal_uploads.videos) as videos")   
+           \DB::raw("MAX(users.personal_image) as personal_image"),
+           \DB::raw("MAX(orders.id) as order_id"),
+           \DB::raw("MAX(reviews.rating) as review_rating"),
+           \DB::raw("GROUP_CONCAT(DISTINCT deal_uploads.images ORDER BY deal_uploads.id SEPARATOR ', ') as images"),
+           \DB::raw("GROUP_CONCAT(DISTINCT deal_uploads.videos ORDER BY deal_uploads.id SEPARATOR ', ') as videos")
        )
+       ->where('deals.user_id', 3)
        ->get();
         if ($deals) {
             return response()->json(['deals' => $deals], 200);
@@ -1061,7 +1055,7 @@ class ServiceProviderController extends Controller
     {
         $userId = Auth::id();
         $dealIds = Deal::where('user_id', $userId)->pluck('id')->toArray();
-        $orders = Order::whereIn('deal_id', $dealIds)->orderBy('id', 'desc')->get();
+        $orders = Order::leftjoin('users','users.id','=','orders.customer_id')->leftjoin('deals','deals.id','=','orders.deal_id')->select('orders.*','users.personal_image','users.name','deals.service_title')->whereIn('deal_id', $dealIds)->get();
         if ($orders) {
             return response()->json(['message' => 'Orders List', 'orders' => $orders], 200);
         } else {
