@@ -26,32 +26,15 @@ class ServiceProviderController extends Controller
     
     public function Deals(Request $request)
     {
-        $userId = Auth::id();
+       $userId = Auth::id();
        $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
        ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
        ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
-       ->leftJoin('deal_uploads', 'deal_uploads.deal_id', '=', 'deals.id')
-       ->groupBy(
-           'deals.id', 
-           'deals.user_id', 
-           'deals.service_title', 
-           'deals.commercial',  
-           'users.name'
-       )
-       ->select(
-           'deals.id',
-           'deals.user_id',
-           'deals.service_title',
-           'deals.commercial',  
-           'users.name as user_name',
-           \DB::raw("MAX(users.personal_image) as personal_image"),
-           \DB::raw("MAX(orders.id) as order_id"),
-           \DB::raw("MAX(reviews.rating) as review_rating"),
-           \DB::raw("GROUP_CONCAT(DISTINCT deal_uploads.images ORDER BY deal_uploads.id SEPARATOR ', ') as images"),
-           \DB::raw("GROUP_CONCAT(DISTINCT deal_uploads.videos ORDER BY deal_uploads.id SEPARATOR ', ') as videos")
-       )
-       ->where('deals.user_id', 3)
+       ->orderBy('deals.id', 'desc')
+       ->select('deals.*', 'users.name as user_name','users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+       ->where('deals.user_id', $userId)
        ->get();
+       
         if ($deals) {
             return response()->json(['deals' => $deals], 200);
         } else {
@@ -94,6 +77,7 @@ class ServiceProviderController extends Controller
 
     public function BasicInfo(Request $request)
     {
+        $userId = Auth::id();
         $validator = Validator::make($request->all(), [
             'user_id' => 'required',
             'service_title' => 'required',
@@ -135,7 +119,7 @@ class ServiceProviderController extends Controller
                 return response()->json(['message' => 'No deals found'], 401);
             }
         } else {
-            $userId = Auth::id();
+            
             $data['user_id'] = $userId;
             $data['publish'] = 0;
             $deal = Deal::create($data);
@@ -227,6 +211,7 @@ class ServiceProviderController extends Controller
 
     public function MediaUpload(Request $request)
     {
+        $userId = Auth::id();
        $data=$request->all();
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
@@ -248,8 +233,7 @@ class ServiceProviderController extends Controller
            
             $data['images']=json_encode($DealImages);
             $data['videos']=json_encode($DealVideos);
-            $data['deal_id']=$request->user_id;
-            
+            $data['user_id']=$userId;
             $deals=Deal::create($data);
           
             return response()->json([
