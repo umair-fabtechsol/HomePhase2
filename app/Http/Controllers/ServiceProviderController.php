@@ -95,7 +95,6 @@ class ServiceProviderController extends Controller
     public function BasicInfo(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => 'required',
             'service_title' => 'required',
             'service_category' => 'required',
             'search_tags' => 'required',
