@@ -42,6 +42,8 @@ class Deal extends Model
         'by_now_discount3',
         'final_list_price3',
         'estimated_service_timing3',
+        'images',
+        'videos',
         'publish',
     ];
 }

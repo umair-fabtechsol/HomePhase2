@@ -206,18 +206,14 @@ class ServiceProviderController extends Controller
 
     public function MediaUpload(Request $request)
     {
-       
-        $DealUpload=[];
+       $data=$request->all();
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
                 $photo_name = time() . '-' . $photo->getClientOriginalName();
                 $photo->move(public_path('uploads'), $photo_name);
         
                
-                $DealUpload[] = DealUpload::create([
-                    'deal_id' => $request->deal_id,
-                    'images' => $photo_name,
-                ])->toArray();
+                $DealImages[] = $photo_name;
             }
         }
         
@@ -226,17 +222,18 @@ class ServiceProviderController extends Controller
                 $video_name = time() . '-' . $video->getClientOriginalName();
                 $video->move(public_path('uploads'), $video_name);
         
-                $DealUpload[] = DealUpload::create([
-                    'deal_id' => $request->deal_id,
-                    'videos' => $video_name,
-                ])->toArray(); 
+                $DealVideos[] = $video_name; 
             }
-            $deals=Deal::where('id',$request->deal_id)->get();
+           
+            $data['images']=json_encode($DealImages);
+            $data['videos']=json_encode($DealVideos);
+            $data['deal_id']=$request->user_id;
+            
+            $deals=Deal::create($data);
           
             return response()->json([
                 'message' => 'Added new deal with Images successfully',
                 'deals' => $deals,
-                'uploads' =>$DealUpload 
             ], 200);
             
         }   
