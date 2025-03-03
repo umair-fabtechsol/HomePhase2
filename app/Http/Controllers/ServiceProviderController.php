@@ -1153,7 +1153,7 @@ class ServiceProviderController extends Controller
 
     }
     
-    public function OrderConfirmImages(Request $request){
+    public function OrderConfirm(Request $request){
 
       
         $data=$request->all();
