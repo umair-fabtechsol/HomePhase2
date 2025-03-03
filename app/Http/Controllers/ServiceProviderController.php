@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\SocialProfile;
 use App\Models\PaymentHistory;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ServiceProviderController extends Controller
 {
