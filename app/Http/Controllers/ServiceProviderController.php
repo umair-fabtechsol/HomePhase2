@@ -137,6 +137,7 @@ class ServiceProviderController extends Controller
     {
         $userId = Auth::id();
         $userRole = Auth::user()->role;
+        
         $data = $request->all();
         if ($userRole != 2) {
             return response()->json(['message' => 'Access denied. Only providers can perform this action.'], 400);
@@ -221,7 +222,15 @@ class ServiceProviderController extends Controller
     public function MediaUpload(Request $request)
     {
         $userId = Auth::id();
+        $userRole = Auth::user()->role;
+        
+        // if ($userRole != 2) {
+        //     return response()->json(['message' => 'Access denied. Only providers can perform this action.'], 400);
+        // }
        $data=$request->all();
+       $DealImages=[];
+       $DealVideos=[];
+       
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
                 $photo_name = time() . '-' . $photo->getClientOriginalName();
@@ -1066,7 +1075,7 @@ class ServiceProviderController extends Controller
     {
         $userId = Auth::id();
         $dealIds = Deal::where('user_id', $userId)->pluck('id')->toArray();
-        $orders = Order::leftjoin('users','users.id','=','orders.customer_id')->leftjoin('deals','deals.id','=','orders.deal_id')->select('orders.*','users.personal_image','users.name','deals.service_title')->whereIn('deal_id', $dealIds)->get();
+        $orders = Order::leftjoin('users','users.id','=','orders.customer_id')->leftjoin('deals','deals.id','=','orders.deal_id')->leftjoin('delivery_images','delivery_images.order_id','=','orders.id')->select('orders.*','users.personal_image','users.name','deals.service_title','delivery_images.type')->whereIn('deal_id', $dealIds)->get();
         if ($orders) {
             return response()->json(['message' => 'Orders List', 'orders' => $orders], 200);
         } else {
