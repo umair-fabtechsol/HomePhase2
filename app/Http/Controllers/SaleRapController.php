@@ -40,7 +40,7 @@ class SaleRapController extends Controller
         if ($serviceProviders) {
             return response()->json(['serviceProviders' => $serviceProviders], 200);
         } else {
-            return response()->json(['message' => 'No Service Provider Available'], 200);
+            return response()->json(['message' => 'No Service Provider Available'], 401);
         }
     }
 
@@ -63,7 +63,7 @@ class SaleRapController extends Controller
             }
             return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 200);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -72,13 +72,13 @@ class SaleRapController extends Controller
         $user = User::find($request->id);
         if ($user) {
             if (!Hash::check($request->current_password, $user->password)) {
-                return response()->json(['message' => 'Current password is incorrect'], 200);
+                return response()->json(['message' => 'Current password is incorrect'], 422);
             }
             $user->password = Hash::make($request->password);
             $user->save();
             return response()->json(['message' => 'User Password Updated successfully', 'user' => $user], 200);
         } else {
-            return response()->json(['message' => 'No user found'], 200);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 

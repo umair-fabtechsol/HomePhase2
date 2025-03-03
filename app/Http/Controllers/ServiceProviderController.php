@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\SocialProfile;
 use App\Models\PaymentHistory;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ServiceProviderController extends Controller
 {
@@ -92,9 +94,28 @@ class ServiceProviderController extends Controller
 
     public function BasicInfo(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required',
+            'service_title' => 'required',
+            'service_category' => 'required',
+            'search_tags' => 'required',
+            'service_description' => 'required',
+            'commercial' => 'nullable',
+            'residential' => 'nullable',
+        ], [
+            'at_least_one.required' => 'At least one of commercial or residential is required.',
+        ]);
+        
+        $validator->after(function ($validator) use ($request) {
+            if (empty($request->commercial) && empty($request->residential)) {
+                $validator->errors()->add('at_least_one', 'At least one of commercial or residential is required.');
+            }
+        });
+        
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
         $data = $request->all();
-        // $data['search_tags'] = !empty($request->search_tags) ? implode(',', $request->search_tags) : '';
-       
         if (!empty($request->id)) {
             $deal = Deal::find($request->id);
             if ($deal) {
