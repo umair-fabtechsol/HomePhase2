@@ -74,7 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('GetDealsByCategory', 'GetDealsByCategory')->name('GetDealsByCategory');
         
         Route::post('OrderBeforeImages', 'OrderBeforeImages')->name('OrderBeforeImages');
-        Route::post('OrderConfirmImages', 'OrderConfirmImages')->name('OrderConfirmImages');
+        Route::post('OrderConfirm', 'OrderConfirm')->name('OrderConfirm');
         Route::post('OrdeAfterImages', 'OrdeAfterImages')->name('OrdeAfterImages');
 
         Route::post('CreateOffer', 'CreateOffer')->name('CreateOffer');
