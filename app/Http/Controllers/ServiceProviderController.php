@@ -1429,14 +1429,14 @@ class ServiceProviderController extends Controller
 
         $role = Auth::user()->role;
         if ($role == 2) {
-            $GetOrderDetails = Deal::leftjoin('orders', 'orders.deal_id', '=', 'deals.id')
-                ->leftjoin('users', 'users.id', '=', 'orders.customer_id')
-                ->where('orders.id', '=', $id)->first();
-            $GetOrderBeforeImages = DeliveryImage::where('order_id', '=', $id)->where('type', 'before')->get();
-            $GetOrderAfterImages = DeliveryImage::where('order_id', '=', $id)->where('type', 'after')->get();
-
-
-            return response()->json(['GetOrderDetails' => $GetOrderDetails, 'GetOrderBeforeImages' => $GetOrderBeforeImages, 'GetOrderAfterImages' => $GetOrderAfterImages]);
+            $GetOrderDetails=Deal::leftjoin('orders','orders.deal_id','=','deals.id')
+        ->leftjoin('users','users.id','=','orders.customer_id')->select('users.*','orders.id as order_id','orders.status as order_type')
+        ->where('orders.id','=',$id)->first();
+        $GetOrderBeforeImages=DeliveryImage::where('order_id','=',$id)->where('type', 'before')->get();
+       $GetOrderAfterImages=DeliveryImage::where('order_id','=',$id)->where('type', 'after')->get();
+       
+        
+        return response()->json(['GetOrderDetails' => $GetOrderDetails ,'GetOrderBeforeImages' => $GetOrderBeforeImages,'GetOrderAfterImages'=> $GetOrderAfterImages]);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
