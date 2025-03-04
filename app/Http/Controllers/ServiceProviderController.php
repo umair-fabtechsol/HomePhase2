@@ -258,15 +258,30 @@ class ServiceProviderController extends Controller
        
        $data['images'] = json_encode($DealImages);
        $data['videos'] = json_encode($DealVideos);
+       $data['user_id'] = $userId;
+       $deal = Deal::find($request->id);
+       if ($deal) {
+      
        
-       $userId = auth()->id();
-       $data['user_id'] = 3;
-       
-       $deals = Deal::create($data);
-       return response()->json([
-        'message' => 'Added new deal with Images successfully',
-        'deals' => $deals,
-    ], 200);
+        $existingImages = json_decode($deal->images, true) ?? [];
+        $existingVideos = json_decode($deal->videos, true) ?? [];
+        $deal->update([
+            'images' => json_encode(array_merge($existingImages, $DealImages)),
+            'videos' => json_encode(array_merge($existingVideos, $DealVideos))
+        ]);
+
+        return response()->json([
+            'message' => 'Deal Images updated successfully',
+            'deal' => $deal,
+        ], 200);
+    } else {
+    
+        $deal = Deal::create($data);
+        return response()->json([
+            'message' => 'Added new deal with Images successfully',
+            'deal' => $deal,
+        ], 200);
+    }
         
     }
 
