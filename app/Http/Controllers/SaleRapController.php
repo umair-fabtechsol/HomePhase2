@@ -162,4 +162,58 @@ class SaleRapController extends Controller
         return response()->json(['message' => 'Setting not available'], 401);
     }
 
+    public function SaleCustomers(Request $request)
+    {
+        $customers = User::where('role', 1);
+        if ($request->has('search')) {
+            $search = $request->search;
+            $customers->where(function ($query) use ($search) {
+                $query->where('users.name', 'like', "%{$search}%")
+                    ->orWhere('users.email', 'like', "%{$search}%")
+                    ->orWhere('users.phone', 'like', "%{$search}%");
+            });
+        }
+
+        $customers = $customers->paginate($request->clients ?? 8);
+        
+        $total_customers = $customers->total();
+        if ($customers) {
+            return response()->json(['total_customers' => $total_customers, 'Customers' => $customers], 200);
+        } else {
+            return response()->json(['message' => 'No Customer Available'], 401);
+        }
+    }
+
+    public function SaleCustomer($id)
+    {
+        $customer = User::find($id);
+        if ($customer) {
+            return response()->json(['Customer' => $customer], 200);
+        } else {
+            return response()->json(['message' => 'No Customer Available'], 401);
+        }
+    }
+
+    public function UpdateSaleCustomer(Request $request)
+    {
+
+        $data = $request->all();
+
+        $GetSaleRep = User::find($request->id);
+        if ($request->hasFile('personal_image')) {
+            $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
+            if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+            $photo1 = $request->file('personal_image');
+            $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+            $photo_destination = public_path('uploads');
+            $photo1->move($photo_destination, $photo_name1);
+            $data['personal_image'] = $photo_name1;
+        }
+        $GetSaleRep->update($data);
+
+        return response()->json(['message' => 'Customer updated successfully', 'GetSaleRep' => $GetSaleRep], 200);
+    }
+
 }
