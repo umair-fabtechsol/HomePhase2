@@ -1236,9 +1236,11 @@ class ServiceProviderController extends Controller
         $GetOrderDetails=Deal::leftjoin('orders','orders.deal_id','=','deals.id')
         ->leftjoin('users','users.id','=','orders.customer_id')
         ->where('orders.id','=',$id)->first();
-       $GetOrderImages=DeliveryImage::where('order_id','=',$id)->get();
+        $GetOrderBeforImages=DeliveryImage::where('order_id','=',$id)->where('type', 'before')->get();
+       $GetOrderAfterImages=DeliveryImage::where('order_id','=',$id)->where('type', 'after')->get();
+       
         
-        return response()->json(['GetOrderDetails' => $GetOrderDetails ,'GetOrderImages' => $GetOrderImages]);
+        return response()->json(['GetOrderDetails' => $GetOrderDetails ,'GetOrderBeforImages' => $GetOrderBeforImages,'GetOrderAfterImages'=> $GetOrderAfterImages]);
     }
 
     public function FavoritService(Request $request)
