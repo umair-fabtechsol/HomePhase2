@@ -147,4 +147,19 @@ class SaleRapController extends Controller
         return response()->json(['message' => 'Task deleted successfully', 'task' => $task], 200);  
     }
 
+    public function GetSettingSale($id)
+    {
+        $GetSettingSale = User::find($id);
+        if($GetSettingSale){
+            $setting = [
+                'name' => $GetSettingSale->name,
+                'email' => $GetSettingSale->email,
+                'phone' => $GetSettingSale->phone,
+                'personal_image' => $GetSettingSale->personal_image,
+            ];
+            return response()->json(['setting' => $setting], 200);
+        }
+        return response()->json(['message' => 'Setting not available'], 401);
+    }
+
 }

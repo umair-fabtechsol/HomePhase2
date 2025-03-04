@@ -172,7 +172,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('ViewTask/{id}', 'ViewTask')->name('ViewTask');
             Route::post('UpdateTask', 'UpdateTask')->name('UpdateTask');
             Route::get('DeleteTask/{id}', 'DeleteTask')->name('DeleteTask');
-
+            Route::get('GetSettingSale/{id}', 'GetSettingSale')->name('GetSettingSale');
             
 
           
