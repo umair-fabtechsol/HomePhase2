@@ -20,6 +20,7 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('auth/google/callback', 'googleHandle');
     Route::get('facebookLogin', 'facebookLogin')->name('facebookLogin');
     Route::get('auth/facebook/callback', 'facebookHandle');
+    Route::get('contact', 'contact');
 
 
     
