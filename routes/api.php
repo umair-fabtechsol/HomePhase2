@@ -12,6 +12,7 @@ use App\Http\Controllers\PaymentController;
 
 Route::post('createPayout', [PaymentController::class, 'createPayout'])->name('createPayout');
 Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('checkBalance');
+Route::get('contact',[SuperAdminController::class,'contact'])->name('contact');
 Route::controller(AuthController::class)->group(function () {
     Route::post('Register', 'Register')->name('Register');
     Route::post('UpdateUser', 'UpdateUser')->name('UpdateUser');
@@ -20,7 +21,7 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('auth/google/callback', 'googleHandle');
     Route::get('facebookLogin', 'facebookLogin')->name('facebookLogin');
     Route::get('auth/facebook/callback', 'facebookHandle');
-    Route::get('contact', 'contact');
+    
 
 
     
