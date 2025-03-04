@@ -1300,7 +1300,7 @@ class ServiceProviderController extends Controller
        $GetOrderAfterImages=DeliveryImage::where('order_id','=',$id)->where('type', 'after')->get();
        
         
-        return response()->json(['GetOrderDetails' => $GetOrderDetails ,'GetOrderBeforImages' => $GetOrderBeforImages,'GetOrderAfterImages'=> $GetOrderAfterImages]);
+        return response()->json(['GetOrderDetails' => $GetOrderDetails ,'GetOrderBeforeImages' => $GetOrderBeforeImages,'GetOrderAfterImages'=> $GetOrderAfterImages]);
     }
 
     public function FavoritService(Request $request)
