@@ -6,8 +6,63 @@ use Illuminate\Http\Request;
 use Stripe\Stripe;
 use Stripe\Payout;
 use Stripe\Balance;
+use Stripe\PaymentIntent;
+use Stripe\Checkout\Session;
+
 class PaymentController extends Controller
 {
+
+    public function index()
+    {
+        return view('payment');
+    }
+
+        public function charge(Request $request)
+    {
+        try {
+            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+            $paymentIntent = \Stripe\PaymentIntent::create([
+                'amount' => 5000,
+                'currency' => 'usd',
+                'payment_method' => $request->payment_method,
+                'confirmation_method' => 'manual',
+                'confirm' => true,
+                'return_url' => url('/payment-success'), // Redirects users after payment
+            ]);
+
+            return response()->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()]);
+        }
+    }
+
+
+    public function checkout()
+    {
+        Stripe::setApiKey(config('services.stripe.secret'));
+
+        $session = Session::create([
+            'payment_method_types' => ['card'],
+            'line_items' => [[
+                'price_data' => [
+                    'currency' => 'usd',
+                    'product_data' => [
+                        'name' => 'Test Product',
+                    ],
+                    'unit_amount' => 5000,
+                ],
+                'quantity' => 1,
+            ]],
+            'mode' => 'payment',
+            'success_url' => url('/success'),
+            'cancel_url' => url('/cancel'),
+        ]);
+
+        return redirect($session->url);
+    }
+
     public function createPayout(Request $request)
     {
         try {
