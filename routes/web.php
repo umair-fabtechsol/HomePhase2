@@ -12,7 +12,7 @@ Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('form', [App\Http\Controllers\AuthController::class, 'form'])->name('form');
-Route::post('MediaUpload', [App\Http\Controllers\ServiceProviderController::class, 'MediaUpload'])->name('TestMediaUpload');
+Route::post('MediaUpload', [App\Http\Controllers\ServiceProviderController::class, 'OrdeAfterImages'])->name('TestMediaUpload');
 
 Route::get('/payment', [PaymentController::class, 'index']);
 Route::post('/charge', [PaymentController::class, 'charge'])->name('stripe.charge');

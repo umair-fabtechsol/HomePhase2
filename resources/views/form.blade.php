@@ -17,11 +17,11 @@
 
         <!-- Deal ID (for updating an existing record) -->
         <label for="id">Deal ID (Optional for Update):</label>
-        <input type="text" name="id" id="id" placeholder="Enter Deal ID"><br><br>
+        <input type="text" name="order_id" id="id" placeholder="Enter Deal ID"><br><br>
 
         <!-- Image Upload -->
         <label for="images">Select Images:</label>
-        <input type="file" name="images[]" id="images" multiple><br><br>
+        <input type="file" name="after_images[]" id="images" multiple><br><br>
 
         <!-- Video Upload -->
         <label for="videos">Select Videos:</label>
