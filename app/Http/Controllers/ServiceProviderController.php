@@ -1096,7 +1096,28 @@ class ServiceProviderController extends Controller
     {
         $userId = Auth::id();
         $dealIds = Deal::where('user_id', $userId)->pluck('id')->toArray();
-        $orders = Order::leftjoin('users','users.id','=','orders.customer_id')->leftjoin('deals','deals.id','=','orders.deal_id')->leftjoin('delivery_images','delivery_images.order_id','=','orders.id')->select('orders.*','users.personal_image','users.name','deals.service_title','delivery_images.type')->whereIn('deal_id', $dealIds)->get();
+        $orders = Order::leftjoin('users','users.id','=','orders.customer_id')->leftjoin('deals','deals.id','=','orders.deal_id')->leftjoin('delivery_images','delivery_images.order_id','=','orders.id')->select('orders.*','users.personal_image','users.name','deals.service_title','delivery_images.type')->whereIn('deal_id', $dealIds)
+        ->get()->map(function ($order) {
+          
+            $beforeImages = DB::table('delivery_images')
+                ->where('order_id', $order->id)
+                ->where('type', 'before')
+                ->pluck('before_images');
+    
+            
+            $afterImages = DB::table('delivery_images')
+                ->where('order_id', $order->id)
+                ->where('type', 'after')
+                ->pluck('after_images');
+    
+            return [
+                'order' => $order,
+                'before_images' => $beforeImages,
+                'after_images' => $afterImages,
+            ];
+        });
+        
+
         if ($orders) {
             return response()->json(['message' => 'Orders List', 'orders' => $orders], 200);
         } else {
