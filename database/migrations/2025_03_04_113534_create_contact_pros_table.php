@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('contact_pros', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('customer_id');
-            $table->unsignedBigInteger('provider_id');
-            $table->unsignedBigInteger('deal_id')->nullable();
+            $table->integer('customer_id');
+            $table->integer('provider_id');
+            $table->integer('deal_id')->nullable();
             $table->string('subject')->nullable();
             $table->text('text')->nullable();
             $table->enum('type', ['call_pro', 'sms_pro', 'email_pro']);

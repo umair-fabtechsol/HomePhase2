@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\InviteSalesRepMail;
+use App\Models\contact_pro;
 
 class SuperAdminController extends Controller
 {
@@ -548,5 +549,9 @@ class SuperAdminController extends Controller
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
+    }
+    public function contact(){
+        contact_pro::get()->all();
+        return response()->json(['message' => 'Invitation sent successfully!']);
     }
 }
