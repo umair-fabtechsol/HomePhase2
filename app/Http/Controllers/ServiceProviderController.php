@@ -1096,7 +1096,7 @@ class ServiceProviderController extends Controller
     {
         $userId = Auth::id();
         $dealIds = Deal::where('user_id', $userId)->pluck('id')->toArray();
-        $orders = Order::leftjoin('users','users.id','=','orders.customer_id')->leftjoin('deals','deals.id','=','orders.deal_id')->leftjoin('delivery_images','delivery_images.order_id','=','orders.id')->select('orders.*','users.personal_image','users.name','deals.service_title','delivery_images.type','delivery_images.	before_images','delivery_images.after_images')->whereIn('deal_id', $dealIds)->get();
+        $orders = Order::leftjoin('users','users.id','=','orders.customer_id')->leftjoin('deals','deals.id','=','orders.deal_id')->leftjoin('delivery_images','delivery_images.order_id','=','orders.id')->select('orders.*','users.personal_image','users.name','deals.service_title','delivery_images.type')->whereIn('deal_id', $dealIds)->get();
         if ($orders) {
             return response()->json(['message' => 'Orders List', 'orders' => $orders], 200);
         } else {
@@ -1234,12 +1234,11 @@ class ServiceProviderController extends Controller
 
 
         $GetOrderDetails=Deal::leftjoin('orders','orders.deal_id','=','deals.id')
-        ->leftjoin('delivery_images','delivery_images.order_id','=','orders.id')
         ->leftjoin('users','users.id','=','orders.customer_id')
         ->where('orders.id','=',$id)->first();
-
-    
-        return response()->json(['GetOrderDetails' => $GetOrderDetails]);
+       $GetOrderImages=DeliveryImage::where('order_id','=',$id)->get();
+        
+        return response()->json(['GetOrderDetails' => $GetOrderDetails ,'GetOrderImages' => $GetOrderImages]);
     }
 
     public function FavoritService(Request $request)
