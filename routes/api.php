@@ -173,7 +173,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('UpdateTask', 'UpdateTask')->name('UpdateTask');
             Route::get('DeleteTask/{id}', 'DeleteTask')->name('DeleteTask');
             Route::get('GetSettingSale/{id}', 'GetSettingSale')->name('GetSettingSale');
-            
+            Route::get('SaleCustomers', 'SaleCustomers')->name('SaleCustomers');
+            Route::get('SaleCustomer/{id}', 'SaleCustomer')->name('SaleCustomer');
+            Route::post('UpdateSaleCustomer', 'UpdateSaleCustomer')->name('UpdateSaleCustomer');
 
           
         });
