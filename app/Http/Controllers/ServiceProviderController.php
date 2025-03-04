@@ -1434,12 +1434,16 @@ class ServiceProviderController extends Controller
         ->where('orders.id','=',$id)->first();
         $GetOrderBeforeImages=DeliveryImage::where('order_id','=',$id)->where('type', 'before')->get();
        $GetOrderAfterImages=DeliveryImage::where('order_id','=',$id)->where('type', 'after')->get();
+       $GetOrderDeliver=DeliveryImage::where('order_id','=',$id)->where('type', 'delivered')->get();
+
        
         
-        return response()->json(['GetOrderDetails' => $GetOrderDetails ,'GetOrderBeforeImages' => $GetOrderBeforeImages,'GetOrderAfterImages'=> $GetOrderAfterImages]);
+
+         return response()->json(['GetOrderDetails' => $GetOrderDetails ,'GetOrderBeforeImages' => $GetOrderBeforeImages,'GetOrderAfterImages'=> $GetOrderAfterImages,'GetOrderDeliver' => $GetOrderDeliver]);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
+
     }
 
     public function FavoritService(Request $request)
