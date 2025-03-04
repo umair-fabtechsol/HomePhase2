@@ -1184,7 +1184,7 @@ class ServiceProviderController extends Controller
        
            $data['after_images'] = json_encode($mergedImages);
            $existingImage->update($data);
-           return response()->json(['message' => 'Before Delivery Image update successfully', 'BeforeDeliveryImage' => $mergedImages]);
+           return response()->json(['message' => 'Before Delivery Image update successfully', 'GetOrderAfterImages' => $mergedImages]);
 
        } else {
           
@@ -1194,7 +1194,7 @@ class ServiceProviderController extends Controller
                'after_images' => json_encode($mergedImages),
            ]);
            
-           return response()->json(['message' => 'Before Delivery Image created successfully', 'BeforeDeliveryImage' => $mergedImages]);
+           return response()->json(['message' => 'Before Delivery Image created successfully', 'GetOrderAfterImages' => $mergedImages]);
        }
     }
     public function OrderBeforeImages(Request $request){
@@ -1226,7 +1226,7 @@ class ServiceProviderController extends Controller
         
             $data['before_images'] = json_encode($mergedImages);
             $existingImage->update($data);
-            return response()->json(['message' => 'Before Delivery Image update successfully', 'BeforeDeliveryImage' => $mergedImages]);
+            return response()->json(['message' => 'Before Delivery Image update successfully', 'GetOrderBeforeImages' => $mergedImages]);
 
         } else {
            
@@ -1236,7 +1236,7 @@ class ServiceProviderController extends Controller
                 'before_images' => json_encode($mergedImages),
             ]);
             
-            return response()->json(['message' => 'Before Delivery Image created successfully', 'BeforeDeliveryImage' => $mergedImages]);
+            return response()->json(['message' => 'Before Delivery Image created successfully', 'GetOrderBeforeImages' => $mergedImages]);
         }
         
         
