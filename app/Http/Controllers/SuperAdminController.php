@@ -551,7 +551,7 @@ class SuperAdminController extends Controller
         }
     }
     public function contact(){
-        contact_pro::get()->all();
-        return response()->json(['message' => 'Invitation sent successfully!']);
+        $getcontact=contact_pro::get()->all();
+        return response()->json(['message' => 'Invitation sent successfully!','getcontact' => $getcontact]);
     }
 }
