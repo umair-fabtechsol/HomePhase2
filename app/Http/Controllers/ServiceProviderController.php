@@ -1155,52 +1155,91 @@ class ServiceProviderController extends Controller
     }
 
     public function OrdeAfterImages(Request $request){
-        $images = [];
-    
-        if ($request->order_id) {
-            $data = $request->all();
-            if ($request->hasFile('after_images')) {
-                foreach($request->file('after_images') as $image){
-                    $photo1 = $image;
-                    $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo1->move($photo_destination, $photo_name1);
-                    $images[] = $photo_name1;
-                }
-            }
+      
+        $imageNames = [];
 
-            $data['after_images'] =  json_encode($images);
-            $data['type'] =  'after';
-            $afterImages = DeliveryImage::create($data);
-            return response()->json(['message' => 'Added after delivey images successfully', 'afterImages' => $afterImages], 200);
-        } else {
-            return response()->json(['message' => 'No order found'], 401);
-        }
+        $data=$request->all();     
+       $existingImage = DeliveryImage::where('order_id', $request->order_id)
+           ->where('type', 'after')
+           ->first();
+
+      
+       $existingImageArray = $existingImage ? json_decode($existingImage->after_images, true) : [];
+   
+          
+       if ($request->hasFile('after_images')) {
+           foreach ($request->file('after_images') as $beforeImage) {
+               $photo_name = time() . '-' . $beforeImage->getClientOriginalName();
+               $photo_destination = public_path('uploads');
+               $beforeImage->move($photo_destination, $photo_name);
+   
+               $imageNames[] = $photo_name;
+           }
+       }
+   
+    
+       $mergedImages = array_merge($existingImageArray, $imageNames);
+  
+       if ($existingImage) {
+       
+           $data['after_images'] = json_encode($mergedImages);
+           $existingImage->update($data);
+           return response()->json(['message' => 'Before Delivery Image update successfully', 'BeforeDeliveryImage' => $mergedImages]);
+
+       } else {
+          
+           DeliveryImage::create([
+               'order_id' => $request->order_id,
+               'type' => 'after',
+               'after_images' => json_encode($mergedImages),
+           ]);
+           
+           return response()->json(['message' => 'Before Delivery Image created successfully', 'BeforeDeliveryImage' => $mergedImages]);
+       }
     }
     public function OrderBeforeImages(Request $request){
         $imageNames = [];
 
-     
+         $data=$request->all();     
+        $existingImage = DeliveryImage::where('order_id', $request->order_id)
+            ->where('type', 'before')
+            ->first();
+
+       
+        $existingImageArray = $existingImage ? json_decode($existingImage->before_images, true) : [];
+    
+           
         if ($request->hasFile('before_images')) {
             foreach ($request->file('before_images') as $beforeImage) {
-                $photo_name1 = time() . '-' . $beforeImage->getClientOriginalName();
+                $photo_name = time() . '-' . $beforeImage->getClientOriginalName();
                 $photo_destination = public_path('uploads');
-                $beforeImage->move($photo_destination, $photo_name1);
-        
-                $imageNames[] = $photo_name1; 
-                
+                $beforeImage->move($photo_destination, $photo_name);
+    
+                $imageNames[] = $photo_name;
             }
+        }
+    
+     
+        $mergedImages = array_merge($existingImageArray, $imageNames);
+   
+        if ($existingImage) {
+        
+            $data['before_images'] = json_encode($mergedImages);
+            $existingImage->update($data);
+            return response()->json(['message' => 'Before Delivery Image update successfully', 'BeforeDeliveryImage' => $mergedImages]);
+
+        } else {
+           
+            DeliveryImage::create([
+                'order_id' => $request->order_id,
+                'type' => 'before',
+                'before_images' => json_encode($mergedImages),
+            ]);
             
+            return response()->json(['message' => 'Before Delivery Image created successfully', 'BeforeDeliveryImage' => $mergedImages]);
         }
         
-     
-        $data['order_id'] = $request->order_id;
-        $data['type'] = 'before';
-        $data['before_images'] = json_encode($imageNames);
         
-        $BeforeDeliveryImage = DeliveryImage::create($data);
-        
-        return response()->json(['message' => 'Before Delivery Image created successfully', 'BeforeDeliveryImage' => $BeforeDeliveryImage]);
 
     }
     
