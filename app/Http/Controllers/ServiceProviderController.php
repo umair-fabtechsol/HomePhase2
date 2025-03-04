@@ -1134,7 +1134,7 @@ class ServiceProviderController extends Controller
     }
 
     public function OrdeAfterImages(Request $request){
-
+        $images = [];
     
         if ($request->order_id) {
             $data = $request->all();
