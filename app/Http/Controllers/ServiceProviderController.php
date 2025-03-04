@@ -1294,7 +1294,7 @@ class ServiceProviderController extends Controller
 
 
         $GetOrderDetails=Deal::leftjoin('orders','orders.deal_id','=','deals.id')
-        ->leftjoin('users','users.id','=','orders.customer_id')
+        ->leftjoin('users','users.id','=','orders.customer_id')->select('users.*','orders.id as order_id')
         ->where('orders.id','=',$id)->first();
         $GetOrderBeforeImages=DeliveryImage::where('order_id','=',$id)->where('type', 'before')->get();
        $GetOrderAfterImages=DeliveryImage::where('order_id','=',$id)->where('type', 'after')->get();
