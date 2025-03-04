@@ -1096,7 +1096,7 @@ class ServiceProviderController extends Controller
     {
         $userId = Auth::id();
         $dealIds = Deal::where('user_id', $userId)->pluck('id')->toArray();
-        $orders = Order::leftjoin('users','users.id','=','orders.customer_id')->leftjoin('deals','deals.id','=','orders.deal_id')->leftjoin('delivery_images','delivery_images.order_id','=','orders.id')->select('orders.*','users.personal_image','users.name','deals.service_title','delivery_images.type')->whereIn('deal_id', $dealIds)->get();
+        $orders = Order::leftjoin('users','users.id','=','orders.customer_id')->leftjoin('deals','deals.id','=','orders.deal_id')->leftjoin('delivery_images','delivery_images.order_id','=','orders.id')->select('orders.*','users.personal_image','users.name','deals.service_title','delivery_images.type','delivery_images.	before_images','delivery_images.after_images')->whereIn('deal_id', $dealIds)->get();
         if ($orders) {
             return response()->json(['message' => 'Orders List', 'orders' => $orders], 200);
         } else {
