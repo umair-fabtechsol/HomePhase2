@@ -1370,9 +1370,23 @@ class ServiceProviderController extends Controller
 
             $data['type'] = 'delivered';
 
-            $BeforeDeliveryImage = DeliveryImage::create($data);
+            $GetConfirm=DeliveryImage::where('order_id','=',$request->order_id)->first();
+            if($GetConfirm){
 
-            return response()->json(['message' => 'Before Delivery created successfully', 'BeforeDeliveryImage' => $BeforeDeliveryImage]);
+                $BeforeDeliveryImage = $GetConfirm->update($data);
+
+                return response()->json(['message' => 'Order Delivery successfully', 'BeforeDeliveryImage' => $GetConfirm]);
+                
+            }else{
+            
+            
+                $BeforeDeliveryImage = DeliveryImage::create($data);
+                
+                return response()->json(['message' => 'Order Delivery successfully', 'BeforeDeliveryImage' => $BeforeDeliveryImage]);
+            
+            }
+
+            
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
