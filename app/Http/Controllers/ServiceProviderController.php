@@ -1546,7 +1546,7 @@ class ServiceProviderController extends Controller
 
         $GetUser=User::find($userId);
 
-        return response()->json(['GetUser' => $getUser], 200);
+        return response()->json(['GetUser' => $GetUser], 200);
         
     }
 }
