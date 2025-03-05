@@ -1522,14 +1522,15 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function GetInprogressOrder($id)
+    public function GetInprogressOrder()
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 2) {
 
             $GetInprogressOrder = Order::leftJoin('deals', 'deals.id', '=', 'orders.deal_id')
                 ->where('orders.status', 'in progress')
-                ->where('orders.customer_id', $id)
+                ->where('orders.customer_id', $userId)
                 ->select('orders.*', 'deals.service_title as deal_name')
                 ->get();
 

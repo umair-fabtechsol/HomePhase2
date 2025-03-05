@@ -83,7 +83,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('PaymentHistory', 'PaymentHistory')->name('PaymentHistory');
         Route::get('GetProviderPaymentHistory', 'GetProviderPaymentHistory')->name('GetProviderPaymentHistory');
         Route::get('GetOrderDetails/{id}', 'GetOrderDetails')->name('GetOrderDetails');
-        Route::get('GetInprogressOrder/{id}', 'GetInprogressOrder')->name('GetInprogressOrder');
+        Route::get('GetInprogressOrder', 'GetInprogressOrder')->name('GetInprogressOrder');
 
 
         Route::post('FavoritService', 'FavoritService')->name('FavoritService');
