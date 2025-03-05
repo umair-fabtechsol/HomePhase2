@@ -15,6 +15,7 @@ Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('ch
 Route::get('contact',[SuperAdminController::class,'contact'])->name('contact');
 Route::get('GetSupport',[SuperAdminController::class,'GetSupport'])->name('GetSupport');
 Route::post('UpdateSupport',[SuperAdminController::class,'UpdateSupport'])->name('UpdateSupport');
+Route::get('OrdersList', [SuperAdminController::class,'OrdersList'])->name('OrdersList');
 Route::controller(AuthController::class)->group(function () {
     Route::post('Register', 'Register')->name('Register');
     Route::post('UpdateUser', 'UpdateUser')->name('UpdateUser');
@@ -73,7 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('UpdateBusinessLocation', 'UpdateBusinessLocation')->name('UpdateBusinessLocation');
         Route::get('GetBusiness/{id}', 'GetBusiness')->name('GetBusiness');
 
-        Route::get('OrdersList', 'OrdersList')->name('OrdersList');
+        
         Route::get('SettingPublish/{id}', 'SettingPublish')->name('SettingPublish');
         Route::post('GetDealsByCategory', 'GetDealsByCategory')->name('GetDealsByCategory');
         
