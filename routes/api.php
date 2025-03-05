@@ -13,6 +13,7 @@ use App\Http\Controllers\PaymentController;
 Route::post('createPayout', [PaymentController::class, 'createPayout'])->name('createPayout');
 Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('checkBalance');
 Route::get('contact',[SuperAdminController::class,'contact'])->name('contact');
+Route::get('GetSupport',[SuperAdminController::class,'GetSupport'])->name('GetSupport');
 Route::controller(AuthController::class)->group(function () {
     Route::post('Register', 'Register')->name('Register');
     Route::post('UpdateUser', 'UpdateUser')->name('UpdateUser');
@@ -161,7 +162,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('GetClientsSummary', 'GetClientsSummary')->name('GetClientsSummary');
             Route::post('sendInvite','sendInvite')->name('sendInvite');
             Route::get('GetSettingDetail/{id}', 'GetSettingDetail')->name('GetSettingDetail');
-            Route::get('GetSupport', 'GetSupport')->name('GetSupport');
+            
 
             
 
