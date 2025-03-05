@@ -53,7 +53,7 @@ class ServiceProviderController extends Controller
         $userId = Auth::id();
         if ($role == 2) {
             $deal =Deal::
-            where('id', $userId)
+            where('id', $id)
             ->first();
            
             if ($deal) {
