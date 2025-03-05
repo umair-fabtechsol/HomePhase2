@@ -483,7 +483,7 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         
-       
+        if ($role == 2) {
             $user = User::find($request->id);
             if ($user) {
                 $data = $request->all();
@@ -504,7 +504,9 @@ class ServiceProviderController extends Controller
             } else {
                 return response()->json(['message' => 'No user found'], 401);
             }
-       
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
     }
 
     public function UpdatePassword(Request $request)
