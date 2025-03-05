@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Models\Offer;
 use App\Models\DealUpload;
 use App\Models\Notification;
+use App\Models\Support;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\SocialProfile;
@@ -1547,6 +1548,18 @@ class ServiceProviderController extends Controller
         $GetUser=User::find($userId);
 
         return response()->json(['GetUser' => $GetUser], 200);
+        
+    }
+    public function CustomerSupport(Request $request){
+
+        $userId = Auth::id();
+        $data = $request->all();
+
+        $data['user_id'] = $userId;     
+        $CustomerSupport = Support::create($data);
+        
+        return response()->json(['CustomerSupport' => $CustomerSupport], 200);
+
         
     }
 }

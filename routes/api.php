@@ -90,6 +90,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('FavoritService', 'FavoritService')->name('FavoritService');
 
         Route::post('SearchDealLocation', 'SearchDealLocation')->name('SearchDealLocation');
+        Route::post('CustomerSupport', 'SearchDealLocation')->name('customer-support');
+        
         
     });
 
