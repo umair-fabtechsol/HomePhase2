@@ -7,6 +7,7 @@ use App\Models\Deal;
 use App\Models\User;
 use App\Models\Price;
 use App\Models\Review;
+use App\Models\Support;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -554,5 +555,13 @@ class SuperAdminController extends Controller
     public function contact(){
         $getcontact=contact_pro::get()->all();
         return response()->json(['message' => 'Invitation sent successfully!','getcontact' => $getcontact]);
+    }
+
+    public function GetSupport(Request $request){
+
+      
+
+
+        
     }
 }

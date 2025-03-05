@@ -84,6 +84,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('GetProviderPaymentHistory', 'GetProviderPaymentHistory')->name('GetProviderPaymentHistory');
         Route::get('GetOrderDetails/{id}', 'GetOrderDetails')->name('GetOrderDetails');
         Route::get('GetLoginDetails', 'GetLoginDetails')->name('GetLoginDetails');
+        Route::get('GetInprogressOrder', 'GetInprogressOrder')->name('GetInprogressOrder');
+
         
 
 
