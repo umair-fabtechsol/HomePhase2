@@ -52,12 +52,8 @@ class ServiceProviderController extends Controller
         $role = Auth::user()->role;
         $userId = Auth::id();
         if ($role == 2) {
-            $deal =Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-            ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
-            ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
-            ->orderBy('deals.id', 'desc')
-            ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'reviews.rating as review_rating')
-            ->where('deals.user_id', $userId)
+            $deal =Deal::
+            where('id', $userId)
             ->get();
            
             if ($deal) {
