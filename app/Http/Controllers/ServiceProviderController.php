@@ -50,11 +50,18 @@ class ServiceProviderController extends Controller
     public function Deal($id)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 2) {
-            $deal = Deal::where('id', $id)->first();
-            $getUpload = DealUpload::where('deal_id', $id)->get();
+            $deal =Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+            ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+            ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+            ->orderBy('deals.id', 'desc')
+            ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+            ->where('deals.user_id', $userId)
+            ->get();
+           
             if ($deal) {
-                $deal->setAttribute('uploads', $getUpload);
+               
                 return response()->json(['deal' => $deal], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);
