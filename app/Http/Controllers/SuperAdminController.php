@@ -558,9 +558,16 @@ class SuperAdminController extends Controller
     }
 
     public function GetSupport(Request $request){
-
+     
       
+      $GetSupport = Support::leftJoin('users', 'users.id', '=', 'supports.user_id')
+        ->select('supports.*', 'users.name as user_name', 'users.personal_image')
+        ->get();
+    
 
+
+        
+        return response()->json(['GetSupport' => $GetSupport]);
 
         
     }
