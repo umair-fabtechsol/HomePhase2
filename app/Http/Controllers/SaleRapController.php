@@ -74,8 +74,9 @@ class SaleRapController extends Controller
                     $photo_destination = public_path('uploads');
                     $photo1->move($photo_destination, $photo_name1);
                     $data['personal_image'] = $photo_name1;
-                    $user->update($data);
+                    
                 }
+                $user->update($data);
                 return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
             } else {
                 return response()->json(['message' => 'No user found'], 401);
