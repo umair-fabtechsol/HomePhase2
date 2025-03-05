@@ -1551,7 +1551,7 @@ class ServiceProviderController extends Controller
         
     }
     public function CustomerSupport(Request $request){
-
+ 
         $userId = Auth::id();
         $data = $request->all();
 
