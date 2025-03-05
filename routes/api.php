@@ -14,6 +14,7 @@ Route::post('createPayout', [PaymentController::class, 'createPayout'])->name('c
 Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('checkBalance');
 Route::get('contact',[SuperAdminController::class,'contact'])->name('contact');
 Route::get('GetSupport',[SuperAdminController::class,'GetSupport'])->name('GetSupport');
+Route::post('UpdateSupport',[SuperAdminController::class,'UpdateSupport'])->name('UpdateSupport');
 Route::controller(AuthController::class)->group(function () {
     Route::post('Register', 'Register')->name('Register');
     Route::post('UpdateUser', 'UpdateUser')->name('UpdateUser');
@@ -86,6 +87,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('GetOrderDetails/{id}', 'GetOrderDetails')->name('GetOrderDetails');
         Route::get('GetLoginDetails', 'GetLoginDetails')->name('GetLoginDetails');
         Route::get('GetInprogressOrder', 'GetInprogressOrder')->name('GetInprogressOrder');
+       
+
 
         
 
