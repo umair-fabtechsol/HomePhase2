@@ -1469,9 +1469,8 @@ class ServiceProviderController extends Controller
     public function FavoritService(Request $request)
     {
         $role = Auth::user()->role;
-        $userId = Auth::id();
         if ($role == 2) {
-            $user = User::find($userId);
+            $user = User::find($request->user_id);
             if ($user) {
                 $getFavorit = FavoritDeal::where('user_id', $request->user_id)->where('deal_id', $request->deal_id)->first();
                 if ($getFavorit) {
