@@ -571,4 +571,17 @@ class SuperAdminController extends Controller
 
         
     }
+    public function UpdateSupport(Request $request){
+
+
+        $data=$request->all();
+
+        $GetSupport = Support::find($request->id);
+
+        $data['status'] = $request->status;
+
+        $GetSupport->update($data);
+        
+        return response()->json(['GetSupport' => $GetSupport]);
+    }
 }
