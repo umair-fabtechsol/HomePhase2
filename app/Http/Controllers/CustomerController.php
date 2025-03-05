@@ -22,6 +22,7 @@ class CustomerController extends Controller
     public function MyDetail(Request $request)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 1) {
             $user = User::find($request->id);
             if ($user) {
@@ -41,7 +42,7 @@ class CustomerController extends Controller
                 $notification = [
                     'title' => 'Profile Updated',
                     'message' => 'Profile has been updated successfully',
-                    'created_by' => $user->id,
+                    'created_by' => $userId,
                     'status' => 0,
                     'clear' => 'no',
                 ];
@@ -58,6 +59,7 @@ class CustomerController extends Controller
     public function NewPassword(Request $request)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 1) {
             $user = User::find($request->id);
             if ($user) {
@@ -69,7 +71,7 @@ class CustomerController extends Controller
                 $notification = [
                     'title' => 'Password Updated',
                     'message' => 'Password has been updated successfully',
-                    'created_by' => $user->id,
+                    'created_by' => $userId,
                     'status' => 0,
                     'clear' => 'no',
                 ];
@@ -86,15 +88,16 @@ class CustomerController extends Controller
     public function AddPaymentMethod(Request $request)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 1) {
-            $user = User::find($request->user_id);
+            $user = User::find($request->id);
             if ($user) {
                 $data = $request->all();
                 $paymentMethod = PaymentMethod::create($data);
                 $notification = [
                     'title' => 'Payment Method Added',
                     'message' => 'New Payment Method has been Added successfully',
-                    'created_by' => $user->id,
+                    'created_by' => $userId,
                     'status' => 0,
                     'clear' => 'no',
                 ];
