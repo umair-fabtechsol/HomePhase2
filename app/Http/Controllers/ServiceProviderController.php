@@ -1513,7 +1513,7 @@ class ServiceProviderController extends Controller
                 ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
                 ->orderBy('deals.id', 'desc')
                 ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
-                ->where('deals.user_id', $userId)
+                ->where('favorit_deals.user_id', $userId)
                 ->get();
         
                 return response()->json(['deals' => $deals], 200);
