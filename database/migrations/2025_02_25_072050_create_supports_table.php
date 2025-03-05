@@ -14,6 +14,11 @@ return new class extends Migration
         Schema::create('supports', function (Blueprint $table) {
             $table->id();
             $table->integer('user_id');
+            $table->string('name');
+            $table->string('email');
+            $table->string('subject');
+            $table->text('message');
+
             $table->timestamps();
         });
     }

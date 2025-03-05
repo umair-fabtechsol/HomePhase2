@@ -93,7 +93,7 @@ class CustomerController extends Controller
             $user = User::find($request->id);
             if ($user) {
                 $data = $request->all();
-                $paymentMethod = PaymentMethod::create($data);
+                $paymentMethod = PaymentDetail::create($data);
                 $notification = [
                     'title' => 'Payment Method Added',
                     'message' => 'New Payment Method has been Added successfully',
