@@ -287,7 +287,7 @@ class ServiceProviderController extends Controller
             $data['images'] = json_encode($DealImages);
             $data['videos'] = json_encode($DealVideos);
             $data['user_id'] = $userId;
-            $deal = Deal::find($request->id);
+            $deal = Deal::find($request->deal_id);
             if ($deal) {
 
 
