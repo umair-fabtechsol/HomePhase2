@@ -56,7 +56,7 @@ class ServiceProviderController extends Controller
             ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
             ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
             ->orderBy('deals.id', 'desc')
-            ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+            ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'reviews.rating as review_rating')
             ->where('deals.user_id', $userId)
             ->get();
            
