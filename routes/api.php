@@ -65,7 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
         Route::post('AddConversation', 'AddConversation')->name('AddConversation');
         Route::post('Social', 'Social')->name('Social');
-        Route::get('UserDetails/{id}', 'UserDetails')->name('UserDetails');
+        Route::get('UserDetails', 'UserDetails')->name('UserDetails');
         Route::post('SocialDelete', 'SocialDelete')->name('SocialDelete');
         Route::post('AddBusinessLocation', 'AddBusinessLocation')->name('AddBusinessLocation');
         Route::post('UpdateBusinessLocation', 'UpdateBusinessLocation')->name('UpdateBusinessLocation');
@@ -83,7 +83,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('PaymentHistory', 'PaymentHistory')->name('PaymentHistory');
         Route::get('GetProviderPaymentHistory', 'GetProviderPaymentHistory')->name('GetProviderPaymentHistory');
         Route::get('GetOrderDetails/{id}', 'GetOrderDetails')->name('GetOrderDetails');
-        Route::get('GetInprogressOrder', 'GetInprogressOrder')->name('GetInprogressOrder');
+        Route::get('GetLoginDetails', 'GetLoginDetails')->name('GetLoginDetails');
+        
 
 
         Route::post('FavoritService', 'FavoritService')->name('FavoritService');

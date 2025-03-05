@@ -481,6 +481,7 @@ class ServiceProviderController extends Controller
     public function MyDetails(Request $request)
     {
         $role = Auth::user()->role;
+        
         if ($role == 2) {
             $user = User::find($request->id);
             if ($user) {
@@ -1053,16 +1054,17 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function UserDetails($id)
+    public function UserDetails()
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 2) {
-            $user = User::find($id);
-            $businessProfile = BusinessProfile::where('user_id', $id)->get();
+            $user = User::find($userId);
+            $businessProfile = BusinessProfile::where('user_id', $userId)->get();
 
-            $getPayment = PaymentDetail::where('user_id', $id)->get();
-            $getDeal = Deal::where('user_id', $id)->get();
-            $getSocial = SocialProfile::where('user_id', $id)->get();
+            $getPayment = PaymentDetail::where('user_id', $userId)->get();
+            $getDeal = Deal::where('user_id', $userId)->get();
+            $getSocial = SocialProfile::where('user_id', $userId)->get();
             if ($user) {
 
                 return response()->json(['user' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial], 200);
@@ -1538,5 +1540,13 @@ class ServiceProviderController extends Controller
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
+    }
+    public function GetLoginDetails(){
+        $userId = Auth::id();
+
+        $GetUser=User::find($userId);
+
+        return response()->json(['GetUser' => $getUser], 200);
+        
     }
 }
