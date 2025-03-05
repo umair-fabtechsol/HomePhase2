@@ -561,7 +561,7 @@ class SuperAdminController extends Controller
      
       
       $GetSupport = Support::leftJoin('users', 'users.id', '=', 'supports.user_id')
-        ->select('supports.*', 'users.name as user_name', 'users.personal_image')
+        ->select('supports.*', 'users.name as user_name', 'users.personal_image','users.role')
         ->get();
     
 
