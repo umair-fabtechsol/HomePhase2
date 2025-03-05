@@ -1555,7 +1555,8 @@ class ServiceProviderController extends Controller
         $userId = Auth::id();
         $data = $request->all();
 
-        $data['user_id'] = $userId;     
+        $data['user_id'] = $userId;
+        $data['status'] = 'pending';     
         $CustomerSupport = Support::create($data);
         
         return response()->json(['CustomerSupport' => $CustomerSupport], 200);
