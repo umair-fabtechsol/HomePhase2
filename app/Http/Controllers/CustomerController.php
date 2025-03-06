@@ -9,6 +9,7 @@ use App\Models\FavoritDeal;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\PaymentMethod;
+use App\Models\PaymentDetail;
 use App\Models\Review;
 use App\Models\User;
 use App\Models\PaymentHistory;
