@@ -85,12 +85,20 @@ class SuperAdminController extends Controller
 
             // Calculate the number of active users for each day of the current month
             $currentMonth = Carbon::now()->month;
+            $previousMonth = Carbon::now()->subMonth()->month;
             $currentYear = Carbon::now()->year;
             $daysInMonth = Carbon::now()->daysInMonth;
-            $monthActiveUser = [];
+            $daysInPreviousMonth = Carbon::now()->subMonth()->daysInMonth;
+            $currentMonthActiveUser = [];
             for ($i = 1; $i <= $daysInMonth; $i++) {
                 $date = Carbon::create($currentYear, $currentMonth, $i);
-                $monthActiveUser[] = User::whereDate('created_at', $date)->count();
+                $currentMonthActiveUser[] = User::where('role', '!=', 0)->whereDate('created_at', $date)->count();
+            }
+
+            $previousMonthActiveUser = [];
+            for ($i = 1; $i <= $daysInPreviousMonth; $i++) {
+                $date = Carbon::create($currentYear, $previousMonth, $i);
+                $previousMonthActiveUser[] = User::where('role', '!=', 0)->whereDate('created_at', $date)->count();
             }
 
 
@@ -106,7 +114,8 @@ class SuperAdminController extends Controller
                 'addCurrentWeeklyProvider' => $addCurrentWeeklyProvider,
                 'addCurrentWeeklyCustomer' => $addCurrentWeeklyCustomer,
                 'addCurrentWeeklySales' => $addCurrentWeeklySales,
-                'monthActiveUser' => $monthActiveUser,
+                'currentMonthActiveUser' => $currentMonthActiveUser,
+                'previousMonthActiveUser' => $previousMonthActiveUser,
             ], 200);
 
         } else {
