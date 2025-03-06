@@ -749,3 +749,4 @@ class SuperAdminController extends Controller
         return response()->json(['message' => 'User banned successfully', 'user' => $user], 200);
     }
 }
+
