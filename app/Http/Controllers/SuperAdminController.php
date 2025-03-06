@@ -726,4 +726,17 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+
+    public function banProvider(Request $request)
+    {
+        $user = User::find($request->id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        if ($user->role != 2) {
+            return response()->json(['message' => 'Invalid User'], 403);
+        }
+        $user->update(['status' => 1]);
+        return response()->json(['message' => 'User banned successfully', 'user' => $user], 200);
+    }
 }

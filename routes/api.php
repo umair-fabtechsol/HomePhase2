@@ -170,7 +170,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('GetSettingDetail/{id}', 'GetSettingDetail')->name('GetSettingDetail');
             Route::get('ServiceProviderReport', 'ServiceProviderReport')->name('ServiceProviderReport');
             
-
+            Route::post('banProvider', 'banProvider')->name('banProvider');
             
 
             
