@@ -6,6 +6,8 @@ use App\Models\Deal;
 use App\Models\User;
 use App\Models\Task;
 use App\Models\Order;
+use App\Models\BusinessProfile;
+use App\Models\Review;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +32,7 @@ class SaleRapController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-    public function SaleRepProviders(Request $request)
+    public function SaleAllProviders(Request $request)
     {
         $role = Auth::user()->role;
         if ($role == 3) {
@@ -63,6 +65,22 @@ class SaleRapController extends Controller
 
             $totalProviders = $allProviders->total();
 
+
+            if ($allProviders) {
+                return response()->json(['totalProviders' => $totalProviders, 'allProviders' => $allProviders ], 200);
+            } else {
+                return response()->json(['message' => 'No Service Provider Available'], 401);
+            }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function SaleAssignProviders(Request $request)
+    {
+        $role = Auth::user()->role;
+        if ($role == 3) {
+            
             // Assiged
 
             $assignProviders = DB::table('users')
@@ -94,11 +112,67 @@ class SaleRapController extends Controller
 
             $totalAssignProviders = $assignProviders->total();
 
-            if ($allProviders) {
-                return response()->json(['totalProviders' => $totalProviders, 'totalAssignProviders' => $totalAssignProviders, 'allProviders' => $allProviders, 'assignProviders' => $assignProviders ], 200);
+            if ($assignProviders) {
+                return response()->json(['totalAssignProviders' => $totalAssignProviders,'assignProviders' => $assignProviders ], 200);
             } else {
                 return response()->json(['message' => 'No Service Provider Available'], 401);
             }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function SaleProviderDetail($user_id)
+    {
+        $role = Auth::user()->role;
+        if ($role == 3) {
+            $user = User::find($user_id);
+            $deals = Deal::where('user_id', $user_id)->get();
+            $business = BusinessProfile::where('user_id', $user_id)->first();
+            $averageRating = DB::table('reviews')->where('provider_id', $user_id)->avg('rating');
+            $totalReview = DB::table('reviews')->where('provider_id', $user_id)->count();
+
+            $stars = Review::select(
+                DB::raw('SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_star'),
+                DB::raw('SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_star'),
+                DB::raw('SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_star'),
+                DB::raw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star'),
+                DB::raw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star')
+            )
+                ->where('provider_id', $user_id)
+                ->first();
+
+            return response()->json(['message' => 'Provider Details', 'user' => $user, 'deals' => $deals, 'business' => $business, 'averageRating' => $averageRating, 'totalReview' => $totalReview, 'stars' => $stars], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function UpdateSaleProvider(Request $request)
+    {
+        $role = Auth::user()->role;
+        if ($role == 3) {
+
+            $data = $request->all();
+
+            $getProvider = User::find($request->id);
+            if($getProvider->role != 2){
+                return response()->json(['message' => 'Invalid User Id'], 401);
+            }
+            if ($request->hasFile('personal_image')) {
+                $imagePath = public_path('uploads/' . $getProvider->personal_image);
+                if (!empty($getProvider->personal_image) && file_exists($imagePath)) {
+                    unlink($imagePath);
+                }
+                $photo1 = $request->file('personal_image');
+                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+                $photo_destination = public_path('uploads');
+                $photo1->move($photo_destination, $photo_name1);
+                $data['personal_image'] = $photo_name1;
+            }
+            $getProvider->update($data);
+
+            return response()->json(['message' => 'Provider updated successfully', 'getProvider' => $getProvider], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
