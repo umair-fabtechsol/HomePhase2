@@ -318,35 +318,33 @@ class SaleRapController extends Controller
             'Q3' => [7, 9],  // July - September
             'Q4' => [10, 12] // October - December
         ];
-
+        
         $quarterlyData = [];
-        $previousRevenue = 0;
-        $totalRevenue = Order::sum('total_amount');
-
+        $previousRevenue = null; 
+        
         foreach ($quarters as $quarter => $months) {
             $revenue = Order::whereMonth('created_at', '>=', $months[0])
                 ->whereMonth('created_at', '<=', $months[1])
                 ->sum('total_amount');
-
         
-            $growth = $previousRevenue > 0 ? round((($revenue - $previousRevenue) / $previousRevenue) * 100, 2) : '-';
+           
+            $growth = ($previousRevenue !== null && $previousRevenue > 0)
+                ? round((($revenue - $previousRevenue) / $previousRevenue) * 100, 2) . '%'
+                : '-';
+        
+            
             $previousRevenue = $revenue;
-
+        
+          
             $quarterlyData[] = [
                 'quarter' => $quarter,
                 'revenue' => $revenue,
                 'growth' => $growth
             ];
         }
-
         
-        $totalGrowth = round(($totalRevenue > 0 ? ($totalRevenue / max($previousRevenue, 1)) * 100 : 0), 2);
-        $quarterlyData[] = [
-            'quarter' => 'Total',
-            'revenue' => $totalRevenue,
-            'growth' => $totalGrowth
-        ];
-
+        
         return response()->json(['quarterlyData' => $quarterlyData], 200);
+        
     }
 }

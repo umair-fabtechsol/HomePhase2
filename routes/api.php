@@ -166,6 +166,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('GetPriceDetails', 'GetPriceDetails')->name('GetPriceDetails');
             Route::get('GetProvidersSummary', 'GetProvidersSummary')->name('GetProvidersSummary');
             Route::get('GetClientsSummary', 'GetClientsSummary')->name('GetClientsSummary');
+            Route::get('ServiceSummary', 'ServiceSummary')->name('ServiceSummary');
+            Route::get('SaleSummary', 'SaleSummary')->name('SaleSummary');
             Route::post('sendInvite','sendInvite')->name('sendInvite');
             Route::get('GetSettingDetail/{id}', 'GetSettingDetail')->name('GetSettingDetail');
             
