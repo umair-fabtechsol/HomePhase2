@@ -183,7 +183,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('SaleRep')->group(function () {
         Route::controller(SaleRapController::class)->group(function () {
     
-            Route::get('SaleRepProviders', 'SaleRepProviders')->name('SaleRepProviders');
+            Route::get('SaleAllProviders', 'SaleAllProviders')->name('SaleAllProviders');
+            Route::get('SaleAssignProviders', 'SaleAssignProviders')->name('SaleAssignProviders');
+            Route::get('SaleProviderDetail/{user_id}', 'SaleProviderDetail')->name('SaleProviderDetail');
+            Route::post('UpdateSaleProvider', 'UpdateSaleProvider')->name('UpdateSaleProvider');
             Route::get('Dashboard', 'Dashboard')->name('Dashboard');
             Route::post('SalesPersonal', 'SalesPersonal')->name('SalesPersonal');
             Route::post('SalesSecurity', 'SalesSecurity')->name('SalesSecurity');
