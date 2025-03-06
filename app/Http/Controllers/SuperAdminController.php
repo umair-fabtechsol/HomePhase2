@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\BusinessProfile;
 use App\Models\Deal;
 use App\Models\User;
+use App\Models\Order;
 use App\Models\Price;
 use App\Models\Review;
 use App\Models\Support;
-use App\Models\Order;
+use App\Models\PaymentHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -16,7 +17,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\InviteSalesRepMail;
 use App\Models\contact_pro;
-use App\Models\PaymentHistory;
 use Carbon\Carbon;
 class SuperAdminController extends Controller
 {
