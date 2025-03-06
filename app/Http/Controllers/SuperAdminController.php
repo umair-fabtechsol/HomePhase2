@@ -140,7 +140,7 @@ class SuperAdminController extends Controller
                     DB::raw('AVG(reviews.rating) as rating')
                 )
                 ->where('users.role', 2)
-                ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.phone', 'deals.total_deals', 'reviews.provider_id');
+                ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.status', 'users.phone', 'deals.total_deals', 'reviews.provider_id');
 
             if ($request->has('search')) {
                 $search = $request->search;
