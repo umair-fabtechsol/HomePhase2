@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\InviteSalesRepMail;
 use App\Models\contact_pro;
+use Carbon\Carbon;
 
 class SuperAdminController extends Controller
 {
@@ -106,6 +107,9 @@ class SuperAdminController extends Controller
             $data = $request->all();
 
             $getProvider = User::find($request->id);
+            if($getProvider->role != 2){
+                return response()->json(['message' => 'Invalid User Id'], 401);
+            }
             if ($request->hasFile('personal_image')) {
                 $imagePath = public_path('uploads/' . $getProvider->personal_image);
                 if (!empty($getProvider->personal_image) && file_exists($imagePath)) {
@@ -583,5 +587,54 @@ class SuperAdminController extends Controller
         $GetSupport->update($data);
         
         return response()->json(['GetSupport' => $GetSupport]);
+    }
+
+    public function ServiceProviderReport()
+    {
+        $role = Auth::user()->role;
+        if ($role == 0) {
+            $currentYear = Carbon::now()->year;
+
+            $quarters = [
+                'Q1' => [Carbon::create($currentYear, 1, 1), Carbon::create($currentYear, 3, 31)],
+                'Q2' => [Carbon::create($currentYear, 4, 1), Carbon::create($currentYear, 6, 30)],
+                'Q3' => [Carbon::create($currentYear, 7, 1), Carbon::create($currentYear, 9, 30)],
+                'Q4' => [Carbon::create($currentYear, 10, 1), Carbon::create($currentYear, 12, 31)],
+            ];
+
+            $report = [];
+            $totalNewServiceProviders = 0;
+            $totalCumulativeServiceProviders = 0;
+
+            foreach ($quarters as $quarter => $dates) {
+                $newServiceProviders = User::where('role', 2)
+                    ->whereBetween('created_at', [$dates[0], $dates[1]])
+                    ->count();
+
+                $cumulativeServiceProviders = User::where('role', 2)
+                    ->where('created_at', '<=', $dates[1])
+                    ->count();
+
+                $report[] = [
+                    'period' => $quarter,
+                    'new_service_providers' => $newServiceProviders,
+                    'cumulative_service_providers' => $cumulativeServiceProviders,
+                ];
+
+                $totalNewServiceProviders += $newServiceProviders;
+                $totalCumulativeServiceProviders += $cumulativeServiceProviders; // This will be the last cumulative count
+            }
+
+            // Add total row
+            $report[] = [
+                'period' => 'Total',
+                'new_service_providers' => $totalNewServiceProviders,
+                'cumulative_service_providers' => $totalCumulativeServiceProviders,
+            ];
+
+            return response()->json(['report' => $report], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
     }
 }
