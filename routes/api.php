@@ -193,6 +193,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('SaleCustomer/{id}', 'SaleCustomer')->name('SaleCustomer');
             Route::post('UpdateSaleCustomer', 'UpdateSaleCustomer')->name('UpdateSaleCustomer');
             Route::get('GetServiceRevenue', 'GetServiceRevenue')->name('GetServiceRevenue');
+            Route::get('quarterlyReport', 'quarterlyReport')->name('quarterlyReport');
+
             
 
           
