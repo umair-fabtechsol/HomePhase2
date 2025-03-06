@@ -101,6 +101,22 @@ class SuperAdminController extends Controller
                 $previousMonthActiveUser[] = User::where('role', '!=', 0)->where('status',0)->whereDate('created_at', $date)->count();
             }
 
+            $monthlySales=[];
+            for ($i = 1; $i <= $daysInMonth; $i++) {
+                $date = Carbon::create($currentYear, $currentMonth, $i);
+                $monthlySales[] = User::where('role', 3)->whereDate('created_at', $date)->count();
+            }
+            $monthlyProviders=[];
+            for ($i = 1; $i <= $daysInMonth; $i++) {
+                $date = Carbon::create($currentYear, $currentMonth, $i);
+                $monthlyProviders[] = User::where('role', 2)->whereDate('created_at', $date)->count();
+            }
+            $monthlyClient=[];
+            for ($i = 1; $i <= $daysInMonth; $i++) {
+                $date = Carbon::create($currentYear, $currentMonth, $i);
+                $monthlyClient[] = User::where('role', 1)->whereDate('created_at', $date)->count();
+            }
+
 
             return response()->json([
                 'total_service_providers' => $total_service_providers,
@@ -116,6 +132,9 @@ class SuperAdminController extends Controller
                 'addCurrentWeeklySales' => $addCurrentWeeklySales,
                 'currentMonthActiveUser' => $currentMonthActiveUser,
                 'previousMonthActiveUser' => $previousMonthActiveUser,
+                'monthlySales' => $monthlySales,
+                'monthlyProviders' => $monthlyProviders,
+                'monthlyClient' => $monthlyClient,
             ], 200);
 
         } else {
