@@ -92,13 +92,13 @@ class SuperAdminController extends Controller
             $currentMonthActiveUser = [];
             for ($i = 1; $i <= $daysInMonth; $i++) {
                 $date = Carbon::create($currentYear, $currentMonth, $i);
-                $currentMonthActiveUser[] = User::where('role', '!=', 0)->whereDate('created_at', $date)->count();
+                $currentMonthActiveUser[] = User::where('role', '!=', 0)->where('status',0)->whereDate('created_at', $date)->count();
             }
 
             $previousMonthActiveUser = [];
             for ($i = 1; $i <= $daysInPreviousMonth; $i++) {
                 $date = Carbon::create($currentYear, $previousMonth, $i);
-                $previousMonthActiveUser[] = User::where('role', '!=', 0)->whereDate('created_at', $date)->count();
+                $previousMonthActiveUser[] = User::where('role', '!=', 0)->where('status',0)->whereDate('created_at', $date)->count();
             }
 
 
