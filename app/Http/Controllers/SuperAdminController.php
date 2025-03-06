@@ -307,7 +307,7 @@ class SuperAdminController extends Controller
             $data = $request->all();
 
             $GetSaleRep = User::find($request->id);
-            if($getProvider->role != 3){
+            if($GetSaleRep->role != 3){
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
             if ($request->hasFile('personal_image')) {
