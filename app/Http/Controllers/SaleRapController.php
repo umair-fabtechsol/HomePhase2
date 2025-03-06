@@ -21,13 +21,17 @@ class SaleRapController extends Controller
         $role = Auth::user()->role;
         if ($role == 3) {
 
-            $GetTotalClient = User::where('role', 1)->count();
-            $GetCurrentMonthTotalClient = User::where('role', 1)->whereMonth('created_at', Carbon::now()->month)->count();
-            $GetTotalActiveProvider = User::where('role', 2)->count();
-            $GetTotalCompletedServices = Deal::where('publish', 1)->count();
+            $assignPros = User::where('role', 2)->where('assign_sales_rep', Auth::id())->count();
+            $newPros = User::where('role', 2)->whereDate('created_at', Carbon::today())->count();
+            $recentDeal = Deal::where('publish', 1)->whereDate('created_at', Carbon::today())->count();
+            $recetPublishDeals = Deal::leftjoin('users', 'deals.user_id', '=', 'users.id')->select('deals.*', 'users.personal_image', 'users.name')->where('deals.publish', 1)->where('users.assign_sales_rep', Auth::id())->get();
 
-
-            return response()->json(['GetTotalClient' => $GetTotalClient, 'GetCurrentMonthTotalClient' => $GetCurrentMonthTotalClient, 'GetTotalActiveProvider' => $GetTotalActiveProvider, 'GetTotalCompletedServices' => $GetTotalCompletedServices], 200);
+            return response()->json([
+                'assignPros' => $assignPros,
+                'newPros' => $newPros,
+                'recentDeal' => $recentDeal,
+                'recetPublishDeals' => $recetPublishDeals
+            ], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
