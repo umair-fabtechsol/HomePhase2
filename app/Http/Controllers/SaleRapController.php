@@ -74,8 +74,9 @@ class SaleRapController extends Controller
                     $photo_destination = public_path('uploads');
                     $photo1->move($photo_destination, $photo_name1);
                     $data['personal_image'] = $photo_name1;
-                    $user->update($data);
+                    
                 }
+                $user->update($data);
                 return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
             } else {
                 return response()->json(['message' => 'No user found'], 401);
@@ -108,6 +109,7 @@ class SaleRapController extends Controller
     public function AddTask(Request $request)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 3) {
 
             $data = $request->all();
@@ -118,7 +120,7 @@ class SaleRapController extends Controller
                 $photo1->move($photo_destination, $photo_name1);
                 $data['files'] = $photo_name1;
             }
-
+            $data['created_by']=$userId;
             $task = Task::create($data);
             return response()->json(['message' => 'Task created successfully', 'task' => $task], 200);
         } else {
@@ -218,6 +220,7 @@ class SaleRapController extends Controller
     public function SaleCustomers(Request $request)
     {
         $role = Auth::user()->role;
+        
         if ($role == 3) {
             $customers = User::where('role', 1);
             if ($request->has('search')) {

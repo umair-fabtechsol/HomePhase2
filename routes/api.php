@@ -12,6 +12,10 @@ use App\Http\Controllers\PaymentController;
 
 Route::post('createPayout', [PaymentController::class, 'createPayout'])->name('createPayout');
 Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('checkBalance');
+Route::get('contact',[SuperAdminController::class,'contact'])->name('contact');
+Route::get('GetSupport',[SuperAdminController::class,'GetSupport'])->name('GetSupport');
+Route::post('UpdateSupport',[SuperAdminController::class,'UpdateSupport'])->name('UpdateSupport');
+
 Route::controller(AuthController::class)->group(function () {
     Route::post('Register', 'Register')->name('Register');
     Route::post('UpdateUser', 'UpdateUser')->name('UpdateUser');
@@ -20,7 +24,7 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('auth/google/callback', 'googleHandle');
     Route::get('facebookLogin', 'facebookLogin')->name('facebookLogin');
     Route::get('auth/facebook/callback', 'facebookHandle');
-    Route::get('contact', 'contact');
+    
 
 
     
@@ -64,13 +68,13 @@ Route::middleware('auth:sanctum')->group(function () {
     
         Route::post('AddConversation', 'AddConversation')->name('AddConversation');
         Route::post('Social', 'Social')->name('Social');
-        Route::get('UserDetails/{id}', 'UserDetails')->name('UserDetails');
+        Route::get('UserDetails', 'UserDetails')->name('UserDetails');
         Route::post('SocialDelete', 'SocialDelete')->name('SocialDelete');
         Route::post('AddBusinessLocation', 'AddBusinessLocation')->name('AddBusinessLocation');
         Route::post('UpdateBusinessLocation', 'UpdateBusinessLocation')->name('UpdateBusinessLocation');
         Route::get('GetBusiness/{id}', 'GetBusiness')->name('GetBusiness');
 
-        Route::get('OrdersList', 'OrdersList')->name('OrdersList');
+        
         Route::get('SettingPublish/{id}', 'SettingPublish')->name('SettingPublish');
         Route::post('GetDealsByCategory', 'GetDealsByCategory')->name('GetDealsByCategory');
         
@@ -82,12 +86,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('PaymentHistory', 'PaymentHistory')->name('PaymentHistory');
         Route::get('GetProviderPaymentHistory', 'GetProviderPaymentHistory')->name('GetProviderPaymentHistory');
         Route::get('GetOrderDetails/{id}', 'GetOrderDetails')->name('GetOrderDetails');
-        Route::get('GetInprogressOrder/{id}', 'GetInprogressOrder')->name('GetInprogressOrder');
+        Route::get('GetLoginDetails', 'GetLoginDetails')->name('GetLoginDetails');
+        Route::get('GetInprogressOrder', 'GetInprogressOrder')->name('GetInprogressOrder');
+        Route::get('OrdersList','OrdersList')->name('OrdersList');
+
+
+        
 
 
         Route::post('FavoritService', 'FavoritService')->name('FavoritService');
+        Route::get('GetFavoritService', 'GetFavoritService')->name('GetFavoritService');
+
 
         Route::post('SearchDealLocation', 'SearchDealLocation')->name('SearchDealLocation');
+        Route::post('CustomerSupport', 'CustomerSupport')->name('CustomerSupport');
+        
         
     });
 
@@ -155,6 +168,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('GetClientsSummary', 'GetClientsSummary')->name('GetClientsSummary');
             Route::post('sendInvite','sendInvite')->name('sendInvite');
             Route::get('GetSettingDetail/{id}', 'GetSettingDetail')->name('GetSettingDetail');
+            Route::get('ServiceProviderReport', 'ServiceProviderReport')->name('ServiceProviderReport');
+            
+
             
 
             

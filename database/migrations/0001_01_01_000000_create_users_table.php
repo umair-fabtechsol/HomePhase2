@@ -37,9 +37,11 @@ return new class extends Migration
 
             $table->integer('general_notification')->nullable();
             $table->integer('provider_notification')->nullable();
-            $table->integer('customer_notification')->nullable();
+            $table->boolean('customer_notification')->default(true);
             $table->integer('sales_notification')->nullable();
             $table->integer('message_notification')->nullable();
+            $table->string('_id')->nullable();
+
             $table->rememberToken();
             $table->timestamps();
         });

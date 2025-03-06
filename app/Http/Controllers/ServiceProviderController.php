@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Models\Offer;
 use App\Models\DealUpload;
 use App\Models\Notification;
+use App\Models\Support;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\SocialProfile;
@@ -50,11 +51,14 @@ class ServiceProviderController extends Controller
     public function Deal($id)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 2) {
-            $deal = Deal::where('id', $id)->first();
-            $getUpload = DealUpload::where('deal_id', $id)->get();
+            $deal =Deal::
+            where('id', $id)
+            ->first();
+           
             if ($deal) {
-                $deal->setAttribute('uploads', $getUpload);
+               
                 return response()->json(['deal' => $deal], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);
@@ -284,7 +288,7 @@ class ServiceProviderController extends Controller
             $data['images'] = json_encode($DealImages);
             $data['videos'] = json_encode($DealVideos);
             $data['user_id'] = $userId;
-            $deal = Deal::find($request->id);
+            $deal = Deal::find($request->deal_id);
             if ($deal) {
 
 
@@ -478,6 +482,7 @@ class ServiceProviderController extends Controller
     public function MyDetails(Request $request)
     {
         $role = Auth::user()->role;
+        
         if ($role == 2) {
             $user = User::find($request->id);
             if ($user) {
@@ -1050,16 +1055,17 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function UserDetails($id)
+    public function UserDetails()
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 2) {
-            $user = User::find($id);
-            $businessProfile = BusinessProfile::where('user_id', $id)->get();
+            $user = User::find($userId);
+            $businessProfile = BusinessProfile::where('user_id', $userId)->get();
 
-            $getPayment = PaymentDetail::where('user_id', $id)->get();
-            $getDeal = Deal::where('user_id', $id)->get();
-            $getSocial = SocialProfile::where('user_id', $id)->get();
+            $getPayment = PaymentDetail::where('user_id', $userId)->get();
+            $getDeal = Deal::where('user_id', $userId)->get();
+            $getSocial = SocialProfile::where('user_id', $userId)->get();
             if ($user) {
 
                 return response()->json(['user' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial], 200);
@@ -1499,6 +1505,20 @@ class ServiceProviderController extends Controller
         }
     }
 
+    public function GetFavoritService(){
+        $userId = Auth::id();
+        $deals=Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
+                ->orderBy('deals.id', 'desc')
+                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+                ->where('favorit_deals.user_id', $userId)
+                ->get();
+        
+                return response()->json(['deals' => $deals], 200);
+    }
+
     public function SearchDealLocation(Request $request)
     {
         $role = Auth::user()->role;
@@ -1519,14 +1539,15 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function GetInprogressOrder($id)
+    public function GetInprogressOrder()
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 2) {
 
             $GetInprogressOrder = Order::leftJoin('deals', 'deals.id', '=', 'orders.deal_id')
                 ->where('orders.status', 'in progress')
-                ->where('orders.customer_id', $id)
+                ->where('orders.customer_id', $userId)
                 ->select('orders.*', 'deals.service_title as deal_name')
                 ->get();
 
@@ -1535,4 +1556,27 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+    public function GetLoginDetails(){
+        $userId = Auth::id();
+
+        $GetUser=User::find($userId);
+
+        return response()->json(['GetUser' => $GetUser], 200);
+        
+    }
+    public function CustomerSupport(Request $request){
+ 
+        $userId = Auth::id();
+        $data = $request->all();
+
+        $data['user_id'] = $userId;
+        $data['status'] = 'pending';     
+        $CustomerSupport = Support::create($data);
+        
+        return response()->json(['CustomerSupport' => $CustomerSupport], 200);
+
+        
+    }
+
+    
 }
