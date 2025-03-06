@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Deal;
 use App\Models\User;
 use App\Models\Task;
+use App\Models\Order;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -285,4 +286,27 @@ class SaleRapController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+
+    public function GetServiceRevenue(){
+            
+      
+        $totalRevenue = Order::sum('total_amount');
+
+      
+        $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
+            ->join('orders', 'orders.deal_id', '=', 'deals.id')
+            ->groupBy('deals.service_category')
+            ->get()
+            ->map(function ($data) use ($totalRevenue) {
+                return [
+                    'category' => $data->service_category,
+                    'revenue' => $data->revenue,
+                    'percentage' => $totalRevenue ? round(($data->revenue / $totalRevenue) * 100, 2) : 0
+                ];
+            });
+
+
+        return response()->json(['reportData' => $reportData], 200);
+        
+    } 
 }

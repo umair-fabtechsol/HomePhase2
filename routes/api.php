@@ -9,7 +9,7 @@ use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SaleRapController;
 use App\Http\Controllers\PaymentController;
-
+use Illuminate\Support\Facades\DB;
 Route::post('createPayout', [PaymentController::class, 'createPayout'])->name('createPayout');
 Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('checkBalance');
 Route::get('contact',[SuperAdminController::class,'contact'])->name('contact');
@@ -192,6 +192,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('SaleCustomers', 'SaleCustomers')->name('SaleCustomers');
             Route::get('SaleCustomer/{id}', 'SaleCustomer')->name('SaleCustomer');
             Route::post('UpdateSaleCustomer', 'UpdateSaleCustomer')->name('UpdateSaleCustomer');
+            Route::get('GetServiceRevenue', 'GetServiceRevenue')->name('GetServiceRevenue');
+            
 
           
         });

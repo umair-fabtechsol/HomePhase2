@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('deal_id')->nullable();
             $table->string('subject')->nullable();
             $table->text('text')->nullable();
-            $table->enum('type', ['call_pro', 'sms_pro', 'email_pro']);
+            $table->enum('type', ['call_pro', 'sms_pro', 'email_pro', 'instant_chat', 'get_direction']);
             $table->boolean('read')->default(false);
             $table->boolean('by_service')->default(false);
             $table->timestamps();
