@@ -214,6 +214,9 @@ class SuperAdminController extends Controller
             $data = $request->all();
 
             $GetSaleRep = User::find($request->id);
+            if($getProvider->role != 3){
+                return response()->json(['message' => 'Invalid User Id'], 401);
+            }
             if ($request->hasFile('personal_image')) {
                 $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
                 if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
@@ -257,6 +260,9 @@ class SuperAdminController extends Controller
             $data = $request->all();
 
             $GetSaleRep = User::find($request->id);
+            if($getProvider->role != 1){
+                return response()->json(['message' => 'Invalid User Id'], 401);
+            }
             if ($request->hasFile('personal_image')) {
                 $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
                 if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
