@@ -1579,5 +1579,35 @@ class ServiceProviderController extends Controller
         
     }
 
+    public function GetSalesRep()
+    {
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $GetSalesRep = User::where('role', 3)->orderBy('id', 'desc')->get();
+
+            return response()->json(['sales_reps' => $GetSalesRep]);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function AssignSalesRep($id)
+    {
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $assignSaleRep = User::find($id);
+            if ($assignSaleRep && $assignSaleRep->role == 3) {
+                $user = User::find(Auth::id());
+                $user->update(['assign_sales_rep' => $assignSaleRep->id]);
+                return response()->json(['message' => 'Sales Rep assigned successfully', 'assignSaleRep' => $user], 200);
+            } else {
+                return response()->json(['message' => 'invalid sale rep id'], 401);
+            }
+
+            return response()->json(['sales_reps' => $GetSalesRep]);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
     
 }

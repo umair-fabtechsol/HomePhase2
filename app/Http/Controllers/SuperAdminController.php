@@ -307,7 +307,7 @@ class SuperAdminController extends Controller
             $data = $request->all();
 
             $GetSaleRep = User::find($request->id);
-            if($getProvider->role != 3){
+            if($GetSaleRep->role != 3){
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
             if ($request->hasFile('personal_image')) {
@@ -352,13 +352,13 @@ class SuperAdminController extends Controller
         if ($role == 0) {
             $data = $request->all();
 
-            $GetSaleRep = User::find($request->id);
-            if($getProvider->role != 1){
+            $getCustomer = User::find($request->id);
+            if($getCustomer->role != 1){
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
             if ($request->hasFile('personal_image')) {
-                $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
-                if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
+                $imagePath = public_path('uploads/' . $getCustomer->personal_image);
+                if (!empty($getCustomer->personal_image) && file_exists($imagePath)) {
                     unlink($imagePath);
                 }
                 $photo1 = $request->file('personal_image');
@@ -367,9 +367,9 @@ class SuperAdminController extends Controller
                 $photo1->move($photo_destination, $photo_name1);
                 $data['personal_image'] = $photo_name1;
             }
-            $GetSaleRep->update($data);
+            $getCustomer->update($data);
 
-            return response()->json(['message' => 'Customer updated successfully', 'GetSaleRep' => $GetSaleRep], 200);
+            return response()->json(['message' => 'Customer updated successfully', 'getCustomer' => $getCustomer], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
