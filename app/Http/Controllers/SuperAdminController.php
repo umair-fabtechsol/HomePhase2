@@ -739,18 +739,24 @@ class SuperAdminController extends Controller
     public function banProvider(Request $request)
     {
         $user = User::find($request->id);
+    
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
+    
         if ($user->role != 2) {
             return response()->json(['message' => 'Invalid User'], 403);
         }
-
-        if ($user->status == 1) {
-            return response()->json(['message' => 'Provider is already banned'], 400);
-        }
-        $user->update(['status' => 1]);
-        return response()->json(['message' => 'User banned successfully', 'user' => $user], 200);
+    
+        // Toggle status (0 → 1 OR 1 → 0)
+        $newStatus = $user->status == 0 ? 1 : 0;
+        $user->update(['status' => $newStatus]);
+    
+        // Message based on status
+        $message = $newStatus == 1 ? 'User banned successfully' : 'User unbanned successfully';
+    
+        return response()->json(['message' => $message, 'user' => $user], 200);
     }
+    
 }
 
