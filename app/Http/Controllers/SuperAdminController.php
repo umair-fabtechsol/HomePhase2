@@ -16,7 +16,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\InviteSalesRepMail;
 use App\Models\contact_pro;
-
+use App\Models\PaymentHistory;
+use Carbon\Carbon;
 class SuperAdminController extends Controller
 {
     public function SuperAdminDashboard()
