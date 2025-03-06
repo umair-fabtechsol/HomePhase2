@@ -68,14 +68,15 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function DealPublish($id)
+    public function DealPublish($deal_id)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 2) {
-            $deal = Deal::find($id);
+            $deal = Deal::find($deal_id);
             if ($deal) {
                 $deal->update(['publish' => 1]);
-                $deal = Deal::find($id);
+                $deal = Deal::find($deal_id);
                 $notifications = [
                     'title' => 'Deal Publish',
                     'message' => '"' . $deal->service_title . '" Deal Publish successfully',
