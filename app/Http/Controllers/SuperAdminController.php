@@ -85,8 +85,6 @@ class SuperAdminController extends Controller
 
             // Calculate the number of active users for each day of the current month
             $currentMonth = Carbon::now()->month;
-            dd($currentMonth);
-            exit;
             $currentYear = Carbon::now()->year;
             $daysInMonth = Carbon::now()->daysInMonth;
             $monthActiveUser = [];
