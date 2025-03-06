@@ -18,15 +18,125 @@ use Illuminate\Support\Facades\Auth;
 use App\Mail\InviteSalesRepMail;
 use App\Models\contact_pro;
 use Carbon\Carbon;
+
 class SuperAdminController extends Controller
 {
     public function SuperAdminDashboard()
     {
         $role = Auth::user()->role;
         if ($role == 0) {
-            $GetNumberOfDeals = Deal::all()->count();
-            $GetTotalServiceProvider = User::where('role', 2)->count();
-            $GetTotalClient = User::where('role', 1)->count();
+
+            $total_revenue_generated = Order::where('status', 'completed')->sum('total_amount');
+            $total_service_providers = User::where('role', 2)->count();
+            $total_customers = User::where('role', 1)->count();
+            $total_service_listed = Deal::all()->count();
+
+            $total_active_sales = User::where('role', 3)->where('status', 0)->count();
+            $total_active_providers = User::where('role', 2)->where('status', 0)->count();
+            $total_active_customers = User::where('role', 1)->where('status', 0)->count();
+
+            $total_transactions = PaymentHistory::where('payment_type', 'payout')->count();
+
+            // Calculate the number of new providers added each day of the current week
+            $startOfWeek = Carbon::now()->startOfWeek();
+            $endOfWeek = Carbon::now()->endOfWeek();
+            $newProvidersByDay = User::where('role', 2)
+                ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
+                ->groupBy('day')
+                ->orderBy('created_at')
+                ->get()
+                ->pluck('count', 'day')
+                ->toArray();
+
+            $newCustomersByDay = User::where('role', 1)
+            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
+            ->groupBy('day')
+            ->orderBy('created_at')
+            ->get()
+            ->pluck('count', 'day')
+            ->toArray();
+
+            $newSaleRapByDay = User::where('role', 3)
+            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
+            ->groupBy('day')
+            ->orderBy('created_at')
+            ->get()
+            ->pluck('count', 'day')
+            ->toArray();
+
+            $dayName = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            $addCurrentWeeklyProvider = [];
+            foreach ($dayName as $day) {
+                $addCurrentWeeklyProvider[] = $newProvidersByDay[$day] ?? 0;
+            }
+
+            $addCurrentWeeklyCustomer = [];
+            foreach ($dayName as $day) {
+                $addCurrentWeeklyCustomer[] = $newCustomersByDay[$day] ?? 0;
+            }
+
+            $addCurrentWeeklySales = [];
+            foreach ($dayName as $day) {
+                $addCurrentWeeklySales[] = $newSaleRapByDay[$day] ?? 0;
+            }
+
+            // Calculate the number of active users for each day of the current month
+            $currentMonth = Carbon::now()->month;
+            $previousMonth = Carbon::now()->subMonth()->month;
+            $currentYear = Carbon::now()->year;
+            $daysInMonth = Carbon::now()->daysInMonth;
+            $daysInPreviousMonth = Carbon::now()->subMonth()->daysInMonth;
+            $currentMonthActiveUser = [];
+            for ($i = 1; $i <= $daysInMonth; $i++) {
+                $date = Carbon::create($currentYear, $currentMonth, $i);
+                $currentMonthActiveUser[] = User::where('role', '!=', 0)->where('status',0)->whereDate('created_at', $date)->count();
+            }
+
+            $previousMonthActiveUser = [];
+            for ($i = 1; $i <= $daysInPreviousMonth; $i++) {
+                $date = Carbon::create($currentYear, $previousMonth, $i);
+                $previousMonthActiveUser[] = User::where('role', '!=', 0)->where('status',0)->whereDate('created_at', $date)->count();
+            }
+
+            $monthlySales=[];
+            for ($i = 1; $i <= $daysInMonth; $i++) {
+                $date = Carbon::create($currentYear, $currentMonth, $i);
+                $monthlySales[] = User::where('role', 3)->whereDate('created_at', $date)->count();
+            }
+            $monthlyProviders=[];
+            for ($i = 1; $i <= $daysInMonth; $i++) {
+                $date = Carbon::create($currentYear, $currentMonth, $i);
+                $monthlyProviders[] = User::where('role', 2)->whereDate('created_at', $date)->count();
+            }
+            $monthlyClient=[];
+            for ($i = 1; $i <= $daysInMonth; $i++) {
+                $date = Carbon::create($currentYear, $currentMonth, $i);
+                $monthlyClient[] = User::where('role', 1)->whereDate('created_at', $date)->count();
+            }
+
+
+            return response()->json([
+                'total_service_providers' => $total_service_providers,
+                'total_customers' => $total_customers,
+                'total_transactions' => $total_transactions,
+                'total_service_listed' => $total_service_listed,
+                'total_revenue_generated' => $total_revenue_generated,
+                'total_active_sales' => $total_active_sales,
+                'total_active_providers' => $total_active_providers,
+                'total_active_customers' => $total_active_customers,
+                'addCurrentWeeklyProvider' => $addCurrentWeeklyProvider,
+                'addCurrentWeeklyCustomer' => $addCurrentWeeklyCustomer,
+                'addCurrentWeeklySales' => $addCurrentWeeklySales,
+                'currentMonthActiveUser' => $currentMonthActiveUser,
+                'previousMonthActiveUser' => $previousMonthActiveUser,
+                'monthlySales' => $monthlySales,
+                'monthlyProviders' => $monthlyProviders,
+                'monthlyClient' => $monthlyClient,
+            ], 200);
+
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
@@ -44,11 +154,12 @@ class SuperAdminController extends Controller
                     'users.name',
                     'users.email',
                     'users.phone',
+                    'users.status',
                     DB::raw('COALESCE(deals.total_deals, 0) as total_deals'),
                     DB::raw('AVG(reviews.rating) as rating')
                 )
                 ->where('users.role', 2)
-                ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.phone', 'deals.total_deals', 'reviews.provider_id');
+                ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.status', 'users.phone', 'deals.total_deals', 'reviews.provider_id');
 
             if ($request->has('search')) {
                 $search = $request->search;
@@ -108,6 +219,9 @@ class SuperAdminController extends Controller
             $data = $request->all();
 
             $getProvider = User::find($request->id);
+            if($getProvider->role != 2){
+                return response()->json(['message' => 'Invalid User Id'], 401);
+            }
             if ($request->hasFile('personal_image')) {
                 $imagePath = public_path('uploads/' . $getProvider->personal_image);
                 if (!empty($getProvider->personal_image) && file_exists($imagePath)) {
@@ -212,6 +326,9 @@ class SuperAdminController extends Controller
             $data = $request->all();
 
             $GetSaleRep = User::find($request->id);
+            if($GetSaleRep->role != 3){
+                return response()->json(['message' => 'Invalid User Id'], 401);
+            }
             if ($request->hasFile('personal_image')) {
                 $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
                 if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
@@ -254,10 +371,13 @@ class SuperAdminController extends Controller
         if ($role == 0) {
             $data = $request->all();
 
-            $GetSaleRep = User::find($request->id);
+            $getCustomer = User::find($request->id);
+            if($getCustomer->role != 1){
+                return response()->json(['message' => 'Invalid User Id'], 401);
+            }
             if ($request->hasFile('personal_image')) {
-                $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
-                if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
+                $imagePath = public_path('uploads/' . $getCustomer->personal_image);
+                if (!empty($getCustomer->personal_image) && file_exists($imagePath)) {
                     unlink($imagePath);
                 }
                 $photo1 = $request->file('personal_image');
@@ -266,9 +386,9 @@ class SuperAdminController extends Controller
                 $photo1->move($photo_destination, $photo_name1);
                 $data['personal_image'] = $photo_name1;
             }
-            $GetSaleRep->update($data);
+            $getCustomer->update($data);
 
-            return response()->json(['message' => 'Customer updated successfully', 'GetSaleRep' => $GetSaleRep], 200);
+            return response()->json(['message' => 'Customer updated successfully', 'getCustomer' => $getCustomer], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
@@ -533,66 +653,7 @@ class SuperAdminController extends Controller
         }
     }
 
-    public function ServiceSummary(){
 
-        $totalRevenue = Order::sum('total_amount');
-
-      
-        $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
-            ->join('orders', 'orders.deal_id', '=', 'deals.id')
-            ->groupBy('deals.service_category')
-            ->get()
-            ->map(function ($data) use ($totalRevenue) {
-                return [
-                    'Service category' => $data->service_category,
-                    'revenue' => $data->revenue,
-                    'Contribution' => $totalRevenue ? round(($data->revenue / $totalRevenue) * 100, 2) : 0
-                ];
-            });
-
-
-        return response()->json(['reportData' => $reportData], 200);
-
-   
-    }
-    public function SaleSummary()
-    {
-        $quarters = [
-            'Q1' => [1, 3],  // January - March
-            'Q2' => [4, 6],  // April - June
-            'Q3' => [7, 9],  // July - September
-            'Q4' => [10, 12] // October - December
-        ];
-        
-        $quarterlyData = [];
-        $previousRevenue = null; 
-        
-        foreach ($quarters as $quarter => $months) {
-            $revenue = Order::whereMonth('created_at', '>=', $months[0])
-                ->whereMonth('created_at', '<=', $months[1])
-                ->sum('total_amount');
-        
-           
-            $growth = ($previousRevenue !== null && $previousRevenue > 0)
-                ? round((($revenue - $previousRevenue) / $previousRevenue) * 100, 2) . '%'
-                : '-';
-        
-            
-            $previousRevenue = $revenue;
-        
-          
-            $quarterlyData[] = [
-                'quarter' => $quarter,
-                'revenue' => $revenue,
-                'growth' => $growth
-            ];
-        }
-        
-        
-        return response()->json(['quarterlyData' => $quarterlyData], 200);
-        
-    }
-   
     public function sendInvite(Request $request)
     {
         $role = Auth::user()->role;
@@ -645,4 +706,77 @@ class SuperAdminController extends Controller
         
         return response()->json(['GetSupport' => $GetSupport]);
     }
+
+    public function ServiceProviderReport()
+    {
+        $role = Auth::user()->role;
+        if ($role == 0) {
+            $currentYear = Carbon::now()->year;
+
+            $quarters = [
+                'Q1' => [Carbon::create($currentYear, 1, 1), Carbon::create($currentYear, 3, 31)],
+                'Q2' => [Carbon::create($currentYear, 4, 1), Carbon::create($currentYear, 6, 30)],
+                'Q3' => [Carbon::create($currentYear, 7, 1), Carbon::create($currentYear, 9, 30)],
+                'Q4' => [Carbon::create($currentYear, 10, 1), Carbon::create($currentYear, 12, 31)],
+            ];
+
+            $report = [];
+            $totalNewServiceProviders = 0;
+            $totalCumulativeServiceProviders = 0;
+
+            foreach ($quarters as $quarter => $dates) {
+                $newServiceProviders = User::where('role', 2)
+                    ->whereBetween('created_at', [$dates[0], $dates[1]])
+                    ->count();
+
+                $cumulativeServiceProviders = User::where('role', 2)
+                    ->where('created_at', '<=', $dates[1])
+                    ->count();
+
+                $report[] = [
+                    'period' => $quarter,
+                    'new_service_providers' => $newServiceProviders,
+                    'cumulative_service_providers' => $cumulativeServiceProviders,
+                ];
+
+                $totalNewServiceProviders += $newServiceProviders;
+                $totalCumulativeServiceProviders += $cumulativeServiceProviders; // This will be the last cumulative count
+            }
+
+            // Add total row
+            $report[] = [
+                'period' => 'Total',
+                'new_service_providers' => $totalNewServiceProviders,
+                'cumulative_service_providers' => $totalCumulativeServiceProviders,
+            ];
+
+            return response()->json(['report' => $report], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function banProvider(Request $request)
+    {
+        $user = User::find($request->id);
+    
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+    
+        if ($user->role != 2) {
+            return response()->json(['message' => 'Invalid User'], 403);
+        }
+    
+        // Toggle status (0 → 1 OR 1 → 0)
+        $newStatus = $user->status == 0 ? 1 : 0;
+        $user->update(['status' => $newStatus]);
+    
+        // Message based on status
+        $message = $newStatus == 1 ? 'User banned successfully' : 'User unbanned successfully';
+    
+        return response()->json(['message' => $message, 'user' => $user], 200);
+    }
+    
 }
+
