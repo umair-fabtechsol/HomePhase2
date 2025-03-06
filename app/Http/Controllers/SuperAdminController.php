@@ -745,6 +745,10 @@ class SuperAdminController extends Controller
         if ($user->role != 2) {
             return response()->json(['message' => 'Invalid User'], 403);
         }
+
+        if ($user->status == 1) {
+            return response()->json(['message' => 'Provider is already banned'], 400);
+        }
         $user->update(['status' => 1]);
         return response()->json(['message' => 'User banned successfully', 'user' => $user], 200);
     }
