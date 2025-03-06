@@ -100,7 +100,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('SearchDealLocation', 'SearchDealLocation')->name('SearchDealLocation');
         Route::post('CustomerSupport', 'CustomerSupport')->name('CustomerSupport');
-        
+        Route::get('GetSalesRep', 'GetSalesRep')->name('GetSalesRep');
+        Route::get('AssignSalesRep/{id}', 'AssignSalesRep')->name('AssignSalesRep');
         
     });
 
@@ -170,8 +171,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('SaleSummary', 'SaleSummary')->name('SaleSummary');
             Route::post('sendInvite','sendInvite')->name('sendInvite');
             Route::get('GetSettingDetail/{id}', 'GetSettingDetail')->name('GetSettingDetail');
+            Route::get('ServiceProviderReport', 'ServiceProviderReport')->name('ServiceProviderReport');
             
-
+            Route::post('banProvider', 'banProvider')->name('banProvider');
             
 
             
