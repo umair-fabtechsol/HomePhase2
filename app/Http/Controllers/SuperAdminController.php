@@ -9,7 +9,11 @@ use App\Models\Order;
 use App\Models\Price;
 use App\Models\Review;
 use App\Models\Support;
+
+use App\Models\Order;
+
 use App\Models\PaymentHistory;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -653,7 +657,70 @@ class SuperAdminController extends Controller
         }
     }
 
+    public function ServiceSummary(){
 
+        $totalRevenue = Order::sum('total_amount');
+
+      
+        $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
+            ->join('orders', 'orders.deal_id', '=', 'deals.id')
+            ->groupBy('deals.service_category')
+            ->get()
+            ->map(function ($data) use ($totalRevenue) {
+                return [
+                    'Service category' => $data->service_category,
+                    'revenue' => $data->revenue,
+                    'Contribution' => $totalRevenue ? round(($data->revenue / $totalRevenue) * 100, 2) : 0
+                ];
+            });
+
+
+        return response()->json(['reportData' => $reportData], 200);
+
+   
+    }
+    
+    public function SaleSummary(){
+
+        $quarters = [
+            'Q1' => [1, 3],  // January - March
+            'Q2' => [4, 6],  // April - June
+            'Q3' => [7, 9],  // July - September
+            'Q4' => [10, 12] // October - December
+        ];
+
+        $quarterlyData = [];
+        $previousRevenue = 0;
+        $totalRevenue = Order::sum('total_amount');
+
+        foreach ($quarters as $quarter => $months) {
+            $revenue = Order::whereMonth('created_at', '>=', $months[0])
+                ->whereMonth('created_at', '<=', $months[1])
+                ->sum('total_amount');
+
+        
+            $growth = $previousRevenue > 0 ? round((($revenue - $previousRevenue) / $previousRevenue) * 100, 2) : '-';
+            $previousRevenue = $revenue;
+
+            $quarterlyData[] = [
+                'quarter' => $quarter,
+                'revenue' => $revenue,
+                'growth' => $growth
+            ];
+        }
+
+        
+        $totalGrowth = round(($totalRevenue > 0 ? ($totalRevenue / max($previousRevenue, 1)) * 100 : 0), 2);
+        $quarterlyData[] = [
+            'quarter' => 'Total',
+            'revenue' => $totalRevenue,
+            'growth' => $totalGrowth
+        ];
+
+        return response()->json(['quarterlyData' => $quarterlyData], 200);
+
+        
+    }
     public function sendInvite(Request $request)
     {
         $role = Auth::user()->role;
