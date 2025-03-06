@@ -19,6 +19,11 @@ return new class extends Migration
             $table->bigInteger('instant_chat')->nullable();
             $table->bigInteger('email_pro')->nullable();
             $table->bigInteger('get_direction')->nullable();
+            $table->bigInteger('th_call_pro')->nullable();
+            $table->bigInteger('th_text_pro')->nullable();
+            $table->bigInteger('th_instant_chat')->nullable();
+            $table->bigInteger('th_email_pro')->nullable();
+            $table->bigInteger('th_get_direction')->nullable();
             $table->bigInteger('customer_call_commission')->nullable();
             $table->bigInteger('customer_text_commission')->nullable();
             $table->bigInteger('customer_chat_commission')->nullable();
