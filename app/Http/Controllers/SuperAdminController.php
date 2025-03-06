@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\BusinessProfile;
 use App\Models\Deal;
 use App\Models\User;
+use App\Models\Order;
 use App\Models\Price;
 use App\Models\Review;
 use App\Models\Support;
+use App\Models\PaymentHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -23,9 +25,92 @@ class SuperAdminController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 0) {
-            $GetNumberOfDeals = Deal::all()->count();
-            $GetTotalServiceProvider = User::where('role', 2)->count();
-            $GetTotalClient = User::where('role', 1)->count();
+
+            $total_revenue_generated = Order::where('status', 'completed')->sum('total_amount');
+            $total_service_providers = User::where('role', 2)->count();
+            $total_customers = User::where('role', 1)->count();
+            $total_service_listed = Deal::all()->count();
+
+            $total_active_sales = User::where('role', 3)->where('status', 0)->count();
+            $total_active_providers = User::where('role', 2)->where('status', 0)->count();
+            $total_active_customers = User::where('role', 1)->where('status', 0)->count();
+
+            $total_transactions = PaymentHistory::where('payment_type', 'payout')->count();
+
+            // Calculate the number of new providers added each day of the current week
+            $startOfWeek = Carbon::now()->startOfWeek();
+            $endOfWeek = Carbon::now()->endOfWeek();
+            $newProvidersByDay = User::where('role', 2)
+                ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
+                ->groupBy('day')
+                ->orderBy('created_at')
+                ->get()
+                ->pluck('count', 'day')
+                ->toArray();
+
+            $newCustomersByDay = User::where('role', 1)
+            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
+            ->groupBy('day')
+            ->orderBy('created_at')
+            ->get()
+            ->pluck('count', 'day')
+            ->toArray();
+
+            $newSaleRapByDay = User::where('role', 3)
+            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
+            ->groupBy('day')
+            ->orderBy('created_at')
+            ->get()
+            ->pluck('count', 'day')
+            ->toArray();
+
+            $dayName = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            $addCurrentWeeklyProvider = [];
+            foreach ($dayName as $day) {
+                $addCurrentWeeklyProvider[] = $newProvidersByDay[$day] ?? 0;
+            }
+
+            $addCurrentWeeklyCustomer = [];
+            foreach ($dayName as $day) {
+                $addCurrentWeeklyCustomer[] = $newCustomersByDay[$day] ?? 0;
+            }
+
+            $addCurrentWeeklySales = [];
+            foreach ($dayName as $day) {
+                $addCurrentWeeklySales[] = $newSaleRapByDay[$day] ?? 0;
+            }
+
+            // Calculate the number of active users for each day of the current month
+            $currentMonth = Carbon::now()->month;
+            dd($currentMonth);
+            exit;
+            $currentYear = Carbon::now()->year;
+            $daysInMonth = Carbon::now()->daysInMonth;
+            $monthActiveUser = [];
+            for ($i = 1; $i <= $daysInMonth; $i++) {
+                $date = Carbon::create($currentYear, $currentMonth, $i);
+                $monthActiveUser[] = User::whereDate('created_at', $date)->count();
+            }
+
+
+            return response()->json([
+                'total_service_providers' => $total_service_providers,
+                'total_customers' => $total_customers,
+                'total_transactions' => $total_transactions,
+                'total_service_listed' => $total_service_listed,
+                'total_revenue_generated' => $total_revenue_generated,
+                'total_active_sales' => $total_active_sales,
+                'total_active_providers' => $total_active_providers,
+                'total_active_customers' => $total_active_customers,
+                'addCurrentWeeklyProvider' => $addCurrentWeeklyProvider,
+                'addCurrentWeeklyCustomer' => $addCurrentWeeklyCustomer,
+                'addCurrentWeeklySales' => $addCurrentWeeklySales,
+                'monthActiveUser' => $monthActiveUser,
+            ], 200);
+
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
