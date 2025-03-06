@@ -42,6 +42,7 @@ class User extends Authenticatable
         'sales_notification',
         'message_notification',
         'status',
+        'assign_sales_rep',
         '',
         
     ];
