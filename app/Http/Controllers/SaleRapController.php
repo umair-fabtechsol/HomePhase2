@@ -30,26 +30,72 @@ class SaleRapController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-    public function SaleRepProviders()
+    public function SaleRepProviders(Request $request)
     {
         $role = Auth::user()->role;
         if ($role == 3) {
-            $serviceProviders = DB::table('users')
-                ->leftJoin('deals', 'users.id', '=', 'deals.user_id')
+            $allProviders = DB::table('users')
+                ->leftJoin(DB::raw('(SELECT user_id, COUNT(id) as total_deals FROM deals GROUP BY user_id) as deals'), 'users.id', '=', 'deals.user_id')
+                ->leftJoin('reviews', 'users.id', '=', 'reviews.provider_id')
                 ->select(
                     'users.id',
                     'users.personal_image',
                     'users.name',
                     'users.email',
                     'users.phone',
-                    DB::raw('COUNT(deals.id) as total_deals')
+                    'users.status',
+                    DB::raw('COALESCE(deals.total_deals, 0) as total_deals'),
+                    DB::raw('AVG(reviews.rating) as rating')
                 )
                 ->where('users.role', 2)
-                ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.phone')
-                ->get();
+                ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.status', 'users.phone', 'deals.total_deals', 'reviews.provider_id');
 
-            if ($serviceProviders) {
-                return response()->json(['serviceProviders' => $serviceProviders], 200);
+            if ($request->has('search')) {
+                $search = $request->search;
+                $allProviders->where(function ($query) use ($search) {
+                    $query->where('users.name', 'like', "%{$search}%")
+                        ->orWhere('users.email', 'like', "%{$search}%")
+                        ->orWhere('users.phone', 'like', "%{$search}%");
+                });
+            }
+
+            $allProviders = $allProviders->paginate($request->providers ?? 8);
+
+            $totalProviders = $allProviders->total();
+
+            // Assiged
+
+            $assignProviders = DB::table('users')
+                ->leftJoin(DB::raw('(SELECT user_id, COUNT(id) as total_deals FROM deals GROUP BY user_id) as deals'), 'users.id', '=', 'deals.user_id')
+                ->leftJoin('reviews', 'users.id', '=', 'reviews.provider_id')
+                ->select(
+                    'users.id',
+                    'users.personal_image',
+                    'users.name',
+                    'users.email',
+                    'users.phone',
+                    'users.status',
+                    DB::raw('COALESCE(deals.total_deals, 0) as total_deals'),
+                    DB::raw('AVG(reviews.rating) as rating')
+                )
+                ->where('users.role', 2)->where('users.assign_sales_rep', Auth::id())
+                ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.status', 'users.phone', 'deals.total_deals', 'reviews.provider_id');
+
+            if ($request->has('search')) {
+                $search = $request->search;
+                $assignProviders->where(function ($query) use ($search) {
+                    $query->where('users.name', 'like', "%{$search}%")
+                        ->orWhere('users.email', 'like', "%{$search}%")
+                        ->orWhere('users.phone', 'like', "%{$search}%");
+                });
+            }
+
+            $assignProviders = $assignProviders->paginate($request->providers ?? 8);
+
+            $totalAssignProviders = $assignProviders->total();
+
+            if ($allProviders) {
+                return response()->json(['totalProviders' => $totalProviders, 'totalAssignProviders' => $totalAssignProviders, 'allProviders' => $allProviders, 'assignProviders' => $assignProviders ], 200);
             } else {
                 return response()->json(['message' => 'No Service Provider Available'], 401);
             }
