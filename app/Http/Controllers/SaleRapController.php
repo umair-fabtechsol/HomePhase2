@@ -34,7 +34,8 @@ class SaleRapController extends Controller
                 DB::raw('SUM(total_amount) as revenue')
             )
             ->groupBy('year', 'month')
-            ->orderBy('year', 'month')
+            ->orderBy('year', 'asc')
+            ->orderBy('month', 'asc')
             ->get()
             ->map(function ($data) {
                 return [
