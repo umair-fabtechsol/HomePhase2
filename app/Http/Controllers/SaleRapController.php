@@ -138,7 +138,7 @@ class SaleRapController extends Controller
                 'totalRevenue' => $totalRevenue,
                 'commission' => $commission,
                 'top_catogory_revenue' => $reportData,
-                'early_evenue' => $formattedMonthlyRevenue,
+                'early_revenue' => $formattedMonthlyRevenue,
                 'monthly_revenue' => $formattedDailyRevenue,
                 'weekly_revenue' => $formattedWeeklyRevenue,
             ], 200);
