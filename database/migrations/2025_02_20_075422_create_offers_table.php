@@ -20,6 +20,8 @@ return new class extends Migration
             $table->text('description');
             $table->Integer('price');
             $table->datetime('shedule');
+            $table->date('date')->nullable();
+            
             $table->timestamps();
         });
     }
