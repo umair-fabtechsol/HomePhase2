@@ -1403,7 +1403,7 @@ class ServiceProviderController extends Controller
     public function CreateOffer(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 1) {
+        if ($role == 2) {
             $validator = Validator::make($request->all(), [
                 'customer_id' => 'required',
                 'provider_id' => 'required',
