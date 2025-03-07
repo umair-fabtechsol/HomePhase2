@@ -19,23 +19,25 @@ class PaymentController extends Controller
 
         public function charge(Request $request)
     {
-        try {
-            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
-            $paymentIntent = \Stripe\PaymentIntent::create([
-                'amount' => 5000,
-                'currency' => 'usd',
-                'payment_method' => $request->payment_method,
-                'confirmation_method' => 'manual',
-                'confirm' => true,
-                'return_url' => url('/payment-success'), // Redirects users after payment
-            ]);
+       // try {
+        //     \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
-            return response()->json(['success' => true]);
+        //     $paymentIntent = \Stripe\PaymentIntent::create([
+        //         'amount' => 5000,
+        //         'currency' => 'usd',
+        //         'payment_method' => $request->payment_method,
+        //         'confirmation_method' => 'manual',
+        //         'confirm' => true,
+        //         'return_url' => url('/payment-success'), // Redirects users after payment
+        //     ]);
+           
+        //     return response()->json(['success' => true]);
 
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()]);
-        }
+        // } catch (\Exception $e) {
+        //     return response()->json(['error' => $e->getMessage()]);
+        // }
+        
     }
 
 
