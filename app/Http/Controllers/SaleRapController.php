@@ -28,6 +28,22 @@ class SaleRapController extends Controller
 
             $totalRevenue = Order::sum('total_amount');
 
+            $monthlyRevenue = Order::select(
+                DB::raw('YEAR(created_at) as year'),
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('SUM(total_amount) as revenue')
+            )
+            ->groupBy('year', 'month')
+            ->orderBy('year', 'month')
+            ->get()
+            ->map(function ($data) {
+                return [
+                    'year' => $data->year,
+                    'month' => $data->month,
+                    'revenue' => $data->revenue,
+                ];
+            });
+
       
             $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
             ->join('orders', 'orders.deal_id', '=', 'deals.id')
@@ -51,7 +67,8 @@ class SaleRapController extends Controller
                 'recetPublishDeals' => $recetPublishDeals,
                 'totalRevenue' => $totalRevenue,
                 'commission' => $commission,
-                'top_catogory_revenue' => $reportData
+                'top_catogory_revenue' => $reportData,
+                'monthlyRevenue' => $monthlyRevenue
             ], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
