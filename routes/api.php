@@ -92,6 +92,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('OrdersList','OrdersList')->name('OrdersList');
         Route::get('GetInformationPrice', 'GetInformationPrice')->name('GetInformationPrice');
 
+        Route::get('SearchHomeServices', 'SearchHomeServices')->name('SearchHomeServices');
+        
+
+
         Route::post('FavoritService', 'FavoritService')->name('FavoritService');
         Route::get('GetFavoritService', 'GetFavoritService')->name('GetFavoritService');
 
@@ -137,6 +141,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('OrderStatus/{id}', 'OrderStatus')->name('OrderStatus');
             Route::get('GetCustomerInprogressOrder/{id}', 'GetCustomerInprogressOrder')->name('GetCustomerInprogressOrder');
             
+            Route::get('PublishSetting/{id}', 'PublishSetting')->name('PublishSetting');
         });
     });
 
