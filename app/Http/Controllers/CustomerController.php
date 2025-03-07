@@ -659,6 +659,63 @@ class CustomerController extends Controller
         }
     }
 
-    
+    public function CustomerDetail()
+    {
+        $role = Auth::user()->role;
+        $userId = Auth::id();
+        if ($role == 1) {
+            $user = User::find($userId);
+
+            $getPayment = PaymentDetail::where('user_id', $userId)->get();
+            $getSocial = SocialProfile::where('user_id', $userId)->get();
+            if ($user) {
+
+                return response()->json(['user' => $user, 'getPayment' => $getPayment, 'getSocial' => $getSocial], 200);
+            }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function AddCustomerPayment(Request $request)
+    {
+        $role = Auth::user()->role;
+        $userId = Auth::id();
+        if ($role == 1) {
+            $data = $request->all();
+            $payment = PaymentDetail::where('user_id', $userId)->first();
+            if ($payment) {
+
+                $payment->update($data);
+                $notifications = [
+                    'title' => 'update Payment details',
+                    'message' => 'Updated Payment details successfully',
+                    'created_by' => $userId,
+                    'status' => 0,
+                    'clear' => 'no',
+
+                ];
+                Notification::create($notifications);
+                return response()->json(['message' => 'Updated Payment details successfully', 'payment' => $payment], 200);
+            } else {
+                    $data['user_id'] = $userId;
+                    $payment = PaymentDetail::create($data);
+                    $notifications = [
+                        'title' => 'Create Payment details',
+                        'message' => 'Added Payment details successfully',
+                        'created_by' => $userId,
+                        'status' => 0,
+                        'clear' => 'no',
+
+                    ];
+                    Notification::create($notifications);
+                    return response()->json(['message' => 'Added Payment details successfully', 'payment' => $payment], 200);
+                
+            }
+            return response()->json(['message' => 'User not found'], 401);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
     
 }
