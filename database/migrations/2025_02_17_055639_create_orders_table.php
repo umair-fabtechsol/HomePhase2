@@ -18,6 +18,7 @@ return new class extends Migration
             $table->bigInteger('total_amount');
             $table->string('status');
             $table->text('notes')->nullable();
+            $table->text('scheduleDate')->nullable();
             $table->timestamps();
         });
     }
