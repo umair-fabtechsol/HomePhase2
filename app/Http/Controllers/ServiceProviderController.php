@@ -1203,9 +1203,8 @@ class ServiceProviderController extends Controller
         $role = Auth::user()->role;
         if ($role == 2) {
             $userId = Auth::id();
-            $dealIds = Deal::where('user_id', $userId)->pluck('user_id')->toArray();
-            
-            $orders = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->leftjoin('delivery_images', 'delivery_images.order_id', '=', 'orders.id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title', 'delivery_images.type','users.email','users.phone','users.location')->whereIn('orders.provider_id', $dealIds)
+       
+            $orders = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title','users.email','users.phone','users.location','deals.images')->where('orders.provider_id', $userId)
                 ->get()->map(function ($order) {
 
                     $beforeImages = DB::table('delivery_images')
@@ -1405,9 +1404,16 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 2) {
+            $validator = Validator::make($request->all(), [
+                'customer_id' => 'required',
+                'provider_id' => 'required',
+                'deal_id' => 'required',
+                'total_amount' => 'required',
+            ]);
             $data = $request->all();
 
-            $Offer = Offer::create($data);
+            $data['status']= 'new';
+            $Offer = Order::create($data);
 
             return response()->json(['message' => 'Offer created successfully', 'Offer' => $Offer]);
         } else {
