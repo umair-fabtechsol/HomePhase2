@@ -97,6 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('GetInformationPrice', 'GetInformationPrice')->name('GetInformationPrice');
 
         Route::get('SearchHomeServices', 'SearchHomeServices')->name('SearchHomeServices');
+        Route::get('FilterHomeDeals', 'FilterHomeDeals')->name('FilterHomeDeals');
         
 
 
@@ -138,6 +139,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('DeleteReview/{id}', 'DeleteReview')->name('DeleteReview');
 
             Route::post('FilterService', 'FilterService')->name('FilterService');
+            Route::get('SearchHomeDeals', 'SearchHomeDeals')->name('SearchHomeDeals');
+            Route::get('FilterHomeService', 'FilterHomeService')->name('FilterHomeService');
 
             Route::post('AskForRevison', 'AskForRevison')->name('AskForRevison');
 

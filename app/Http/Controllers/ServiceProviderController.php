@@ -1662,6 +1662,53 @@ class ServiceProviderController extends Controller
         }
     }
 
+    public function FilterHomeDeals(Request $request)
+    {
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $budget = $request->budget;
+            $reviews = $request->reviews;
+            $estimate_time = $request->estimate_time;
+            $location = $request->location;
+            $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+                ->orderBy('deals.id', 'desc')
+                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating');
+                if($reviews){
+                    $deals = $deals->where('reviews.rating', $reviews);
+                }
+                if($budget){
+                    $deals = $deals->where(function ($query) use ($budget) {
+                        $query->where('deals.flat_rate_price','<=' , $budget)
+                            ->orWhere('deals.hourly_rate','<=' , $budget)
+                            ->orWhere('deals.price1','<=' , $budget);
+                    });
+                }
+                if($estimate_time){
+                    $deals = $deals->where(function ($query) use ($estimate_time) {
+                        $query->where('deals.flat_estimated_service_time', $estimate_time)
+                            ->orWhere('deals.hourly_estimated_service_time', $estimate_time)
+                            ->orWhere('deals.estimated_service_timing1', $estimate_time);
+                    });
+                }
+
+                if($location){
+                    $locationDistance = BusinessProfile::where('location_miles', '<=', $location)->pluck('user_id')->toArray();
+                    $deals = $deals->whereIn('deals.user_id', $locationDistance);
+                }
+
+                $deals = $deals->get();
+            if ($deals) {
+                return response()->json(['deals' => $deals], 200);
+            } else {
+                return response()->json(['message' => 'No deals found'], 401);
+            }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
     public function AddScheduleOrder(Request $request){
         $role = Auth::user()->role;
         if ($role == 2) {
