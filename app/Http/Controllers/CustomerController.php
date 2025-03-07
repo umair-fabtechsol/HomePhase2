@@ -194,8 +194,11 @@ class CustomerController extends Controller
                 ->orderBy('deals.id', 'desc')
                 ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
                 ->get();
+            
+            $fetchDeal = Deal::find($id); 
+            $businessProfile = BusinessProfile::where('user_id', $fetchDeal->user_id)->first();
             if ($deal) {
-                return response()->json(['deal' => $deal], 200);
+                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);
             }

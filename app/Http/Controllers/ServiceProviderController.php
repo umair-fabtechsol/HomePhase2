@@ -26,6 +26,8 @@ use Illuminate\Support\Facades\Validator;
 class ServiceProviderController extends Controller
 {
 
+
+
     public function Deals(Request $request)
     {
         $role = Auth::user()->role;
@@ -1632,6 +1634,7 @@ class ServiceProviderController extends Controller
         }
     }
 
+    // for home section service provider 
     public function SearchHomeServices(Request $request){
         $role = Auth::user()->role;
         if ($role == 2) {
