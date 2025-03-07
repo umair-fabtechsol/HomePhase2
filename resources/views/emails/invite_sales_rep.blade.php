@@ -8,7 +8,7 @@
 <body>
     <p>Hello,</p>
     <p>You have been invited to join as a Sales Representative. Click the link below to sign up:</p>
-    <p><a href="https://homerservice-ph2.netlify.app/signup" state={{ userType: "3" }} target="_blank">Sign Up Here</a></p>
+    <p><a href="https://homerservice-ph2.netlify.app/signup" target="_blank">Sign Up Here</a></p>
     <p>Thank you!</p>
 </body>
 
