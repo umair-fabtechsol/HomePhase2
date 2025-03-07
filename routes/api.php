@@ -92,10 +92,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('OrdersList','OrdersList')->name('OrdersList');
         Route::get('GetInformationPrice', 'GetInformationPrice')->name('GetInformationPrice');
 
-
-        
-
-
         Route::post('FavoritService', 'FavoritService')->name('FavoritService');
         Route::get('GetFavoritService', 'GetFavoritService')->name('GetFavoritService');
 
@@ -125,7 +121,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('UpdateOrder', 'UpdateOrder')->name('UpdateOrder');
             Route::get('Orders', 'Orders')->name('Orders');
             Route::get('Order/{id}', 'Order')->name('Order');
-
+            
             Route::post('UploadReview', 'UploadReview')->name('UploadReview');
             Route::post('UpdateReview', 'UpdateReview')->name('UpdateReview');
             Route::get('DeleteReview/{id}', 'DeleteReview')->name('DeleteReview');

@@ -1403,10 +1403,17 @@ class ServiceProviderController extends Controller
     public function CreateOffer(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 2) {
+        if ($role == 1) {
+            $validator = Validator::make($request->all(), [
+                'customer_id' => 'required',
+                'provider_id' => 'required',
+                'deal_id' => 'required',
+                'total_amount' => 'required',
+            ]);
             $data = $request->all();
 
-            $Offer = Offer::create($data);
+            $data['status']= 'new';
+            $Offer = Order::create($data);
 
             return response()->json(['message' => 'Offer created successfully', 'Offer' => $Offer]);
         } else {
