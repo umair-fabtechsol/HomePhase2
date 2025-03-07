@@ -29,7 +29,7 @@ class SaleRapController extends Controller
             $totalRevenue = Order::sum('total_amount');
 
       
-        $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
+            $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
             ->join('orders', 'orders.deal_id', '=', 'deals.id')
             ->groupBy('deals.service_category')
             ->get()
@@ -37,9 +37,9 @@ class SaleRapController extends Controller
                 return [
                     'category' => $data->service_category,
                     'revenue' => $data->revenue,
-                    'percentage' => $totalRevenue ? round(($data->revenue / $totalRevenue) * 100, 2) : 0
                 ];
-            });
+            })
+            ->sortByDesc('revenue');
 
             $commission = $totalRevenue * 0.02;
         
@@ -51,6 +51,7 @@ class SaleRapController extends Controller
                 'recetPublishDeals' => $recetPublishDeals,
                 'totalRevenue' => $totalRevenue,
                 'commission' => $commission,
+                'top_catogory_revenue' => $reportData
             ], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
