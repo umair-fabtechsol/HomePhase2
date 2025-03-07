@@ -142,6 +142,10 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('GetCustomerInprogressOrder/{id}', 'GetCustomerInprogressOrder')->name('GetCustomerInprogressOrder');
             
             Route::get('PublishSetting/{id}', 'PublishSetting')->name('PublishSetting');
+            
+            Route::get('CustomerDetail', 'CustomerDetail')->name('CustomerDetail');
+            Route::post('AddCustomerPayment', 'AddCustomerPayment')->name('AddCustomerPayment');
+
         });
     });
 
