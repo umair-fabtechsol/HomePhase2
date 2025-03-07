@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('offers', function (Blueprint $table) {
             $table->id();
             $table->Integer('user_id');
+            $table->Integer('customer_id');
             $table->Integer('service_id');
             $table->Integer('price_plan');
             $table->text('description');
