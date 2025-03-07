@@ -16,7 +16,8 @@ class OrderSeeder extends Seeder
         
         DB::table('orders')->insert([
             [
-                'customer_id' => 3,
+                'provider_id' => 3,
+                'customer_id' => 2,
                 'deal_id' => 13,
                 'total_amount' => 50,
                 'status' => 'pending',
@@ -25,7 +26,8 @@ class OrderSeeder extends Seeder
                 'updated_at' => Carbon::now(),
             ],
             [
-                'customer_id' => 3,
+                'provider_id' => 3,
+                'customer_id' => 11,
                 'deal_id' => 14,
                 'total_amount' => 60,
                 'status' => 'pending',
@@ -34,7 +36,8 @@ class OrderSeeder extends Seeder
                 'updated_at' => Carbon::now(),
             ],
             [
-                'customer_id' => 3,
+                'provider_id' => 24,
+                'customer_id' => 20,
                 'deal_id' => 16,
                 'total_amount' => 60,
                 'status' => 'pending',
