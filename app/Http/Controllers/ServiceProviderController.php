@@ -1661,5 +1661,23 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+
+    public function AddScheduleOrder(Request $request){
+        $role = Auth::user()->role;
+        if ($role == 2) {
+        
+            $GetOrder = Order::find($request->id);
+
+            $GetOrder->update([
+                
+                'scheduleDate' => $request->scheduleDate,
+                'status' => 'scheduled' 	                
+            ]);
+            return response()->json(['message' => 'Order status updated  successfully.'], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+        
+    }
     
 }
