@@ -17,7 +17,7 @@ class OrderSeeder extends Seeder
         DB::table('orders')->insert([
             [
                 'customer_id' => 3,
-                'deal_id' => 1,
+                'deal_id' => 13,
                 'total_amount' => 50,
                 'status' => 'pending',
                 'notes' => 'test',
@@ -26,7 +26,7 @@ class OrderSeeder extends Seeder
             ],
             [
                 'customer_id' => 3,
-                'deal_id' => 1,
+                'deal_id' => 14,
                 'total_amount' => 60,
                 'status' => 'pending',
                 'notes' => 'test order 2',
@@ -35,7 +35,7 @@ class OrderSeeder extends Seeder
             ],
             [
                 'customer_id' => 3,
-                'deal_id' => 2,
+                'deal_id' => 16,
                 'total_amount' => 60,
                 'status' => 'pending',
                 'notes' => 'test order 2',
