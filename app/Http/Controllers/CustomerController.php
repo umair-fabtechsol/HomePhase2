@@ -635,4 +635,34 @@ class CustomerController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+
+    public function PublishSetting($id)
+    {
+
+        $role = Auth::user()->role;
+        if ($role == 1) {
+            $setting = BusinessProfile::where('user_id', $id)->first();
+            if ($setting) {
+                $setting->update(['publish' => 1]);
+
+                $notifications = [
+                    'title' => 'Setting Publish',
+                    'message' => 'Setting Publish successfully',
+                    'created_by' => $setting->user_id,
+                    'status' => 0,
+                    'clear' => 'no',
+
+                ];
+                Notification::create($notifications);
+                return response()->json(['message' => 'Setting Publish successfully', 'setting' => $setting], 200);
+            } else {
+                return response()->json(['message' => 'No Setting found'], 401);
+            }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    
+    
 }

@@ -1625,5 +1625,32 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+
+    public function SearchHomeServices(Request $request){
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $deals = Deal::query();
+            if ($request->service) {
+                $deals = $deals->where('service_category', 'like', '%' . $request->service . '%')->where('user_id', Auth::id());
+            }
+
+            if ($request->location) {
+                $location = BusinessProfile::where('user_id',Auth::id())->where('service_location', 'like', '%' . $request->location . '%')->pluck('user_id')->toArray();
+                $deals = $deals->whereIn('user_id', $location);
+            }
+            $deals = $deals->pluck('id')->toArray();
+
+            $searchDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+                ->orderBy('deals.id', 'desc')
+                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+                ->where('deals.user_id', Auth::id())->where('deals.id', $deals)
+                ->get();
+            return response()->json(['message' => 'No user found', 'services' => $searchDeal], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
     
 }
