@@ -717,5 +717,19 @@ class CustomerController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+
+    public function GetCustomerFavoritService(){
+        $userId = Auth::id();
+        $deals=Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
+                ->orderBy('deals.id', 'desc')
+                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+                ->where('favorit_deals.user_id', $userId)
+                ->get();
+        
+                return response()->json(['deals' => $deals], 200);
+    }
     
 }
