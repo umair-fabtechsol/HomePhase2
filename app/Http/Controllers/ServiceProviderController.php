@@ -1204,6 +1204,7 @@ class ServiceProviderController extends Controller
         if ($role == 2) {
             $userId = Auth::id();
             $dealIds = Deal::where('user_id', $userId)->pluck('user_id')->toArray();
+            
             $orders = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->leftjoin('delivery_images', 'delivery_images.order_id', '=', 'orders.id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title', 'delivery_images.type','users.email','users.phone','users.location')->whereIn('orders.provider_id', $dealIds)
                 ->get()->map(function ($order) {
 
