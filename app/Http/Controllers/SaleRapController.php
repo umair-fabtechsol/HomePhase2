@@ -26,11 +26,27 @@ class SaleRapController extends Controller
             $recentDeal = Deal::where('publish', 1)->whereDate('created_at', Carbon::today())->count();
             $recetPublishDeals = Deal::leftjoin('users', 'deals.user_id', '=', 'users.id')->select('deals.*', 'users.personal_image', 'users.name')->where('deals.publish', 1)->where('users.assign_sales_rep', Auth::id())->orderBy('deals.id','desc')->limit(2)->get();
 
+            $totalRevenue = Order::sum('total_amount');
+
+      
+        $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
+            ->join('orders', 'orders.deal_id', '=', 'deals.id')
+            ->groupBy('deals.service_category')
+            ->get()
+            ->map(function ($data) use ($totalRevenue) {
+                return [
+                    'category' => $data->service_category,
+                    'revenue' => $data->revenue,
+                    'percentage' => $totalRevenue ? round(($data->revenue / $totalRevenue) * 100, 2) : 0
+                ];
+            });
+
             return response()->json([
                 'assignPros' => $assignPros,
                 'newPros' => $newPros,
                 'recentDeal' => $recentDeal,
-                'recetPublishDeals' => $recetPublishDeals
+                'recetPublishDeals' => $recetPublishDeals,
+                'reportData' => $reportData
             ], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
