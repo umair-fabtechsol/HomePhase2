@@ -1204,7 +1204,25 @@ class ServiceProviderController extends Controller
         if ($role == 2) {
             $userId = Auth::id();
             $orders = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->leftjoin('delivery_images', 'delivery_images.order_id', '=', 'orders.id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title', 'delivery_images.type','users.email','users.phone','users.location')->where('orders.provider_id', $userId)
-                ->get();
+                ->get()->map(function ($order) {
+
+                    $beforeImages = DB::table('delivery_images')
+                        ->where('order_id', $order->id)
+                        ->where('type', 'before')
+                        ->pluck('before_images');
+
+
+                    $afterImages = DB::table('delivery_images')
+                        ->where('order_id', $order->id)
+                        ->where('type', 'after')
+                        ->pluck('after_images');
+
+                    return [
+                        'order' => $order,
+                        'before_images' => $beforeImages,
+                        'after_images' => $afterImages,
+                    ];
+                });
 
 
             if ($orders) {
