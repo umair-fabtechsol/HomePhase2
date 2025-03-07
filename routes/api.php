@@ -188,6 +188,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('SaleProviderDetail/{user_id}', 'SaleProviderDetail')->name('SaleProviderDetail');
             Route::post('UpdateSaleProvider', 'UpdateSaleProvider')->name('UpdateSaleProvider');
             Route::get('Dashboard', 'Dashboard')->name('Dashboard');
+            Route::get('RecenltyPublishDeals', 'RecenltyPublishDeals')->name('RecenltyPublishDeals');
             Route::post('SalesPersonal', 'SalesPersonal')->name('SalesPersonal');
             Route::post('SalesSecurity', 'SalesSecurity')->name('SalesSecurity');
             Route::post('AddTask', 'AddTask')->name('AddTask');
