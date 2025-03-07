@@ -8,6 +8,7 @@ class Offer extends Model
 {
     protected $fillable = [
         'user_id',
+        'customer_id',
         'service_id',
         'price_plan',
         'description',
