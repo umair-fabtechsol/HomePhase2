@@ -146,6 +146,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('CustomerDetail', 'CustomerDetail')->name('CustomerDetail');
             Route::post('AddCustomerPayment', 'AddCustomerPayment')->name('AddCustomerPayment');
 
+            Route::get('GetCustomerFavoritService', 'GetCustomerFavoritService')->name('GetCustomerFavoritService');
+
         });
     });
 
