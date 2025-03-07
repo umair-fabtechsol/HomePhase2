@@ -36,12 +36,25 @@ class SaleRapController extends Controller
             ->groupBy('month')
             ->orderBy('month', 'asc')
             ->get()
-            ->map(function ($data) {
-                return [
-                    'month' => $data->month,
-                    'revenue' => $data->revenue,
+            ->keyBy('month')
+            ->toArray();
+            
+            // Initialize an array with all months set to 0
+            $allMonths = array_fill(1, 12, 0);
+            
+            // Update the array with actual revenue data
+            foreach ($monthlyRevenue as $month => $data) {
+                $allMonths[$month] = $data['revenue'];
+            }
+            
+            // Format the data for the response
+            $formattedMonthlyRevenue = [];
+            foreach ($allMonths as $month => $revenue) {
+                $formattedMonthlyRevenue[] = [
+                    'month' => $month,
+                    'revenue' => $revenue,
                 ];
-            });
+            }
 
       
             $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
@@ -67,7 +80,7 @@ class SaleRapController extends Controller
                 'totalRevenue' => $totalRevenue,
                 'commission' => $commission,
                 'top_catogory_revenue' => $reportData,
-                'monthlyRevenue' => $monthlyRevenue
+                'monthlyRevenue' => $formattedMonthlyRevenue
             ], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
