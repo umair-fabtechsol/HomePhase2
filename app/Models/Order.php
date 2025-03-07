@@ -12,5 +12,6 @@ class Order extends Model
         'total_amount',
         'status',
         'notes',
+        'scheduleDate',
     ];
 }
