@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\PaymentDetail;
 use App\Models\Hour;
 use App\Models\Order;
+use App\Models\Price;
 use App\Models\Offer;
 use App\Models\DealUpload;
 use App\Models\Notification;
@@ -1605,6 +1606,20 @@ class ServiceProviderController extends Controller
             }
 
             return response()->json(['sales_reps' => $GetSalesRep]);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function GetInformationPrice()
+    {
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $GetPriceDetails = Price::first();
+            if ($GetPriceDetails) {
+                return response()->json(['GetPriceDetails' => $GetPriceDetails], 200);
+            }
+            return response()->json(['message' => 'price not available'], 401);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
