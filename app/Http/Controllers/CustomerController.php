@@ -313,8 +313,8 @@ class CustomerController extends Controller
         if ($role == 1) {
             $user = User::find($id);
 
-            $PaymentMethod = PaymentMethod::where('user_id', $id)->get();
-
+            $getPayment = PaymentDetail::where('user_id', $id)->get();
+            $getSocial = SocialProfile::where('user_id', $id)->get();
             if ($user) {
 
                 return response()->json(['user' => $user, 'PaymentMethod' => $PaymentMethod], 200);
