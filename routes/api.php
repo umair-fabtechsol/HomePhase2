@@ -96,7 +96,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('OrdersList','OrdersList')->name('OrdersList');
         Route::get('GetInformationPrice', 'GetInformationPrice')->name('GetInformationPrice');
 
-
+        Route::get('SearchHomeServices', 'SearchHomeServices')->name('SearchHomeServices');
         
 
 
@@ -108,6 +108,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('CustomerSupport', 'CustomerSupport')->name('CustomerSupport');
         Route::get('GetSalesRep', 'GetSalesRep')->name('GetSalesRep');
         Route::get('AssignSalesRep/{id}', 'AssignSalesRep')->name('AssignSalesRep');
+        Route::post('AddScheduleOrder', 'AddScheduleOrder')->name('AddScheduleOrder');
+        
         
     });
 
@@ -130,7 +132,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('UpdateOrder', 'UpdateOrder')->name('UpdateOrder');
             Route::get('Orders', 'Orders')->name('Orders');
             Route::get('Order/{id}', 'Order')->name('Order');
-
+            
             Route::post('UploadReview', 'UploadReview')->name('UploadReview');
             Route::post('UpdateReview', 'UpdateReview')->name('UpdateReview');
             Route::get('DeleteReview/{id}', 'DeleteReview')->name('DeleteReview');
@@ -146,6 +148,13 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('OrderStatus/{id}', 'OrderStatus')->name('OrderStatus');
             Route::get('GetCustomerInprogressOrder/{id}', 'GetCustomerInprogressOrder')->name('GetCustomerInprogressOrder');
             
+            Route::get('PublishSetting/{id}', 'PublishSetting')->name('PublishSetting');
+            
+            Route::get('CustomerDetail', 'CustomerDetail')->name('CustomerDetail');
+            Route::post('AddCustomerPayment', 'AddCustomerPayment')->name('AddCustomerPayment');
+
+            Route::get('GetCustomerFavoritService', 'GetCustomerFavoritService')->name('GetCustomerFavoritService');
+
         });
     });
 

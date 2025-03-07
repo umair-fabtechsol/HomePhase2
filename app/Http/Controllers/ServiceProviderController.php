@@ -26,6 +26,8 @@ use Illuminate\Support\Facades\Validator;
 class ServiceProviderController extends Controller
 {
 
+
+
     public function Deals(Request $request)
     {
         $role = Auth::user()->role;
@@ -1203,8 +1205,8 @@ class ServiceProviderController extends Controller
         $role = Auth::user()->role;
         if ($role == 2) {
             $userId = Auth::id();
-            $dealIds = Deal::where('user_id', $userId)->pluck('id')->toArray();
-            $orders = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->leftjoin('delivery_images', 'delivery_images.order_id', '=', 'orders.id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title', 'delivery_images.type','users.email','users.phone','users.location')->whereIn('deal_id', $dealIds)
+       
+            $orders = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title','users.email','users.phone','users.location','deals.images')->where('orders.provider_id', $userId)
                 ->get()->map(function ($order) {
 
                     $beforeImages = DB::table('delivery_images')
@@ -1404,9 +1406,16 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 2) {
+            $validator = Validator::make($request->all(), [
+                'customer_id' => 'required',
+                'provider_id' => 'required',
+                'deal_id' => 'required',
+                'total_amount' => 'required',
+            ]);
             $data = $request->all();
 
-            $Offer = Offer::create($data);
+            $data['status']= 'new';
+            $Offer = Order::create($data);
 
             return response()->json(['message' => 'Offer created successfully', 'Offer' => $Offer]);
         } else {
@@ -1623,6 +1632,52 @@ class ServiceProviderController extends Controller
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
+    }
+
+    // for home section service provider 
+    public function SearchHomeServices(Request $request){
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $deals = Deal::query();
+            if ($request->service) {
+                $deals = $deals->where('service_category', 'like', '%' . $request->service . '%')->where('user_id', Auth::id());
+            }
+
+            if ($request->location) {
+                $location = BusinessProfile::where('user_id',Auth::id())->where('service_location', 'like', '%' . $request->location . '%')->pluck('user_id')->toArray();
+                $deals = $deals->whereIn('user_id', $location);
+            }
+            $deals = $deals->pluck('id')->toArray();
+
+            $searchDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+                ->orderBy('deals.id', 'desc')
+                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+                ->where('deals.user_id', Auth::id())->where('deals.id', $deals)
+                ->get();
+            return response()->json(['message' => 'No user found', 'services' => $searchDeal], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function AddScheduleOrder(Request $request){
+        $role = Auth::user()->role;
+        if ($role == 2) {
+        
+            $GetOrder = Order::find($request->id);
+
+            $GetOrder->update([
+                
+                'scheduleDate' => $request->scheduleDate,
+                'status' => 'scheduled' 	                
+            ]);
+            return response()->json(['message' => 'Order status updated  successfully.'], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+        
     }
     
 }

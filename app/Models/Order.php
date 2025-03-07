@@ -14,5 +14,7 @@ class Order extends Model
         'status',
         'notes',
         'scheduleDate',
+        'date',
+        
     ];
 }

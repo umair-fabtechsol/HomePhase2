@@ -19,17 +19,23 @@ class PaymentController extends Controller
 
         public function charge(Request $request)
     {
-
+       
        try {
             \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-
+            $token = Token::create([
+                'card' => [
+                    'number'    => '4242424242424242',
+                    'exp_month' => 12,
+                    'exp_year'  => 2025,
+                    'cvc'       => '123',
+                ],
+            ]);
             $paymentIntent = \Stripe\PaymentIntent::create([
                 'amount' => 5000,
                 'currency' => 'usd',
-                'payment_method' => $request->payment_method,
+                'payment_method' => $token->id,
                 'confirmation_method' => 'manual',
                 'confirm' => true,
-                'return_url' => url('/payment-success'),
             ]);
            
             return response()->json(['success' => true]);

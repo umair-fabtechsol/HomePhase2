@@ -194,8 +194,11 @@ class CustomerController extends Controller
                 ->orderBy('deals.id', 'desc')
                 ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
                 ->get();
+            
+            $fetchDeal = Deal::find($id); 
+            $businessProfile = BusinessProfile::where('user_id', $fetchDeal->user_id)->first();
             if ($deal) {
-                return response()->json(['deal' => $deal], 200);
+                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);
             }
@@ -310,11 +313,11 @@ class CustomerController extends Controller
         if ($role == 1) {
             $user = User::find($id);
 
-            $PaymentMethod = PaymentMethod::where('user_id', $id)->get();
-
+            $getPayment = PaymentDetail::where('user_id', $id)->get();
+            $getSocial = SocialProfile::where('user_id', $id)->get();
             if ($user) {
 
-                return response()->json(['user' => $user, 'PaymentMethod' => $PaymentMethod], 200);
+                return response()->json(['user' => $user, 'getPayment' => $getPayment], 200);
             }
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
@@ -598,14 +601,7 @@ class CustomerController extends Controller
             $order = Order::find($id);
             if ($order) {
                 $order->update(['status' => 'completed']);
-                $notification = [
-                    'title' => 'Order Completed',
-                    'message' => 'Order has been completed successfully',
-                    'created_by' => $order->customer_id,
-                    'status' => 0,
-                    'clear' => 'no',
-                ];
-                Notification::create($notification);
+               
                 return response()->json(['message' => 'Order completed successfully', 'order' => $order], 200);
             } else {
                 return response()->json(['message' => 'No Order found'], 401);
@@ -635,6 +631,7 @@ class CustomerController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+
     public function uploadImage(Request $request)
     {
         if (!auth()->user()) {
@@ -657,4 +654,107 @@ class CustomerController extends Controller
 
     return response()->json(['message' => 'No image uploaded'], 400);
 }
+
+
+    public function PublishSetting($id)
+    {
+
+        $role = Auth::user()->role;
+        if ($role == 1) {
+            $setting = BusinessProfile::where('user_id', $id)->first();
+            if ($setting) {
+                $setting->update(['publish' => 1]);
+
+                $notifications = [
+                    'title' => 'Setting Publish',
+                    'message' => 'Setting Publish successfully',
+                    'created_by' => $setting->user_id,
+                    'status' => 0,
+                    'clear' => 'no',
+
+                ];
+                Notification::create($notifications);
+                return response()->json(['message' => 'Setting Publish successfully', 'setting' => $setting], 200);
+            } else {
+                return response()->json(['message' => 'No Setting found'], 401);
+            }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function CustomerDetail()
+    {
+        $role = Auth::user()->role;
+        $userId = Auth::id();
+        if ($role == 1) {
+            $user = User::find($userId);
+
+            $getPayment = PaymentDetail::where('user_id', $userId)->get();
+            $getSocial = SocialProfile::where('user_id', $userId)->get();
+            if ($user) {
+
+                return response()->json(['user' => $user, 'getPayment' => $getPayment, 'getSocial' => $getSocial], 200);
+            }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function AddCustomerPayment(Request $request)
+    {
+        $role = Auth::user()->role;
+        $userId = Auth::id();
+        if ($role == 1) {
+            $data = $request->all();
+            $payment = PaymentDetail::where('user_id', $userId)->first();
+            if ($payment) {
+
+                $payment->update($data);
+                $notifications = [
+                    'title' => 'update Payment details',
+                    'message' => 'Updated Payment details successfully',
+                    'created_by' => $userId,
+                    'status' => 0,
+                    'clear' => 'no',
+
+                ];
+                Notification::create($notifications);
+                return response()->json(['message' => 'Updated Payment details successfully', 'payment' => $payment], 200);
+            } else {
+                    $data['user_id'] = $userId;
+                    $payment = PaymentDetail::create($data);
+                    $notifications = [
+                        'title' => 'Create Payment details',
+                        'message' => 'Added Payment details successfully',
+                        'created_by' => $userId,
+                        'status' => 0,
+                        'clear' => 'no',
+
+                    ];
+                    Notification::create($notifications);
+                    return response()->json(['message' => 'Added Payment details successfully', 'payment' => $payment], 200);
+                
+            }
+            return response()->json(['message' => 'User not found'], 401);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function GetCustomerFavoritService(){
+        $userId = Auth::id();
+        $deals=Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
+                ->orderBy('deals.id', 'desc')
+                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+                ->where('favorit_deals.user_id', $userId)
+                ->get();
+        
+                return response()->json(['deals' => $deals], 200);
+    }
+    
+
 }
