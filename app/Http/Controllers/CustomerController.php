@@ -317,7 +317,7 @@ class CustomerController extends Controller
             $getSocial = SocialProfile::where('user_id', $id)->get();
             if ($user) {
 
-                return response()->json(['user' => $user, 'PaymentMethod' => $PaymentMethod], 200);
+                return response()->json(['user' => $user, 'getPayment' => $getPayment], 200);
             }
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
