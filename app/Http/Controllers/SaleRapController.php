@@ -41,12 +41,16 @@ class SaleRapController extends Controller
                 ];
             });
 
+            $commission = $totalRevenue * 0.02;
+        
+
             return response()->json([
                 'assignPros' => $assignPros,
                 'newPros' => $newPros,
                 'recentDeal' => $recentDeal,
                 'recetPublishDeals' => $recetPublishDeals,
-                'reportData' => $reportData
+                'totalRevenue' => $totalRevenue,
+                'commission' => $commission,
             ], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
