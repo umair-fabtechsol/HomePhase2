@@ -56,6 +56,64 @@ class SaleRapController extends Controller
                 ];
             }
 
+            $weeklyRevenue = Order::select(
+                DB::raw('DAYOFWEEK(created_at) as day'),
+                DB::raw('SUM(total_amount) as revenue')
+            )
+            ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+            ->groupBy('day')
+            ->orderBy('day', 'asc')
+            ->get()
+            ->keyBy('day')
+            ->toArray();
+            
+            // Initialize an array with all days of the week set to 0
+            $allDays = array_fill(1, 7, 0);
+            
+            // Update the array with actual revenue data
+            foreach ($weeklyRevenue as $day => $data) {
+                $allDays[$day] = $data['revenue'];
+            }
+            
+            // Format the data for the response
+            $formattedWeeklyRevenue = [];
+            foreach ($allDays as $day => $revenue) {
+                $formattedWeeklyRevenue[] = [
+                    'day' => $day,
+                    'revenue' => $revenue,
+                ];
+            }
+
+            $dailyRevenue = Order::select(
+                DB::raw('DAY(created_at) as day'),
+                DB::raw('SUM(total_amount) as revenue')
+            )
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->groupBy('day')
+            ->orderBy('day', 'asc')
+            ->get()
+            ->keyBy('day')
+            ->toArray();
+            
+            // Initialize an array with all days of the month set to 0
+            $daysInMonth = Carbon::now()->daysInMonth;
+            $allDays = array_fill(1, $daysInMonth, 0);
+            
+            // Update the array with actual revenue data
+            foreach ($dailyRevenue as $day => $data) {
+                $allDays[$day] = $data['revenue'];
+            }
+            
+            // Format the data for the response
+            $formattedDailyRevenue = [];
+            foreach ($allDays as $day => $revenue) {
+                $formattedDailyRevenue[] = [
+                    'day' => $day,
+                    'revenue' => $revenue,
+                ];
+            }
+
       
             $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
             ->join('orders', 'orders.deal_id', '=', 'deals.id')
@@ -80,7 +138,9 @@ class SaleRapController extends Controller
                 'totalRevenue' => $totalRevenue,
                 'commission' => $commission,
                 'top_catogory_revenue' => $reportData,
-                'monthlyRevenue' => $formattedMonthlyRevenue
+                'early_evenue' => $formattedMonthlyRevenue,
+                'monthly_revenue' => $formattedDailyRevenue,
+                'weekly_revenue' => $formattedWeeklyRevenue,
             ], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
