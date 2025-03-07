@@ -29,17 +29,15 @@ class SaleRapController extends Controller
             $totalRevenue = Order::sum('total_amount');
 
             $monthlyRevenue = Order::select(
-                DB::raw('YEAR(created_at) as year'),
                 DB::raw('MONTH(created_at) as month'),
                 DB::raw('SUM(total_amount) as revenue')
             )
-            ->groupBy('year', 'month')
-            ->orderBy('year', 'asc')
+            ->whereYear('created_at', Carbon::now()->year)
+            ->groupBy('month')
             ->orderBy('month', 'asc')
             ->get()
             ->map(function ($data) {
                 return [
-                    'year' => $data->year,
                     'month' => $data->month,
                     'revenue' => $data->revenue,
                 ];
