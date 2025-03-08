@@ -105,6 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('SearchHomeServices', 'SearchHomeServices')->name('SearchHomeServices');
         Route::get('FilterHomeDeals', 'FilterHomeDeals')->name('FilterHomeDeals');
         Route::get('HomeProviderOrders', 'HomeProviderOrders')->name('HomeProviderOrders');
+        Route::get('RecentViewDeals', 'RecentViewDeals')->name('RecentViewDeals');
         
 
 
