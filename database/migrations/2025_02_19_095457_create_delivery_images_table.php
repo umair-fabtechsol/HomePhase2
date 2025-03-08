@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('comments')->nullable();
             $table->text('before_images')->nullable();
             $table->text('after_images')->nullable();
+            $table->text('revision_images')->nullable();
             $table->datetime('Schedule_date_time')->nullable();                                            
             $table->timestamps();
         });

@@ -12,6 +12,7 @@ class DeliveryImage extends Model
         'comments',
         'before_images',
         'after_images',
+        'revision_images',
         'Schedule_date_time',
     ];
 }

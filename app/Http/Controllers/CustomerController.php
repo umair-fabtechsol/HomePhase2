@@ -595,7 +595,7 @@ class CustomerController extends Controller
                     }
                 }
 
-                $data['images'] =  json_encode($images);
+                $data['revision_images'] =  json_encode($images);
                 $data['type'] =  'revision';
                 $afterImages = DeliveryImage::create($data);
                 $notification = [
