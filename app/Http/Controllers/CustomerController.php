@@ -489,12 +489,17 @@ class CustomerController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 1) {
-            $order = Order::find($id);
-            if ($order) {
-                return response()->json(['message' => 'Order Detail', 'order' => $order], 200);
-            } else {
-                return response()->json(['message' => 'No order available'], 401);
-            }
+            $order = Deal::leftjoin('orders','orders.deal_id','=','deals.id')
+            ->leftjoin('users','users.id','=','orders.customer_id')->select('users.*','orders.id as order_id','orders.status as order_type','deals.service_title','orders.scheduleDate','orders.total_amount','orders.notes')
+            ->where('orders.id','=',$id)->first();
+            $GetOrderBeforeImages=DeliveryImage::where('order_id','=',$id)->where('type', 'before')->get();
+           $GetOrderAfterImages=DeliveryImage::where('order_id','=',$id)->where('type', 'after')->get();
+           $GetOrderDeliver=DeliveryImage::where('order_id','=',$id)->where('type', 'delivered')->get();
+    
+           
+            
+    
+             return response()->json(['order' => $order ,'GetOrderBeforeImages' => $GetOrderBeforeImages,'GetOrderAfterImages'=> $GetOrderAfterImages,'GetOrderDeliver' => $GetOrderDeliver]);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
