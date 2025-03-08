@@ -28,7 +28,7 @@ class OrderSeeder extends Seeder
             [
                 'provider_id' => 3,
                 'customer_id' => 11,
-                'deal_id' => 14,
+                'deal_id' => 2,
                 'total_amount' => 60,
                 'status' => 'pending',
                 'notes' => 'test order 2',
@@ -38,7 +38,7 @@ class OrderSeeder extends Seeder
             [
                 'provider_id' => 24,
                 'customer_id' => 20,
-                'deal_id' => 16,
+                'deal_id' => 3,
                 'total_amount' => 60,
                 'status' => 'pending',
                 'notes' => 'test order 2',
