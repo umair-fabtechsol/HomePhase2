@@ -69,6 +69,13 @@ class AuthController extends Controller
                 'message' => 'You account has been banned'
             ], 401);
         }
+
+        if ($user->terms != 1) {
+            return response()->json([
+                'message' => 'You must accept the terms and conditions to log in'
+            ], 403);
+        }
+        
         $token = $user->createToken('auth_token')->plainTextToken;
         return [
             'user' => $user,
