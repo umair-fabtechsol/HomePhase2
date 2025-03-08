@@ -12,6 +12,7 @@ class Review extends Model
         'provider_id',
         'deal_id',
         'rating',
+        'attach_photo',
         'desciption',
     ];
 }
