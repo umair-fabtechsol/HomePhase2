@@ -1737,7 +1737,14 @@ class ServiceProviderController extends Controller
     public function HomeProviderOrders(Request $request){
         $role = Auth::user()->role;
         $userId = Auth::id();
-        $GetActiveOrders = Order::where('provider_id', $userId)->where('status', '!=', 'completed')->orderBy('id','desc')->limit(3)->get();
+        $GetActiveOrders = Order::where('status', '!=', 'completed');
+        if($role == 1){
+            $GetActiveOrders = $GetActiveOrders->where('customer_id', $userId);
+        }
+        if($role == 2){
+            $GetActiveOrders = $GetActiveOrders->where('provider_id', $userId);
+        }
+        $GetActiveOrders = $GetActiveOrders->orderBy('id','desc')->limit(3)->get();
         if($GetActiveOrders){
             return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
         }else{
