@@ -484,8 +484,9 @@ class CustomerController extends Controller
     public function UploadReview(Request $request)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 1) {
-            $user = User::find($request->user_id);
+            $user = User::find($userId);
             if ($user) {
                 $order = Order::find($request->order_id);
                 $dealId = $order->deal_id;
@@ -498,7 +499,7 @@ class CustomerController extends Controller
                 $notification = [
                     'title' => 'Added Review',
                     'message' => 'A new review has been added successfully',
-                    'created_by' => $review->user_id,
+                    'created_by' => $userId,
                     'status' => 0,
                     'clear' => 'no',
                 ];
@@ -830,6 +831,18 @@ class CustomerController extends Controller
                 ->get();
         
                 return response()->json(['deals' => $deals], 200);
+    }
+
+
+    public function UpdateOrderStatus($id){
+
+        $order = Order::find($id);
+
+        $order->update([
+            'status' => 'completed'           
+        ]);
+
+
     }
     
 
