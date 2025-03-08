@@ -24,6 +24,9 @@ Route::post('charge',[PaymentController::class,'charge'])->name('charge');
 // Route::get('charge',[PaymentController::class,'charge'])->name('charge');
 Route::get('salesrep',[CommonController::class,'salesrep'])->name('salesrep');
 
+Route::get('GetAllDeals',[CommonController::class,'GetAllDeals'])->name('GetAllDeals');
+Route::get('GetDealDetail/{id}',[CommonController::class,'GetDealDetail'])->name('GetDealDetail');
+
 
 
 Route::controller(AuthController::class)->group(function () {
