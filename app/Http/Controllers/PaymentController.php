@@ -10,6 +10,7 @@ use Stripe\PaymentIntent;
 use Stripe\PaymentMethod;
 use Stripe\Checkout\Session;
 use Stripe\Token;
+use Stripe\Charge;
 class PaymentController extends Controller
 {
 
@@ -43,33 +44,20 @@ class PaymentController extends Controller
 
     public function pay(Request $request){
 
-        try {
-            Stripe::setApiKey(config('services.stripe.secret'));
 
-            // Create a PaymentMethod
-            $paymentMethod = PaymentMethod::create([
-                'type' => 'card',
-                'card' => [
-                    'number'    => $request->get('card_no'),
-                    'exp_month' => $request->get('ccExpiryMonth'),
-                    'exp_year'  => $request->get('ccExpiryYear'),
-                    'cvc'       => $request->get('cvvNumber'),
-                ],
-            ]);
+        Stripe::setApiKey(config('services.stripe.public'));
+    
+        Charge::create ([
+                "amount" => 100 * 100,
+                "currency" => "usd",
+                "source" => $request->stripeToken,
+                "description" => "Test payment from itsolutionstuff.com." 
+        ]);
+      
+        Session::flash('success', 'Payment successful!');
+              
+        return back();
 
-            // Create a PaymentIntent
-            $paymentIntent = PaymentIntent::create([
-                'amount' => 2049, // Amount in cents (e.g., $20.49)
-                'currency' => 'usd',
-                'payment_method' => $paymentMethod->id,
-                'confirm' => true, // Confirm immediately
-            ]);
-
-            return redirect()->back()->with('success', 'Payment successful!');
-
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
-        }
         
     }
 
