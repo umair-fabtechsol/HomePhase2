@@ -44,8 +44,8 @@ class PaymentController extends Controller
 
     public function pay(Request $request){
 
+        \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
 
-        Stripe::setApiKey(config('services.stripe.public'));
     
         Charge::create ([
                 "amount" => 100 * 100,
