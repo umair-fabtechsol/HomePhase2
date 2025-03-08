@@ -26,7 +26,7 @@ class PaymentController extends Controller
             \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
             $paymentIntent = \Stripe\PaymentIntent::create([
-                'amount' => 5000,
+                'amount' => $request->amount * 100,
                 'currency' => 'usd',
                 'payment_method' => $request->payment_method,
                 'confirmation_method' => 'manual',
