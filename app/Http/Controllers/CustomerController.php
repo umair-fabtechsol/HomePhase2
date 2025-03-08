@@ -627,10 +627,17 @@ class CustomerController extends Controller
                         $images[] = $photo_name1;
                     }
                 }
-
+                
                 $data['revision_images'] =  json_encode($images);
                 $data['type'] =  'revision';
                 $afterImages = DeliveryImage::create($data);
+
+                if($order->status == 'delivered'){
+                    
+                    $order->update([
+                    'status' => 'in_revision'
+                    ]);
+                }
                 $notification = [
                     'title' => 'Revision Request',
                     'message' => 'Revision request has been added successfully',
