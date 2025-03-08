@@ -498,7 +498,7 @@ class CustomerController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 1) {
-            $order =  $orders = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title','users.email','users.phone','users.location','users.personal_image','deals.images')->where('orders.provider_id', 3)
+        $orders = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title','users.email','users.phone','users.location','users.personal_image','deals.images')->where('orders.provider_id','=',3)
             ->get()->map(function ($order) {
 
                 $beforeImages = DB::table('delivery_images')
