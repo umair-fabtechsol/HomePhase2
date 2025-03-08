@@ -1662,7 +1662,7 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
+    // for home page for provider and customer 
     public function FilterHomeDeals(Request $request)
     {
         $role = Auth::user()->role;
@@ -1678,7 +1678,7 @@ class ServiceProviderController extends Controller
             ->orderBy('deals.id', 'desc')
             ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'reviews.rating as review_rating');
             if($service){
-                $deals = $deals->where('deals.service_category', $service);
+                $deals = $deals->where('service_category', 'like', '%' . $request->service . '%');
             }
             if($reviews){
                 $deals = $deals->where('reviews.rating', $reviews);
@@ -1704,7 +1704,7 @@ class ServiceProviderController extends Controller
             }
 
             if($location){
-                $locationDistance = BusinessProfile::where('service_location', '<=', $location)->pluck('user_id')->toArray();
+                $locationDistance = BusinessProfile::where('service_location', 'like', '%' . $request->location . '%')->pluck('user_id')->toArray();
                 $deals = $deals->whereIn('deals.user_id', $locationDistance);
             }
 
@@ -1750,6 +1750,7 @@ class ServiceProviderController extends Controller
         
     }
 
+    // for home page for provider and customer 
     public function RecentViewDeals(Request $request){
         $role = Auth::user()->role;
 
