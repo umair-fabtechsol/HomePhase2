@@ -819,6 +819,8 @@ class CustomerController extends Controller
     }
 
     public function GetCustomerFavoritService(){
+        $role = Auth::user()->role;
+        if ($role == 1) {
         $userId = Auth::id();
         $deals=Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
                 ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
@@ -830,6 +832,25 @@ class CustomerController extends Controller
                 ->get();
         
                 return response()->json(['deals' => $deals], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function HomeCustomerOrders(Request $request){
+        $role = Auth::user()->role;
+        if ($role == 1) {
+            $userId = Auth::id();
+            $GetActiveOrders = Order::where('customer_id', $userId)->where('status', '!=', 'completed')->get();
+            if($GetActiveOrders){
+                return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
+            }else{
+                return response()->json(['message' => 'No order available'], 401);
+            }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+        
     }
     
 
