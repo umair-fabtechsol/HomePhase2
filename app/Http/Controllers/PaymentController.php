@@ -7,8 +7,9 @@ use Stripe\Stripe;
 use Stripe\Payout;
 use Stripe\Balance;
 use Stripe\PaymentIntent;
+use Stripe\PaymentMethod;
 use Stripe\Checkout\Session;
-
+use Stripe\Token;
 class PaymentController extends Controller
 {
 
@@ -43,29 +44,32 @@ class PaymentController extends Controller
     public function pay(Request $request){
 
         try {
-            
-            $stripe = Stripe::setApiKey(config('services.stripe.secret'));
+            Stripe::setApiKey(config('services.stripe.secret'));
 
-            $token = $stripe->tokens()->create([
+            // Create a PaymentMethod
+            $paymentMethod = PaymentMethod::create([
+                'type' => 'card',
                 'card' => [
-                'number' => $request->get('card_no'),
-                'exp_month' => $request->get('ccExpiryMonth'),
-                'exp_year' => $request->get('ccExpiryYear'),
-                'cvc' => $request->get('cvvNumber'),
+                    'number'    => $request->get('card_no'),
+                    'exp_month' => $request->get('ccExpiryMonth'),
+                    'exp_year'  => $request->get('ccExpiryYear'),
+                    'cvc'       => $request->get('cvvNumber'),
                 ],
-                ]);
-                $charge = $stripe->charges()->create([
-                    'card' => $token['id'],
-                    'currency' => 'USD',
-                    'amount' => 20.49,
-                    'description' => 'wallet',
-                    ]);
+            ]);
+
+            // Create a PaymentIntent
+            $paymentIntent = PaymentIntent::create([
+                'amount' => 2049, // Amount in cents (e.g., $20.49)
+                'currency' => 'usd',
+                'payment_method' => $paymentMethod->id,
+                'confirm' => true, // Confirm immediately
+            ]);
 
             return redirect()->back()->with('success', 'Payment successful!');
+
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
-
         
     }
 
