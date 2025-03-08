@@ -59,9 +59,11 @@ class ServiceProviderController extends Controller
             $deal =Deal::
             where('id', $id)
             ->first();
-           
             if ($deal) {
-               
+                $recentDeal = RecentDealView::create([
+                    'user_id' => $userId,
+                    'deal_id' => $id,
+                ]);
                 return response()->json(['deal' => $deal], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);
@@ -1740,7 +1742,7 @@ class ServiceProviderController extends Controller
         $role = Auth::user()->role;
         if ($role == 2) {
             $userId = Auth::id();
-            $GetActiveOrders = Order::where('provider_id', $userId)->where('status', '!=', 'completed')->get();
+            $GetActiveOrders = Order::where('provider_id', $userId)->where('status', '!=', 'completed')->orderBy('id','desc')->limit(3)->get();
             if($GetActiveOrders){
                 return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
             }else{
@@ -1751,5 +1753,26 @@ class ServiceProviderController extends Controller
         }
         
     }
+
+    public function RecentViewDeals(Request $request){
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $userId = Auth::id();
+            $recentDealId = RecentDealView::where('user_id', $userId)->pluck('deal_id')->toArray();
+            $recentDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+                ->orderBy('deals.id', 'desc')
+                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+                ->where('deals.user_id', Auth::id())->where('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->limit(8)->get();
+            if($recentDeal){
+                return response()->json(['message' => 'Orders List', 'recentDeal' => $recentDeal], 200);
+            }else{
+                return response()->json(['message' => 'No deal available'], 401);
+            }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }    
     
 }
