@@ -104,6 +104,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('SearchHomeServices', 'SearchHomeServices')->name('SearchHomeServices');
         Route::get('FilterHomeDeals', 'FilterHomeDeals')->name('FilterHomeDeals');
+        Route::get('HomeProviderOrders', 'HomeProviderOrders')->name('HomeProviderOrders');
         
 
 
@@ -163,6 +164,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('AddCustomerPayment', 'AddCustomerPayment')->name('AddCustomerPayment');
 
             Route::get('GetCustomerFavoritService', 'GetCustomerFavoritService')->name('GetCustomerFavoritService');
+            Route::get('HomeCustomerOrders', 'HomeCustomerOrders')->name('HomeCustomerOrders');
 
         });
     });
