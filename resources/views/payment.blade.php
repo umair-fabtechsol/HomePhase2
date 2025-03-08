@@ -22,10 +22,38 @@
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
 
-        <form id="payment-form">
+        <form id="payment-form" action="{{ route('stripe.charge') }}" method="POST">
             @csrf
             <input type="hidden" id="stripe-key" value="{{ config('services.stripe.public') }}">
-            <div id="card-element" class="form-control"></div>
+            <input type="hidden" id="payment-method" name="payment_method">
+
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" id="name" name="name" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount (USD)</label>
+                <input type="number" id="amount" name="amount" class="form-control" required min="1">
+            </div>
+
+            <label class="form-label">Card Details</label>
+            <div class="mb-3">
+                <label class="form-label">Card Number</label>
+                <div id="card-number" class="form-control"></div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Expiry Date</label>
+                    <div id="card-expiry" class="form-control"></div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">CVC</label>
+                    <div id="card-cvc" class="form-control"></div>
+                </div>
+            </div>
+
             <button id="submit-button" class="btn btn-primary mt-3">Pay</button>
         </form>
 
@@ -34,11 +62,17 @@
 
     <script>
         const stripe = Stripe(document.getElementById('stripe-key').value);
-
         const elements = stripe.elements();
-        const cardElement = elements.create('card');
 
-        cardElement.mount('#card-element');
+        // Separate elements for card details
+        const cardNumber = elements.create('cardNumber');
+        const cardExpiry = elements.create('cardExpiry');
+        const cardCvc = elements.create('cardCvc');
+
+        // Mount elements to the form
+        cardNumber.mount('#card-number');
+        cardExpiry.mount('#card-expiry');
+        cardCvc.mount('#card-cvc');
 
         document.getElementById('payment-form').addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -48,32 +82,17 @@
                 error
             } = await stripe.createPaymentMethod({
                 type: 'card',
-                card: cardElement,
+                card: cardNumber,
+                billing_details: {
+                    name: document.getElementById('name').value
+                }
             });
-            var crd = paymentMethod;
-
 
             if (error) {
                 document.getElementById('payment-message').textContent = error.message;
             } else {
-                fetch("{{ route('stripe.charge') }}", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-CSRF-TOKEN": document.querySelector('input[name="_token"]').value
-                        },
-                        body: JSON.stringify({
-                            payment_method: paymentMethod.id
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            document.getElementById('payment-message').textContent = "Payment successful!";
-                        } else {
-                            document.getElementById('payment-message').textContent = data.error;
-                        }
-                    });
+                document.getElementById('payment-method').value = paymentMethod.id;
+                this.submit(); // Submit form to Laravel backend
             }
         });
     </script>
