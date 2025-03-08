@@ -1666,15 +1666,19 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 2) {
+            $service = $request->service;
             $budget = $request->budget;
             $reviews = $request->reviews;
             $estimate_time = $request->estimate_time;
             $location = $request->location;
+            $distance = $request->distance;
             $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
-                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+                ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
                 ->orderBy('deals.id', 'desc')
-                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating');
+                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'reviews.rating as review_rating')->where('deals.user_id', Auth::id());
+                if($service){
+                    $deals = $deals->where('deals.service_category', $service);
+                }
                 if($reviews){
                     $deals = $deals->where('reviews.rating', $reviews);
                 }
@@ -1693,8 +1697,13 @@ class ServiceProviderController extends Controller
                     });
                 }
 
+                if($distance){
+                    $locationDistance = BusinessProfile::where('location_miles', '<=', $distance)->pluck('user_id')->toArray();
+                    $deals = $deals->whereIn('deals.user_id', $locationDistance);
+                }
+
                 if($location){
-                    $locationDistance = BusinessProfile::where('location_miles', '<=', $location)->pluck('user_id')->toArray();
+                    $locationDistance = BusinessProfile::where('service_location', '<=', $location)->pluck('user_id')->toArray();
                     $deals = $deals->whereIn('deals.user_id', $locationDistance);
                 }
 
