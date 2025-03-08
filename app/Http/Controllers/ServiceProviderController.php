@@ -61,10 +61,17 @@ class ServiceProviderController extends Controller
             where('id', $id)
             ->first();
             if ($deal) {
-                $recentDeal = RecentDealView::create([
-                    'user_id' => $userId,
-                    'deal_id' => $id,
-                ]);
+                $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
+                if($viewedDeal){
+                    $viewedDeal->update([
+                        'created_at' => now()
+                    ]);
+                } else{
+                    $recentDeal = RecentDealView::create([
+                        'user_id' => $userId,
+                        'deal_id' => $id,
+                    ]);
+                }
                 return response()->json(['deal' => $deal], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);

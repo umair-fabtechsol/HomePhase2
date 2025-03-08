@@ -240,6 +240,6 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // common provider and customer
-// filterHomeSearch
+// FilterHomeDeals
 //RecentViewDeals
 //HomeProviderOrders
