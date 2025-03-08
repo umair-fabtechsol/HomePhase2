@@ -11,6 +11,7 @@ use App\Models\PaymentDetail;
 use App\Models\Hour;
 use App\Models\Order;
 use App\Models\Price;
+use App\Models\RecentDealView;
 use App\Models\Offer;
 use App\Models\DealUpload;
 use App\Models\Notification;
