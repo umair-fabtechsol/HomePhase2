@@ -18,7 +18,7 @@ return new class extends Migration
             $table->Integer('deal_id');
             $table->Integer('provider_id');
             $table->Integer('rating');
-            $table->boolean('attach_photo')->nullable();
+            $table->boolean('is_active')->default(false);
             $table->text('desciption')->nullable();
             $table->timestamps();
         });
