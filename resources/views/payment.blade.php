@@ -50,6 +50,8 @@
                 type: 'card',
                 card: cardElement,
             });
+            var crd = paymentMethod;
+
 
             if (error) {
                 document.getElementById('payment-message').textContent = error.message;
