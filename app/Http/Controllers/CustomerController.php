@@ -464,7 +464,26 @@ class CustomerController extends Controller
         $role = Auth::user()->role;
         if ($role == 1) {
             $userId = Auth::id();
-            $orders = Order::where('customer_id', $userId)->orderBy('id', 'desc')->get();
+            $orders = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title','users.email','users.phone','users.location','users.personal_image','deals.images')->where('orders.provider_id',3)
+            ->get()->map(function ($order) {
+
+                $beforeImages = DB::table('delivery_images')
+                    ->where('order_id', $order->id)
+                    ->where('type', 'before')
+                    ->pluck('before_images');
+
+
+                $afterImages = DB::table('delivery_images')
+                    ->where('order_id', $order->id)
+                    ->where('type', 'after')
+                    ->pluck('after_images');
+                return [
+                    'order' => $order,
+                    'before_images' => $beforeImages,
+                    'after_images' => $afterImages,
+
+                ];
+            });
             if ($orders) {
                 return response()->json(['message' => 'Orders List', 'orders' => $orders], 200);
             } else {
