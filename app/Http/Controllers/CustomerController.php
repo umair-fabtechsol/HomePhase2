@@ -557,6 +557,8 @@ class CustomerController extends Controller
                 $data['user_id'] = $userId;
                 $data['deal_id'] = $dealId;
                 $review = Review::create($data);
+
+                $order->update(['status' => 'completed']);
                 $notification = [
                     'title' => 'Added Review',
                     'message' => 'A new review has been added successfully',
