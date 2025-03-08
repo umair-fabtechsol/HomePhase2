@@ -1212,25 +1212,21 @@ class ServiceProviderController extends Controller
                     $beforeImages = DB::table('delivery_images')
                         ->where('order_id', $order->id)
                         ->where('type', 'before')
-                        ->pluck('before_images');
+                        ->pluck('before_images' ,'type');
 
 
                     $afterImages = DB::table('delivery_images')
                         ->where('order_id', $order->id)
                         ->where('type', 'after')
-                        ->pluck('after_images');
+                        ->pluck('after_images' ,'type');
 
                         
-                    $delivered = DB::table('delivery_images')
-                        ->where('order_id', $order->id)
-                        ->where('type', 'delivered')
-                        ->get();
 
                     return [
                         'order' => $order,
                         'before_images' => $beforeImages,
                         'after_images' => $afterImages,
-                        'delivered' => $delivered,
+                       
 
                     ];
                 });
