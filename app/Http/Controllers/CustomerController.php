@@ -680,7 +680,7 @@ class CustomerController extends Controller
             if ($order) {
                 $order->update(['status' => 'completed']);
                
-                return response()->json(['message' => 'Order completed successfully', 'order' => $order], 200);
+                return response()->json(['message' => 'Order status completed successfully', 'order' => $order], 200);
             } else {
                 return response()->json(['message' => 'No Order found'], 401);
             }
@@ -854,18 +854,5 @@ class CustomerController extends Controller
         }
         
     }
-
-
-    public function UpdateOrderStatus($id){
-
-        $order = Order::find($id);
-
-        $order->update([
-            'status' => 'completed'           
-        ]);
-
-
-    }
     
-
 }
