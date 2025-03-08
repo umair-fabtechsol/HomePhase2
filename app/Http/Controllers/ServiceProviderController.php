@@ -1219,18 +1219,10 @@ class ServiceProviderController extends Controller
                         ->where('order_id', $order->id)
                         ->where('type', 'after')
                         ->pluck('after_images');
-
-                        
-                    $delivered = DB::table('delivery_images')
-                        ->where('order_id', $order->id)
-                        ->where('type', 'delivered')
-                        ->get();
-
                     return [
                         'order' => $order,
                         'before_images' => $beforeImages,
                         'after_images' => $afterImages,
-                        'delivered' => $delivered,
 
                     ];
                 });
@@ -1386,9 +1378,9 @@ class ServiceProviderController extends Controller
 
             $data = $request->all();
 
-            $data['type'] = 'delivered';
+            $data['status'] = 'delivered';
 
-            $GetConfirm=DeliveryImage::where('order_id','=',$request->order_id)->first();
+            $GetConfirm=Order::where('id','=',$request->order_id)->first();
             if($GetConfirm){
 
                 $BeforeDeliveryImage = $GetConfirm->update($data);

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('status');
             $table->text('notes')->nullable();
             $table->text('scheduleDate')->nullable();
+            $table->text('date')->nullable();
             $table->timestamps();
         });
     }
