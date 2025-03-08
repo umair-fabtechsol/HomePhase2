@@ -1770,8 +1770,7 @@ class ServiceProviderController extends Controller
             ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
             ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
             ->orderBy('deals.id', 'desc')
-            ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
-            ->where('deals.user_id', Auth::id())->where('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->limit(8)->get();
+            ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')->where('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->limit(8)->get();
         if($recentDeal){
             return response()->json(['message' => 'Orders List', 'recentDeal' => $recentDeal], 200);
         }else{
