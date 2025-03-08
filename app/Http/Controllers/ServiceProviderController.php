@@ -1738,16 +1738,12 @@ class ServiceProviderController extends Controller
 
     public function HomeProviderOrders(Request $request){
         $role = Auth::user()->role;
-        if ($role == 2) {
-            $userId = Auth::id();
-            $GetActiveOrders = Order::where('provider_id', $userId)->where('status', '!=', 'completed')->orderBy('id','desc')->limit(3)->get();
-            if($GetActiveOrders){
-                return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
-            }else{
-                return response()->json(['message' => 'No order available'], 401);
-            }
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+        $userId = Auth::id();
+        $GetActiveOrders = Order::where('provider_id', $userId)->where('status', '!=', 'completed')->orderBy('id','desc')->limit(3)->get();
+        if($GetActiveOrders){
+            return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
+        }else{
+            return response()->json(['message' => 'No order available'], 401);
         }
         
     }
