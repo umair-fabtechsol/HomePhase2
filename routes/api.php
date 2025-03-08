@@ -238,3 +238,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     
 });
+
+// common provider and customer
+// filterHomeSearch
+//RecentViewDeals
