@@ -181,6 +181,80 @@ class CustomerController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+    // for home page 
+    public function FilterHomeService(Request $request)
+    {
+        $role = Auth::user()->role;
+        if ($role == 1) {
+            $budget = $request->budget;
+            $reviews = $request->reviews;
+            $estimate_time = $request->estimate_time;
+            $location = $request->location;
+            $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+                ->orderBy('deals.id', 'desc')
+                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating');
+                if($reviews){
+                    $deals = $deals->where('reviews.rating', $reviews);
+                }
+                if($budget){
+                    $deals = $deals->where(function ($query) use ($budget) {
+                        $query->where('deals.flat_rate_price','<=' , $budget)
+                            ->orWhere('deals.hourly_rate','<=' , $budget)
+                            ->orWhere('deals.price1','<=' , $budget);
+                    });
+                }
+                if($estimate_time){
+                    $deals = $deals->where(function ($query) use ($estimate_time) {
+                        $query->where('deals.flat_estimated_service_time', $estimate_time)
+                            ->orWhere('deals.hourly_estimated_service_time', $estimate_time)
+                            ->orWhere('deals.estimated_service_timing1', $estimate_time);
+                    });
+                }
+
+                if($location){
+                    $locationDistance = BusinessProfile::where('location_miles', '<=', $location)->pluck('user_id')->toArray();
+                    $deals = $deals->whereIn('deals.user_id', $locationDistance);
+                }
+
+                $deals = $deals->get();
+            if ($deals) {
+                return response()->json(['deals' => $deals], 200);
+            } else {
+                return response()->json(['message' => 'No deals found'], 401);
+            }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function SearchHomeDeals(Request $request){
+        $role = Auth::user()->role;
+        if ($role == 1) {
+            $deals = Deal::query();
+            if ($request->service) {
+                $deals = $deals->where('service_category', 'like', '%' . $request->service . '%');
+            }
+
+            if ($request->location) {
+                $location = BusinessProfile::where('service_location', 'like', '%' . $request->location . '%')->pluck('user_id')->toArray();
+                $deals = $deals->whereIn('user_id', $location);
+            }
+            $deals = $deals->pluck('id')->toArray();
+
+            $searchDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+                ->orderBy('deals.id', 'desc')
+                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+                ->where('deals.id', $deals)
+                ->get();
+            return response()->json(['message' => 'No user found', 'services' => $searchDeal], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
 
     public function SingleDeal($id)
     {
@@ -313,11 +387,11 @@ class CustomerController extends Controller
         if ($role == 1) {
             $user = User::find($id);
 
-            $PaymentMethod = PaymentMethod::where('user_id', $id)->get();
-
+            $getPayment = PaymentDetail::where('user_id', $id)->get();
+            $getSocial = SocialProfile::where('user_id', $id)->get();
             if ($user) {
 
-                return response()->json(['user' => $user, 'PaymentMethod' => $PaymentMethod], 200);
+                return response()->json(['user' => $user, 'getPayment' => $getPayment], 200);
             }
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
@@ -331,6 +405,8 @@ class CustomerController extends Controller
             $user = User::find($request->customer_id);
             if ($user) {
                 $data = $request->all();
+                $provider = Deal::find($request->deal_id);
+                $data['provider_id'] = $provider->user_id; 
                 $order = Order::create($data);
                 $notification = [
                     'title' => 'Added New Order',
@@ -632,6 +708,30 @@ class CustomerController extends Controller
         }
     }
 
+    public function uploadImage(Request $request)
+    {
+        if (!auth()->user()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $request->validate([
+            'img' => 'required|image|mimes:jpeg,png,jpg,gif', 
+        ]);
+
+        if ($request->hasFile('img')) {
+            $photo = $request->file('img');
+            $photo_name = time() . '-' . $photo->getClientOriginalName();
+            $photo_destination = public_path('uploads');
+            $photo->move($photo_destination, $photo_name);
+            return response()->json([
+                'message' => 'Image uploaded successfully',
+                'image_name' => $photo_name
+            ], 200);
+        }
+
+    return response()->json(['message' => 'No image uploaded'], 400);
+}
+
+
     public function PublishSetting($id)
     {
 
@@ -717,5 +817,20 @@ class CustomerController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+
+    public function GetCustomerFavoritService(){
+        $userId = Auth::id();
+        $deals=Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
+                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
+                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
+                ->orderBy('deals.id', 'desc')
+                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
+                ->where('favorit_deals.user_id', $userId)
+                ->get();
+        
+                return response()->json(['deals' => $deals], 200);
+    }
     
+
 }

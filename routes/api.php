@@ -9,13 +9,20 @@ use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SaleRapController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\CommonController;
+
 use Illuminate\Support\Facades\DB;
 Route::post('createPayout', [PaymentController::class, 'createPayout'])->name('createPayout');
 Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('checkBalance');
 Route::get('contact',[SuperAdminController::class,'contact'])->name('contact');
 Route::get('GetSupport',[SuperAdminController::class,'GetSupport'])->name('GetSupport');
 Route::post('UpdateSupport',[SuperAdminController::class,'UpdateSupport'])->name('UpdateSupport');
+
 Route::post('charge',[PaymentController::class,'charge'])->name('charge');
+
+
+Route::get('charge',[PaymentController::class,'charge'])->name('charge');
+Route::get('salesrep',[CommonController::class,'salesrep'])->name('salesrep');
 
 
 
@@ -33,6 +40,7 @@ Route::controller(AuthController::class)->group(function () {
     
 });
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('getNotification',[CommonController::class,'getNotification'])->name('getNotification');
     
     Route::controller(ServiceProviderController::class)->group(function () {
         Route::post('BasicInfo', 'BasicInfo')->name('BasicInfo');
@@ -95,6 +103,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('GetInformationPrice', 'GetInformationPrice')->name('GetInformationPrice');
 
         Route::get('SearchHomeServices', 'SearchHomeServices')->name('SearchHomeServices');
+        Route::get('FilterHomeDeals', 'FilterHomeDeals')->name('FilterHomeDeals');
         
 
 
@@ -113,6 +122,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('Customer')->group(function () {
         Route::controller(CustomerController::class)->group(function () {
+            Route::post('uploadImage', 'uploadImage')->name('uploadImage');
             Route::get('ListDeals', 'ListDeals')->name('ListDeals');
             Route::get('SingleDeal/{id}', 'SingleDeal')->name('SingleDeal');
             Route::post('MyDetail', 'MyDetail')->name('MyDetail');
@@ -135,6 +145,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('DeleteReview/{id}', 'DeleteReview')->name('DeleteReview');
 
             Route::post('FilterService', 'FilterService')->name('FilterService');
+            Route::get('SearchHomeDeals', 'SearchHomeDeals')->name('SearchHomeDeals');
+            Route::get('FilterHomeService', 'FilterHomeService')->name('FilterHomeService');
 
             Route::post('AskForRevison', 'AskForRevison')->name('AskForRevison');
 
@@ -149,6 +161,8 @@ Route::middleware('auth:sanctum')->group(function () {
             
             Route::get('CustomerDetail', 'CustomerDetail')->name('CustomerDetail');
             Route::post('AddCustomerPayment', 'AddCustomerPayment')->name('AddCustomerPayment');
+
+            Route::get('GetCustomerFavoritService', 'GetCustomerFavoritService')->name('GetCustomerFavoritService');
 
         });
     });
