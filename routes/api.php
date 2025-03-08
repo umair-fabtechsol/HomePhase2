@@ -15,7 +15,9 @@ Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('ch
 Route::get('contact',[SuperAdminController::class,'contact'])->name('contact');
 Route::get('GetSupport',[SuperAdminController::class,'GetSupport'])->name('GetSupport');
 Route::post('UpdateSupport',[SuperAdminController::class,'UpdateSupport'])->name('UpdateSupport');
-Route::get('charge',[PaymentController::class,'charge'])->name('charge');
+Route::post('charge',[PaymentController::class,'charge'])->name('charge');
+
+
 
 Route::controller(AuthController::class)->group(function () {
     Route::post('Register', 'Register')->name('Register');

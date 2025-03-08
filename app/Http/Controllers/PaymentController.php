@@ -22,20 +22,14 @@ class PaymentController extends Controller
        
        try {
             \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-            $token = Token::create([
-                'card' => [
-                    'number'    => '4242424242424242',
-                    'exp_month' => 12,
-                    'exp_year'  => 2025,
-                    'cvc'       => '123',
-                ],
-            ]);
+
             $paymentIntent = \Stripe\PaymentIntent::create([
                 'amount' => 5000,
                 'currency' => 'usd',
-                'payment_method' => $token->id,
+                'payment_method' => $request->payment_method,
                 'confirmation_method' => 'manual',
                 'confirm' => true,
+                'return_url' => url('/payment-success'),
             ]);
            
             return response()->json(['success' => true]);
@@ -46,6 +40,34 @@ class PaymentController extends Controller
         
     }
 
+    public function pay(Request $request){
+
+        try {
+            
+            $stripe = Stripe::setApiKey(config('services.stripe.secret'));
+
+            $token = $stripe->tokens()->create([
+                'card' => [
+                'number' => $request->get('card_no'),
+                'exp_month' => $request->get('ccExpiryMonth'),
+                'exp_year' => $request->get('ccExpiryYear'),
+                'cvc' => $request->get('cvvNumber'),
+                ],
+                ]);
+                $charge = $stripe->charges()->create([
+                    'card' => $token['id'],
+                    'currency' => 'USD',
+                    'amount' => 20.49,
+                    'description' => 'wallet',
+                    ]);
+
+            return redirect()->back()->with('success', 'Payment successful!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+
+        
+    }
 
     public function checkout()
     {
@@ -96,5 +118,13 @@ class PaymentController extends Controller
     } catch (\Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
+}
+
+public function my(){
+
+
+
+
+    return view('pay');
 }
 }

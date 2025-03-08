@@ -9,7 +9,8 @@ Route::get('/', function () {
 });
 
 Auth::routes();
-
+Route::post('pay',[PaymentController::class,'pay'])->name('pay');
+Route::get('my',[PaymentController::class,'my'])->name('my');
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::get('form', [App\Http\Controllers\AuthController::class, 'form'])->name('form');
 Route::post('MediaUpload', [App\Http\Controllers\ServiceProviderController::class, 'OrdeAfterImages'])->name('TestMediaUpload');
