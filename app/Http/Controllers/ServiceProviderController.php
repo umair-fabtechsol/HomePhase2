@@ -1378,9 +1378,9 @@ class ServiceProviderController extends Controller
 
             $data = $request->all();
 
-            $data['type'] = 'delivered';
+            $data['status'] = 'delivered';
 
-            $GetConfirm=DeliveryImage::where('order_id','=',$request->order_id)->first();
+            $GetConfirm=Order::where('order_id','=',$request->order_id)->first();
             if($GetConfirm){
 
                 $BeforeDeliveryImage = $GetConfirm->update($data);
