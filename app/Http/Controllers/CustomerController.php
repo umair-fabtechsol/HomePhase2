@@ -494,6 +494,7 @@ class CustomerController extends Controller
                 $providerId = $deal->user_id;
                 $data = $request->all();
                 $data['provider_id'] = $providerId;
+                $data['user_id'] = $userId;
                 $data['deal_id'] = $dealId;
                 $review = Review::create($data);
                 $notification = [
