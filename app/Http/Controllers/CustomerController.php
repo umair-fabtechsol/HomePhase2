@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\PaymentDetail;
 use App\Models\Review;
+use App\Models\RecentDealView;
 use App\Models\User;
 use App\Models\PaymentHistory;
 use Illuminate\Http\Request;
@@ -268,6 +269,7 @@ class CustomerController extends Controller
     public function SingleDeal($id)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 1) {
             // $deal = Deal::where('id', $id)->get();
             $deal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
@@ -281,6 +283,17 @@ class CustomerController extends Controller
             $fetchDeal = Deal::find($id); 
             $businessProfile = BusinessProfile::where('user_id', $fetchDeal->user_id)->first();
             if ($deal) {
+                $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
+                if($viewedDeal){
+                    $viewedDeal->update([
+                        'created_at' => now()
+                    ]);
+                } else{
+                    $recentDeal = RecentDealView::create([
+                        'user_id' => $userId,
+                        'deal_id' => $id,
+                    ]);
+                }
                 return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);

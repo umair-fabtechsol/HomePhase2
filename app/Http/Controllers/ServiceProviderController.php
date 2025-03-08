@@ -1765,7 +1765,7 @@ class ServiceProviderController extends Controller
         $role = Auth::user()->role;
 
         $userId = Auth::id();
-        $recentDealId = RecentDealView::where('user_id', $userId)->pluck('deal_id')->toArray();
+        $recentDealId = RecentDealView::where('user_id', $userId)->orderBy('created_at', 'desc')->pluck('deal_id')->toArray();
         $recentDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
             ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
