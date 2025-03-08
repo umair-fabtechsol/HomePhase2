@@ -21,7 +21,7 @@ Route::post('UpdateSupport',[SuperAdminController::class,'UpdateSupport'])->name
 Route::post('charge',[PaymentController::class,'charge'])->name('charge');
 
 
-Route::get('charge',[PaymentController::class,'charge'])->name('charge');
+// Route::get('charge',[PaymentController::class,'charge'])->name('charge');
 Route::get('salesrep',[CommonController::class,'salesrep'])->name('salesrep');
 
 
