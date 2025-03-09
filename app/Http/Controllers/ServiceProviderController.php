@@ -1729,11 +1729,11 @@ class ServiceProviderController extends Controller
 
         if ($budget) {
             $deals = $deals->where(function ($query) use ($budget) {
-                $query->where('deals.flat_rate_price', '<=', $budget)
-                    ->orWhere('deals.hourly_rate', '<=', $budget)
-                    ->orWhere('deals.price1', '<=', $budget);
+                $query->whereRaw("CAST(REPLACE(deals.flat_rate_price, '$', '') AS DECIMAL(10,2)) <= ?", [$budget])
+                    ->orWhereRaw("CAST(REPLACE(deals.hourly_rate, '$', '') AS DECIMAL(10,2)) <= ?", [$budget])
+                    ->orWhereRaw("CAST(REPLACE(deals.price1, '$', '') AS DECIMAL(10,2)) <= ?", [$budget]);
             });
-        }
+        }        
 
         if ($estimate_time) {
             $deals = $deals->where(function ($query) use ($estimate_time) {
