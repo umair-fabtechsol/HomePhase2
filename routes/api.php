@@ -10,7 +10,7 @@ use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SaleRapController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\CommonController;
-
+use App\Http\Controllers\StripePaymentController;
 use Illuminate\Support\Facades\DB;
 Route::post('createPayout', [PaymentController::class, 'createPayout'])->name('createPayout');
 Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('checkBalance');
@@ -243,6 +243,15 @@ Route::middleware('auth:sanctum')->group(function () {
     
 });
 
+
+Route::controller(StripePaymentController::class)->group(function () {
+
+    Route::get('callpro', 'callpro')->name('callpro');
+
+    
+
+  
+});
 // common provider and customer
 // FilterHomeDeals
 //RecentViewDeals
