@@ -1672,7 +1672,6 @@ class ServiceProviderController extends Controller
     // for home page for provider and customer 
         public function FilterHomeDeals(Request $request)
     {
-        $role = Auth::user()->role;
 
         $service = $request->service;
         $budget = $request->budget;
