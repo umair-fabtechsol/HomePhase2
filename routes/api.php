@@ -24,9 +24,10 @@ Route::post('charge',[PaymentController::class,'charge'])->name('charge');
 // Route::get('charge',[PaymentController::class,'charge'])->name('charge');
 Route::get('salesrep',[CommonController::class,'salesrep'])->name('salesrep');
 
+// common routes 
 Route::get('GetAllDeals',[CommonController::class,'GetAllDeals'])->name('GetAllDeals');
 Route::get('GetDealDetail/{id}',[CommonController::class,'GetDealDetail'])->name('GetDealDetail');
-
+Route::get('FilterHomeDeals',[ServiceProviderController::class,'FilterHomeDeals'])->name('FilterHomeDeals');
 
 
 Route::controller(AuthController::class)->group(function () {
@@ -106,7 +107,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('GetInformationPrice', 'GetInformationPrice')->name('GetInformationPrice');
 
         Route::get('SearchHomeServices', 'SearchHomeServices')->name('SearchHomeServices');
-        Route::get('FilterHomeDeals', 'FilterHomeDeals')->name('FilterHomeDeals');
+        // Route::get('FilterHomeDeals', 'FilterHomeDeals')->name('FilterHomeDeals');
         Route::get('HomeProviderOrders', 'HomeProviderOrders')->name('HomeProviderOrders');
         Route::get('RecentViewDeals', 'RecentViewDeals')->name('RecentViewDeals');
         
