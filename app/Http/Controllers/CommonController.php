@@ -22,8 +22,6 @@ class CommonController extends Controller
 
     public function GetAllDeals(Request $request)
     {
-        $role = Auth::user()->role;
-
         $service = $request->service;
         $budget = $request->budget;
         $reviews = $request->reviews;
