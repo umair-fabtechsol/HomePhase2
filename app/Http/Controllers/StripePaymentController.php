@@ -26,6 +26,24 @@ class StripePaymentController extends Controller
         }
     }
 
+    public function callpro(Request $request)
+    {
+        Stripe::setApiKey(config('services.stripe.secret'));
+
+        try {
+            $callpro = Charge::create([
+                'amount' => $request->amount * 100, // Convert to cents
+                'currency' => 'usd',
+                'source' => $request->stripeToken, // Token from frontend
+                'description' => 'Payment Charge'
+            ]);
+
+            return response()->json(['success' => true, 'charge' => $callpro]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
     public function transfer(Request $request)
     {
         Stripe::setApiKey(config('services.stripe.secret'));

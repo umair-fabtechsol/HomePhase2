@@ -243,10 +243,16 @@ Route::middleware('auth:sanctum')->group(function () {
     
 });
 
+
+Route::controller(StripePaymentController::class)->group(function () {
+
+    Route::get('callpro', 'callpro')->name('callpro');
+
+    
+
+  
+});
 // common provider and customer
 // FilterHomeDeals
 //RecentViewDeals
 //HomeProviderOrders
-
-Route::post('/charge', [StripePaymentController::class, 'charge']);
-Route::post('/transfer', [StripePaymentController::class, 'transfer']);
