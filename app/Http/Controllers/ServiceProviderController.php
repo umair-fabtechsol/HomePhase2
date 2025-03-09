@@ -1756,11 +1756,11 @@ class ServiceProviderController extends Controller
 
         $deals = $deals->get();
 
-        if ($deals->isNotEmpty()) {
+        // if ($deals->isNotEmpty()) {
             return response()->json(['deals' => $deals], 200);
-        } else {
-            return response()->json(['message' => 'No deals found'], 401);
-        }
+        // } else {
+        //     return response()->json(['message' => 'No deals found'], 401);
+        // }
     }
 
 
