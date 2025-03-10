@@ -77,7 +77,7 @@ class CommonController extends Controller
         }
 
         if ($reviews) {
-            $deals = $deals->having('avg_rating', '>=', $reviews);
+            $deals = $deals->having('avg_rating', '<=', $reviews);
         }
 
         if ($budget) {
