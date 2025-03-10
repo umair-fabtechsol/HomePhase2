@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BusinessProfile;
+use App\Models\Review;
 use App\Models\Deal;
 use App\Models\DeliveryImage;
 use App\Models\FavoritDeal;
