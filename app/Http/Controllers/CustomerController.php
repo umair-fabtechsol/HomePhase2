@@ -514,31 +514,15 @@ class CustomerController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 1) {
-        $order = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title','users.email','users.phone','users.location','users.personal_image','deals.images')->where('orders.provider_id','=',3)
-            ->get()->map(function ($order) {
+            $GetOrderDetails = Deal::leftjoin('orders', 'orders.deal_id', '=', 'deals.id')
+                ->leftjoin('users', 'users.id', '=', 'orders.customer_id')->select('users.*', 'orders.id as order_id', 'orders.status as order_status', 'deals.service_title', 'orders.scheduleDate', 'orders.total_amount', 'orders.notes', 'deals.images')
+                ->where('orders.id', '=', $id)->first();
+            $GetOrderBeforeImages = DeliveryImage::where('order_id', '=', $id)->where('type', 'before')->get();
+            $GetOrderAfterImages = DeliveryImage::where('order_id', '=', $id)->where('type', 'after')->get();
+            $GetOrderDeliver = DeliveryImage::where('order_id', '=', $id)->where('type', 'delivered')->get();
 
-                $beforeImages = DB::table('delivery_images')
-                    ->where('order_id', $order->id)
-                    ->where('type', 'before')
-                    ->pluck('before_images');
 
-
-                $afterImages = DB::table('delivery_images')
-                    ->where('order_id', $order->id)
-                    ->where('type', 'after')
-                    ->pluck('after_images');
-                return [
-                    'order' => $order,
-                    'before_images' => $beforeImages,
-                    'after_images' => $afterImages,
-
-                ];
-            });
-    
-           
-            
-    
-             return response()->json(['order' => $order ]);
+            return response()->json(['GetOrderDetails' => $GetOrderDetails, 'GetOrderBeforeImages' => $GetOrderBeforeImages, 'GetOrderAfterImages' => $GetOrderAfterImages, 'GetOrderDeliver' => $GetOrderDeliver]);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
