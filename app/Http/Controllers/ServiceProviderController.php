@@ -1685,6 +1685,7 @@ class ServiceProviderController extends Controller
             ->orderBy('deals.id', 'desc')
             ->select(
                 'deals.id',
+                'deals.service_title',
                 'deals.service_category',
                 'deals.service_description',
                 'deals.flat_rate_price',
@@ -1703,6 +1704,7 @@ class ServiceProviderController extends Controller
             )
             ->groupBy(
                 'deals.id',
+                'deals.service_title',
                 'deals.service_category',
                 'deals.service_description',
                 'deals.flat_rate_price',
