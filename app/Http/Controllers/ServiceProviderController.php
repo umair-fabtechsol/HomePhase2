@@ -57,21 +57,33 @@ class ServiceProviderController extends Controller
         $role = Auth::user()->role;
         $userId = Auth::id();
         if ($role == 2) {
-            $deal = Deal::where('id', $id)
-                ->first();
+            $deal = Deal::find($id);
+        
             if ($deal) {
+                $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
+                $getReviews = Review::where('deal_id', $id)->get();
+                if($getReviews->isNotEmpty()) {
+                    $reviews = [];
+                    $reviews['average'] = floor($reviews->avg('rating'));
+                    $reviews['total'] = $reviews->count();
+                } else {
+                    $reviews = [];
+                    $reviews['average'] = 0;
+                    $reviews['total'] = 0;
+                }
+
                 $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
-                if ($viewedDeal) {
+                if($viewedDeal){
                     $viewedDeal->update([
                         'created_at' => now()
                     ]);
-                } else {
+                } else{
                     $recentDeal = RecentDealView::create([
                         'user_id' => $userId,
                         'deal_id' => $id,
                     ]);
                 }
-                return response()->json(['deal' => $deal], 200);
+                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile , 'reviews' => $reviews], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);
             }
