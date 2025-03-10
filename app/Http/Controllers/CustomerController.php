@@ -271,18 +271,19 @@ class CustomerController extends Controller
         $role = Auth::user()->role;
         $userId = Auth::id();
         if ($role == 1) {
-            // $deal = Deal::where('id', $id)->get();
-            $deal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
-                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
-                ->where('deals.id', $id)
-                ->orderBy('deals.id', 'desc')
-                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
-                ->get();
-            
-            $fetchDeal = Deal::find($id); 
-            $businessProfile = BusinessProfile::where('user_id', $fetchDeal->user_id)->first();
+            $deal = Deal::find($id);
+        
             if ($deal) {
+                $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
+                $getReviews = Review::where('deal_id', $id)->get();
+                if($getReviews->isNotEmpty()) {
+                    $reviews = [];
+                    $reviews['average'] = floor($reviews->avg('rating'));
+                    $reviews['total'] = $reviews->count();
+                } else {
+                    $reviews = 0;
+                }
+
                 $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
                 if($viewedDeal){
                     $viewedDeal->update([
@@ -294,7 +295,7 @@ class CustomerController extends Controller
                         'deal_id' => $id,
                     ]);
                 }
-                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile], 200);
+                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile , 'reviews' => $reviews], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);
             }

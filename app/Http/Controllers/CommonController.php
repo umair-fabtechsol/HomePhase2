@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Deal;
 use App\Models\BusinessProfile;
+use App\Models\Review;
+use Illuminate\Support\Facades\Auth;
 
 class CommonController extends Controller
 {
@@ -115,13 +117,19 @@ class CommonController extends Controller
 
     public function GetDealDetail($id)
     {
-        $deal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-            ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-            ->where('deals.id', $id)
-            ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'reviews.rating as review_rating')
-            ->first();
+        $deal = Deal::find($id);
+        
         if ($deal) {
-            return response()->json(['deal' => $deal], 200);
+            $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
+            $getReviews = Review::where('deal_id', $id)->get();
+            if($getReviews->isNotEmpty()) {
+                $reviews = [];
+                $reviews['average'] = floor($reviews->avg('rating'));
+                $reviews['total'] = $reviews->count();
+            } else {
+                $reviews = 0;
+            }
+            return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile , 'reviews' => $reviews], 200);
         } else {
             return response()->json(['message' => 'No deal found'], 401);
         }
