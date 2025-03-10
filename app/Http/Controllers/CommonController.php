@@ -127,7 +127,9 @@ class CommonController extends Controller
                 $reviews['average'] = floor($reviews->avg('rating'));
                 $reviews['total'] = $reviews->count();
             } else {
-                $reviews = 0;
+                $reviews = [];
+                $reviews['average'] = 0;
+                $reviews['total'] = 0;
             }
             return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile , 'reviews' => $reviews], 200);
         } else {
