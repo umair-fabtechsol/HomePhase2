@@ -35,6 +35,7 @@ return new class extends Migration
             $table->text('special_hour')->nullable();
             $table->text('conversation_call_number')->nullable();
             $table->text('conversation_text_number')->nullable();
+            $table->boolean('conversation_chat')->default(false);
             $table->text('conversation_email')->nullable();
             $table->text('conversation_address')->nullable();
             $table->string('service_location_type')->nullable();
