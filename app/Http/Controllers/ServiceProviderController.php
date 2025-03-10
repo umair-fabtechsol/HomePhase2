@@ -1005,6 +1005,7 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 2) {
+            $userId = Auth::id();
 
             $data = $request->all();
             $conversation = BusinessProfile::where('user_id', $request->id)->first();
@@ -1023,7 +1024,7 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Conversation Details updated successfully', 'conversation' => $conversation], 200);
             } else {
-
+                $data['user_id'] = $userId;
                 $conversation = BusinessProfile::create($data);
                 $notifications = [
                     'title' => 'Created Conversation Details',
