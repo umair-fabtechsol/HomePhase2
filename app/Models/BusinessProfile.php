@@ -27,6 +27,7 @@ class BusinessProfile extends Model
         'special_hour',
         'conversation_call_number',
         'conversation_text_number',
+        'conversation_chat',
         'conversation_email',
         'conversation_address',
         'service_location_type',
