@@ -281,7 +281,9 @@ class CustomerController extends Controller
                     $reviews['average'] = floor($reviews->avg('rating'));
                     $reviews['total'] = $reviews->count();
                 } else {
-                    $reviews = 0;
+                    $reviews = [];
+                    $reviews['average'] = 0;
+                    $reviews['total'] = 0;
                 }
 
                 $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
