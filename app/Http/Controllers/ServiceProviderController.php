@@ -73,7 +73,7 @@ class ServiceProviderController extends Controller
                 'deals.user_id',
                 'users.name',
                 'users.personal_image'
-            )->where('deals.deal_id', $userId)->orderBy('deals.id', 'desc')->get();
+            )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
 
             if ($deals) {
                 return response()->json(['deals' => $deals], 200);
