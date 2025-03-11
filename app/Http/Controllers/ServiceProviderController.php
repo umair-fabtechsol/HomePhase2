@@ -1900,7 +1900,7 @@ class ServiceProviderController extends Controller
         )->where('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->limit(8)->get();
 
         if ($recentDeal) {
-            return response()->json(['message' => 'Orders List', 'recentDeal' => $recentDeal], 200);
+            return response()->json(['message' => 'Orders List', 'recentDeal' => $recentDeal, 'recentDealId' => $recentDealId], 200);
         } else {
             return response()->json(['message' => 'No deal available'], 401);
         }
