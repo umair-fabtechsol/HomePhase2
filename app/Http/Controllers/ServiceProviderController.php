@@ -116,7 +116,7 @@ class ServiceProviderController extends Controller
                         'deal_id' => $id,
                     ]);
                 }
-                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile , 'reviews' => $reviews, 'recentDeal' => $recentDeal], 200);
+                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile , 'reviews' => $reviews], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);
             }
