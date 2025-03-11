@@ -213,6 +213,46 @@ class ServiceProviderController extends Controller
         }
     }
 
+    
+    public function PublishBasicInfo(Request $request)
+    {
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $userId = Auth::id();
+            $userRole = Auth::user()->role;
+            $validator = Validator::make($request->all(), [
+                'service_title' => 'required',
+                'service_category' => 'required',
+                'search_tags' => 'required',
+                'service_description' => 'required',
+                'commercial' => 'nullable',
+                'residential' => 'nullable',
+            ], [
+                'at_least_one.required' => 'At least one of commercial or residential is required.',
+            ]);
+
+            $validator->after(function ($validator) use ($request) {
+                if (empty($request->commercial) && empty($request->residential)) {
+                    $validator->errors()->add('at_least_one', 'At least one of commercial or residential is required.');
+                }
+            });
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+            $data = $request->all();
+            
+                $data['user_id'] = $userId;
+                $data['publish'] = 1;
+                $deal = Deal::create($data);
+
+                return response()->json(['message' => 'Added new deal and Publish successfully', 'deal' => $deal], 200);
+          
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+    
     public function PriceAndPackage(Request $request)
     {
         $role = Auth::user()->role;
@@ -304,6 +344,30 @@ class ServiceProviderController extends Controller
         }
     }
 
+    public function PublishPriceAndPackage(Request $request)
+    {
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $userId = Auth::id();
+            $userRole = Auth::user()->role;
+
+            $data = $request->all();
+            if ($userRole != 2) {
+                return response()->json(['message' => 'Access denied. Only providers can perform this action.'], 400);
+            }
+          
+
+                $data['user_id'] = $userId;
+                $data['publish'] = 1;
+                $deal = Deal::create($data);
+
+                return response()->json(['message' => 'Added new package deal and Publish successfully', 'deal' => $deal], 200);
+            
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+    
     public function MediaUpload(Request $request)
     {
         $role = Auth::user()->role;
@@ -374,6 +438,59 @@ class ServiceProviderController extends Controller
         }
     }
 
+    public function PublishMediaUpload(Request $request)
+    {
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $userId = Auth::id();
+            $userRole = Auth::user()->role;
+            $validator = Validator::make($request->all(), [
+
+                'images' => 'required',
+                'videos' => 'required',
+
+            ]);
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+            
+            $data = $request->all();
+            $DealImages = [];
+            $DealVideos = [];
+
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $photo) {
+                    $photo_name = time() . '-' . $photo->getClientOriginalName();
+                    $photo->move(public_path('uploads'), $photo_name);
+                    $DealImages[] = $photo_name;
+                }
+            }
+
+            if ($request->hasFile('videos')) {
+                foreach ($request->file('videos') as $video) {
+                    $video_name = time() . '-' . $video->getClientOriginalName();
+                    $video->move(public_path('uploads'), $video_name);
+                    $DealVideos[] = $video_name;
+                }
+            }
+
+
+            $data['images'] = json_encode($DealImages);
+            $data['videos'] = json_encode($DealVideos);
+            $data['user_id'] = $userId;
+            $data['publish'] = 1;
+            
+                $deal = Deal::create($data);
+                return response()->json([
+                    'message' => 'Added new deal with Images and Publish successfully',
+                    'deal' => $deal,
+                ], 200);
+            
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }   
+    
     public function UpdateBasicInfo(Request $request)
     {
         $role = Auth::user()->role;
