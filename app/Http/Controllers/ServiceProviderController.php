@@ -1761,9 +1761,14 @@ class ServiceProviderController extends Controller
                 'users.personal_image'
             );
 
-        // Apply Filters
+        // Category Filters 
         if ($service) {
             $deals = $deals->where('deals.service_category', 'like', '%' . $service . '%');
+        }
+
+        // Title Filters 
+        if ($service) {
+            $deals = $deals->where('deals.service_title', 'like', '%' . $service . '%');
         }
 
         if ($reviews) {
