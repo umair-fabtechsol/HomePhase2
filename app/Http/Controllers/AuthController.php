@@ -7,7 +7,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
-
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ResetPasswordMail;
 class AuthController extends Controller
 {
     public function form()
@@ -158,5 +160,59 @@ class AuthController extends Controller
 
             dd($e->getMessage());
         }
+    }
+
+    public function ForgetPassword(Request $request){
+
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        
+        $token = Password::createToken(User::where('email', $request->email)->first());
+    
+        if (!$token) {
+            
+            return response()->json(['error' => 'Unable to generate password reset token. Please try again later.'], 500);
+        }
+
+    
+        Mail::to($request->email)->send(new ResetPasswordMail($token, $request->email));
+
+        return response()->json(['message' => 'Password reset link sent to your email.'], 200);   
+        
+    }
+
+    public function ResetPassword(Request $request){
+
+       dd('ok');
+        
+    }
+
+    public function ChangePassword(Request $request){
+       
+        $validator = Validator::make($request->all(), [
+            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+        ],[
+            'new_password.confirmed' => 'The new password and confirm password do not match.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $GetUserDetails=User::where('email','=',$request->email)->first();
+
+        $GetUserDetails->update(['password' => Hash::make($request->new_password)]);
+        
+        return response()->json(['message' => 'Your password has been reset successfully.'], 200);
     }
 }
