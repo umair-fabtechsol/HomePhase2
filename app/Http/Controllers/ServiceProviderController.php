@@ -1920,7 +1920,9 @@ class ServiceProviderController extends Controller
                 $query->where('deals.service_category', 'like', '%' . $service . '%')
                     ->orWhere('deals.service_title', 'like', '%' . $service . '%')
                     ->orWhere('deals.search_tags', 'like', '%' . $service . '%')
-                    ->orWhere('deals.service_description', 'like', '%' . $service . '%');
+                    ->orWhere('deals.service_description', 'like', '%' . $service . '%')
+                    ->orWhere('deals.commercial', 'like', '%' . $service . '%')
+                    ->orWhere('deals.residential', 'like', '%' . $service . '%');
             });
         }
 
