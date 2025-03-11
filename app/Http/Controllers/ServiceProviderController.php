@@ -1897,7 +1897,7 @@ class ServiceProviderController extends Controller
             'deals.user_id',
             'users.name',
             'users.personal_image'
-        )->where('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->limit(8)->get();
+        )->whereIn('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->limit(8)->get();
 
         if ($recentDeal) {
             return response()->json(['message' => 'Orders List', 'recentDeal' => $recentDeal, 'recentDealId' => $recentDealId], 200);
