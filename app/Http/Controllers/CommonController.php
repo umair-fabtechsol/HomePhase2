@@ -108,8 +108,15 @@ class CommonController extends Controller
 
         $deals = $deals->get();
 
+        if($request->user_id){
+            $userId = $request->user_id;
+            $favoritDeals = FavoritDeal::where('user_id', $userId)->pluck('deal_id')->toArray();
+        }else{
+            $favoritDeals = null;
+        }
+
         if ($deals->isNotEmpty()) {
-            return response()->json(['deals' => $deals], 200);
+            return response()->json(['deals' => $deals,'favoritDeals' => $favoritDeals], 200);
         } else {
             return response()->json(['message' => 'No deals found'], 401);
         }
