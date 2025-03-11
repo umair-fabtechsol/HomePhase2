@@ -168,11 +168,44 @@ class CustomerController extends Controller
         if ($role == 1) {
             // $deals = Deal::orderBy('id', 'desc')->get();
             $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-                ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
-                ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
-                ->orderBy('deals.id', 'desc')
-                ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
-                ->get();
+        ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+        ->orderBy('deals.id', 'desc')
+        ->select(
+            'deals.id',
+            'deals.service_title',
+            'deals.service_category',
+            'deals.service_description',
+            'deals.flat_rate_price',
+            'deals.hourly_rate',
+            'deals.images',
+            'deals.videos',
+            'deals.price1',
+            'deals.flat_estimated_service_time',
+            'deals.hourly_estimated_service_time',
+            'deals.estimated_service_timing1',
+            'deals.user_id',
+            'users.name as user_name',
+            'users.personal_image',
+            \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+            \DB::raw('COUNT(reviews.id) as total_reviews')
+        )
+        ->groupBy(
+            'deals.id',
+            'deals.service_title',
+            'deals.service_category',
+            'deals.service_description',
+            'deals.flat_rate_price',
+            'deals.hourly_rate',
+            'deals.price1',
+            'deals.images',
+            'deals.videos',
+            'deals.flat_estimated_service_time',
+            'deals.hourly_estimated_service_time',
+            'deals.estimated_service_timing1',
+            'deals.user_id',
+            'users.name',
+            'users.personal_image'
+        )->orderBy('deals.id', 'desc')->get();
             if ($deals) {
                 return response()->json(['deals' => $deals], 200);
             } else {
