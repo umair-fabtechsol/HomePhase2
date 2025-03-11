@@ -118,6 +118,7 @@ class CommonController extends Controller
     public function GetDealDetail($id)
     {
         $deal = Deal::find($id);
+        $userId = Auth::id();
         
         if ($deal) {
             $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
@@ -130,6 +131,20 @@ class CommonController extends Controller
                 $reviews = [];
                 $reviews['average'] = 0;
                 $reviews['total'] = 0;
+            }
+
+            if($userId){
+                $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
+                if($viewedDeal){
+                    $viewedDeal->update([
+                        'created_at' => now()
+                    ]);
+                } else{
+                    $recentDeal = RecentDealView::create([
+                        'user_id' => $userId,
+                        'deal_id' => $id,
+                    ]);
+                }
             }
             return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile , 'reviews' => $reviews], 200);
         } else {
