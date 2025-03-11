@@ -1727,6 +1727,7 @@ class ServiceProviderController extends Controller
             ->select(
                 'deals.id',
                 'deals.service_title',
+                'deals.search_tags',
                 'deals.service_category',
                 'deals.service_description',
                 'deals.flat_rate_price',
@@ -1746,6 +1747,7 @@ class ServiceProviderController extends Controller
             ->groupBy(
                 'deals.id',
                 'deals.service_title',
+                'deals.search_tags',
                 'deals.service_category',
                 'deals.service_description',
                 'deals.flat_rate_price',
@@ -1763,13 +1765,15 @@ class ServiceProviderController extends Controller
 
         // Category Filters 
         if ($service) {
-            $deals = $deals->where('deals.service_category', 'like', '%' . $service . '%');
+            // $deals = $deals->where('deals.service_category', 'like', '%' . $service . '%');
+            $deals = $deals->where(function ($query) use ($service) {
+                $query->where('deals.service_category', 'like', '%' . $service . '%')
+                    ->orWhere('deals.service_title', 'like', '%' . $service . '%')
+                    ->orWhere('deals.search_tags', 'like', '%' . $service . '%')
+                    ->orWhere('deals.service_description', 'like', '%' . $service . '%');
+            });
         }
 
-        // Title Filters 
-        if ($service) {
-            $deals = $deals->where('deals.service_title', 'like', '%' . $service . '%');
-        }
 
         if ($reviews) {
             $deals = $deals->having('avg_rating', '<=', $reviews);
