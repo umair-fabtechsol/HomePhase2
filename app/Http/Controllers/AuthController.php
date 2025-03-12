@@ -186,6 +186,7 @@ class AuthController extends Controller
         }
 
         $token = Password::createToken(User::where('email', $request->email)->first());
+        User::where('email','=',$request->email)->update(['token' => $token]);
 
         if (!$token) {
 
@@ -206,9 +207,10 @@ class AuthController extends Controller
 
     public function ChangePassword(Request $request)
     {
-
+     
         $validator = Validator::make($request->all(), [
             'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+            'token' => ['required', 'string'],
         ], [
             'new_password.confirmed' => 'The new password and confirm password do not match.',
         ]);
@@ -218,11 +220,17 @@ class AuthController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
+    
 
+    
         $GetUserDetails = User::where('email', '=', $request->email)->first();
-
-        $GetUserDetails->update(['password' => Hash::make($request->new_password)]);
-
+        if ($GetUserDetails->token != $request->token) {
+            return response()->json(['error' => 'Invalid token.'], 400);
+        }
+        $GetUserDetails->update(['password' => Hash::make($request->new_password),
+        'token' => null,
+    ]);
+        
         return response()->json(['message' => 'Your password has been reset successfully.'], 200);
     }
 }
