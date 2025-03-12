@@ -539,6 +539,22 @@ class CustomerController extends Controller
         }
     }
 
+    public function CustomerSocial($user_id)
+    {
+        $role = Auth::user()->role;
+        if ($role == 1) {
+
+            $SocialDetail = SocialProfile::where('user_id', $user_id)->first();
+            if ($SocialDetail) {
+                return response()->json(['SocialDetail' => $SocialDetail], 200);
+            } else {
+                return response()->json(['message' => 'Social not available'], 401);
+            }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
     public function AddOrder(Request $request)
     {
         $role = Auth::user()->role;
