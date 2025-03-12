@@ -50,22 +50,22 @@ class SuperAdminController extends Controller
                 ->toArray();
 
             $newCustomersByDay = User::where('role', 1)
-            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
-            ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
-            ->groupBy('day')
-            ->orderBy('created_at')
-            ->get()
-            ->pluck('count', 'day')
-            ->toArray();
+                ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
+                ->groupBy('day')
+                ->orderBy('created_at')
+                ->get()
+                ->pluck('count', 'day')
+                ->toArray();
 
             $newSaleRapByDay = User::where('role', 3)
-            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
-            ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
-            ->groupBy('day')
-            ->orderBy('created_at')
-            ->get()
-            ->pluck('count', 'day')
-            ->toArray();
+                ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+                ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
+                ->groupBy('day')
+                ->orderBy('created_at')
+                ->get()
+                ->pluck('count', 'day')
+                ->toArray();
 
             $dayName = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
             $addCurrentWeeklyProvider = [];
@@ -92,26 +92,26 @@ class SuperAdminController extends Controller
             $currentMonthActiveUser = [];
             for ($i = 1; $i <= $daysInMonth; $i++) {
                 $date = Carbon::create($currentYear, $currentMonth, $i);
-                $currentMonthActiveUser[] = User::where('role', '!=', 0)->where('status',0)->whereDate('created_at', $date)->count();
+                $currentMonthActiveUser[] = User::where('role', '!=', 0)->where('status', 0)->whereDate('created_at', $date)->count();
             }
 
             $previousMonthActiveUser = [];
             for ($i = 1; $i <= $daysInPreviousMonth; $i++) {
                 $date = Carbon::create($currentYear, $previousMonth, $i);
-                $previousMonthActiveUser[] = User::where('role', '!=', 0)->where('status',0)->whereDate('created_at', $date)->count();
+                $previousMonthActiveUser[] = User::where('role', '!=', 0)->where('status', 0)->whereDate('created_at', $date)->count();
             }
 
-            $monthlySales=[];
+            $monthlySales = [];
             for ($i = 1; $i <= $daysInMonth; $i++) {
                 $date = Carbon::create($currentYear, $currentMonth, $i);
                 $monthlySales[] = User::where('role', 3)->whereDate('created_at', $date)->count();
             }
-            $monthlyProviders=[];
+            $monthlyProviders = [];
             for ($i = 1; $i <= $daysInMonth; $i++) {
                 $date = Carbon::create($currentYear, $currentMonth, $i);
                 $monthlyProviders[] = User::where('role', 2)->whereDate('created_at', $date)->count();
             }
-            $monthlyClient=[];
+            $monthlyClient = [];
             for ($i = 1; $i <= $daysInMonth; $i++) {
                 $date = Carbon::create($currentYear, $currentMonth, $i);
                 $monthlyClient[] = User::where('role', 1)->whereDate('created_at', $date)->count();
@@ -136,7 +136,6 @@ class SuperAdminController extends Controller
                 'monthlyProviders' => $monthlyProviders,
                 'monthlyClient' => $monthlyClient,
             ], 200);
-
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
@@ -221,7 +220,7 @@ class SuperAdminController extends Controller
             $data = $request->all();
 
             $getProvider = User::find($request->id);
-            if($getProvider->role != 2){
+            if ($getProvider->role != 2) {
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
             if ($request->hasFile('personal_image')) {
@@ -328,7 +327,7 @@ class SuperAdminController extends Controller
             $data = $request->all();
 
             $GetSaleRep = User::find($request->id);
-            if($GetSaleRep->role != 3){
+            if ($GetSaleRep->role != 3) {
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
             if ($request->hasFile('personal_image')) {
@@ -374,7 +373,7 @@ class SuperAdminController extends Controller
             $data = $request->all();
 
             $getCustomer = User::find($request->id);
-            if($getCustomer->role != 1){
+            if ($getCustomer->role != 1) {
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
             if ($request->hasFile('personal_image')) {
@@ -454,7 +453,6 @@ class SuperAdminController extends Controller
                     $photo_destination = public_path('uploads');
                     $photo1->move($photo_destination, $photo_name1);
                     $data['personal_image'] = $photo_name1;
-                  
                 }
                 $user->update($data);
                 return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
@@ -654,12 +652,13 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-    
-    public function ServiceSummary(){
+
+    public function ServiceSummary()
+    {
 
         $totalRevenue = Order::sum('total_amount');
 
-      
+
         $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
             ->join('orders', 'orders.deal_id', '=', 'deals.id')
             ->groupBy('deals.service_category')
@@ -674,8 +673,6 @@ class SuperAdminController extends Controller
 
 
         return response()->json(['reportData' => $reportData], 200);
-
-   
     }
     public function SaleSummary()
     {
@@ -685,34 +682,33 @@ class SuperAdminController extends Controller
             'Q3' => [7, 9],  // July - September
             'Q4' => [10, 12] // October - December
         ];
-        
+
         $quarterlyData = [];
-        $previousRevenue = null; 
-        
+        $previousRevenue = null;
+
         foreach ($quarters as $quarter => $months) {
             $revenue = Order::whereMonth('created_at', '>=', $months[0])
                 ->whereMonth('created_at', '<=', $months[1])
                 ->sum('total_amount');
-        
-           
+
+
             $growth = ($previousRevenue !== null && $previousRevenue > 0)
                 ? round((($revenue - $previousRevenue) / $previousRevenue) * 100, 2) . '%'
                 : '-';
-        
-            
+
+
             $previousRevenue = $revenue;
-        
-          
+
+
             $quarterlyData[] = [
                 'quarter' => $quarter,
                 'revenue' => $revenue,
                 'growth' => $growth
             ];
         }
-        
-        
+
+
         return response()->json(['quarterlyData' => $quarterlyData], 200);
-        
     }
     public function sendInvite(Request $request)
     {
@@ -734,36 +730,37 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-    public function contact(){
-        $getcontact=contact_pro::get()->all();
-        return response()->json(['message' => 'Invitation sent successfully!','getcontact' => $getcontact]);
+    public function contact()
+    {
+        $getcontact = contact_pro::get()->all();
+        return response()->json(['message' => 'Invitation sent successfully!', 'getcontact' => $getcontact]);
     }
 
-    public function GetSupport(Request $request){
-     
-      
-      $GetSupport = Support::leftJoin('users', 'users.id', '=', 'supports.user_id')
-        ->select('supports.*', 'users.name as user_name', 'users.personal_image','users.role')
-        ->get();
-    
+    public function GetSupport(Request $request)
+    {
 
 
-        
+        $GetSupport = Support::leftJoin('users', 'users.id', '=', 'supports.user_id')
+            ->select('supports.*', 'users.name as user_name', 'users.personal_image', 'users.role')
+            ->get();
+
+
+
+
         return response()->json(['GetSupport' => $GetSupport]);
-
-        
     }
-    public function UpdateSupport(Request $request){
+    public function UpdateSupport(Request $request)
+    {
 
 
-        $data=$request->all();
+        $data = $request->all();
 
         $GetSupport = Support::find($request->id);
 
         $data['status'] = $request->status;
 
         $GetSupport->update($data);
-        
+
         return response()->json(['GetSupport' => $GetSupport]);
     }
 
@@ -819,23 +816,22 @@ class SuperAdminController extends Controller
     public function banProvider(Request $request)
     {
         $user = User::find($request->id);
-    
+
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-    
+
         if ($user->role != 2) {
             return response()->json(['message' => 'Invalid User'], 403);
         }
-    
+
         // Toggle status (0 → 1 OR 1 → 0)
         $newStatus = $user->status == 0 ? 1 : 0;
         $user->update(['status' => $newStatus]);
-    
+
         // Message based on status
         $message = $newStatus == 1 ? 'User banned successfully' : 'User unbanned successfully';
-    
+
         return response()->json(['message' => $message, 'user' => $user], 200);
     }
-    
 }

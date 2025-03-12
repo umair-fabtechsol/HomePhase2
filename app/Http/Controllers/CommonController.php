@@ -11,16 +11,15 @@ use Illuminate\Support\Facades\Auth;
 
 class CommonController extends Controller
 {
-    public function salesrep() {
+    public function salesrep()
+    {
         $salesReps = User::where('role', 3)->select('id', 'name')->get();
 
         return response()->json([
             'sales_reps' => $salesReps
         ], 200);
     }
-    public function getNotification() {
-
-    }
+    public function getNotification() {}
 
     public function GetAllDeals(Request $request)
     {
@@ -86,7 +85,7 @@ class CommonController extends Controller
                     ->orWhereRaw("CAST(REPLACE(deals.hourly_rate, '$', '') AS DECIMAL(10,2)) <= ?", [$budget])
                     ->orWhereRaw("CAST(REPLACE(deals.price1, '$', '') AS DECIMAL(10,2)) <= ?", [$budget]);
             });
-        } 
+        }
 
         if ($estimate_time) {
             $deals = $deals->where(function ($query) use ($estimate_time) {
@@ -108,15 +107,15 @@ class CommonController extends Controller
 
         $deals = $deals->get();
 
-        if($request->user_id){
+        if ($request->user_id) {
             $userId = $request->user_id;
             $favoritDeals = FavoritDeal::where('user_id', $userId)->pluck('deal_id')->toArray();
-        }else{
+        } else {
             $favoritDeals = null;
         }
 
         if ($deals->isNotEmpty()) {
-            return response()->json(['deals' => $deals,'favoritDeals' => $favoritDeals], 200);
+            return response()->json(['deals' => $deals, 'favoritDeals' => $favoritDeals], 200);
         } else {
             return response()->json(['message' => 'No deals found'], 401);
         }
@@ -126,11 +125,11 @@ class CommonController extends Controller
     {
         $deal = Deal::find($id);
         $userId = Auth::id();
-        
+
         if ($deal) {
             $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
             $getReviews = Review::where('deal_id', $id)->get();
-            if($getReviews->isNotEmpty()) {
+            if ($getReviews->isNotEmpty()) {
                 $reviews = [];
                 $reviews['average'] = floor($getReviews->avg('rating'));
                 $reviews['total'] = $getReviews->count();
@@ -140,23 +139,22 @@ class CommonController extends Controller
                 $reviews['total'] = 0;
             }
 
-            if($userId){
+            if ($userId) {
                 $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
-                if($viewedDeal){
+                if ($viewedDeal) {
                     $viewedDeal->update([
                         'created_at' => now()
                     ]);
-                } else{
+                } else {
                     $recentDeal = RecentDealView::create([
                         'user_id' => $userId,
                         'deal_id' => $id,
                     ]);
                 }
             }
-            return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile , 'reviews' => $reviews], 200);
+            return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile, 'reviews' => $reviews], 200);
         } else {
             return response()->json(['message' => 'No deal found'], 401);
         }
     }
-
 }
