@@ -43,7 +43,7 @@ class ResetPasswordMail extends Mailable
         return new Content(
             view: 'emails.reset-password',
             with: [
-                'resetUrl' => url("api/ResetPasswordhttps://homerservice-ph2.netlify.app/newpassword?token={$this->token}&email=" . urlencode($this->email))
+                'resetUrl' => url("https://homerservice-ph2.netlify.app/newpassword?token={$this->token}&email=" . urlencode($this->email))
             ],
         );
     }
