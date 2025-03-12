@@ -1246,7 +1246,47 @@ class ServiceProviderController extends Controller
             $businessProfile = BusinessProfile::where('user_id', $userId)->get();
 
             $getPayment = PaymentDetail::where('user_id', $userId)->get();
-            $getDeal = Deal::where('user_id', $userId)->get();
+            $getDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+        ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+        ->orderBy('deals.id', 'desc')
+        ->select(
+            'deals.id',
+            'deals.service_title',
+            'deals.service_category',
+            'deals.service_description',
+            'deals.flat_rate_price',
+            'deals.hourly_rate',
+            'deals.images',
+            'deals.videos',
+            'deals.price1',
+            'deals.pricing_model',
+            'deals.flat_estimated_service_time',
+            'deals.hourly_estimated_service_time',
+            'deals.estimated_service_timing1',
+            'deals.user_id',
+            'users.name as user_name',
+            'users.personal_image',
+            \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+            \DB::raw('COUNT(reviews.id) as total_reviews')
+        )
+        ->groupBy(
+            'deals.id',
+            'deals.service_title',
+            'deals.service_category',
+            'deals.service_description',
+            'deals.flat_rate_price',
+            'deals.hourly_rate',
+            'deals.price1',
+            'deals.images',
+            'deals.videos',
+            'deals.pricing_model',
+            'deals.flat_estimated_service_time',
+            'deals.hourly_estimated_service_time',
+            'deals.estimated_service_timing1',
+            'deals.user_id',
+            'users.name',
+            'users.personal_image'
+        )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
             $getSocial = SocialProfile::where('user_id', $userId)->get();
             if ($user) {
 
@@ -1704,6 +1744,7 @@ class ServiceProviderController extends Controller
             'deals.images',
             'deals.videos',
             'deals.price1',
+            'deals.pricing_model',
             'deals.flat_estimated_service_time',
             'deals.hourly_estimated_service_time',
             'deals.estimated_service_timing1',
@@ -1723,6 +1764,7 @@ class ServiceProviderController extends Controller
             'deals.price1',
             'deals.images',
             'deals.videos',
+            'deals.pricing_model',
             'deals.flat_estimated_service_time',
             'deals.hourly_estimated_service_time',
             'deals.estimated_service_timing1',
