@@ -967,7 +967,7 @@ class CustomerController extends Controller
         $role = Auth::user()->role;
         if ($role == 1) {
             $userId = Auth::id();
-            $GetActiveOrders = Order::where('customer_id', $userId)->where('status', '!=', 'completed')->get();
+            $GetActiveOrders = Order::where('customer_id', $userId)->where('status', '!=', 'completed')->orderBy('id', 'desc')->limit(3)->get();
             if ($GetActiveOrders) {
                 return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
             } else {
