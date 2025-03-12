@@ -10,6 +10,7 @@ use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ResetPasswordMail;
+use Illuminate\Support\Facades\Session;
 class AuthController extends Controller
 {
     public function form()
@@ -85,19 +86,24 @@ class AuthController extends Controller
         ];
     }
 
-    public function googleLogin()
+    public function googleLogin($role)
     {
-
-        return Socialite::driver('google')->stateless()->redirect();
+       
+        return Socialite::driver('google')
+        ->stateless()
+        ->with(['state' => $role])
+        ->redirect();
     }
 
-    public function googleHandle(Request $request)
+    public function googleHandle()
     {
+
 
         try {
             $user = Socialite::driver('google')->stateless()->user();
+            $role = request('state');
             $findUser = User::where('email', $user->email)->first();
-
+       
             if (!$findUser) {
 
                 $createUser = new User();
@@ -105,12 +111,10 @@ class AuthController extends Controller
                 $createUser->name = $user->name;
                 $createUser->email = $user->email;
                 $createUser->phone = '123456';
-                $createUser->role = 2;
+                $createUser->role = $role;
                 $createUser->password = Hash::make('aszx1234');
                 $createUser->terms = 1;
                 $createUser->save();
-
-
 
                 return [
 
