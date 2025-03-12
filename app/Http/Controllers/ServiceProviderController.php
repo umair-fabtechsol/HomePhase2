@@ -1288,9 +1288,21 @@ class ServiceProviderController extends Controller
             'users.personal_image'
         )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
             $getSocial = SocialProfile::where('user_id', $userId)->get();
+
+            $getReviews = Review::where('provider_id', $id)->get();
+            if($getReviews->isNotEmpty()) {
+                $provider_reviews = [];
+                $provider_reviews['average'] = floor($getReviews->avg('rating'));
+                $provider_reviews['total'] = $getReviews->count();
+            } else {
+                $provider_reviews = [];
+                $provider_reviews['average'] = 0;
+                $provider_reviews['total'] = 0;
+            }
+
             if ($user) {
 
-                return response()->json(['user' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial], 200);
+                return response()->json(['user' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews], 200);
             }
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
