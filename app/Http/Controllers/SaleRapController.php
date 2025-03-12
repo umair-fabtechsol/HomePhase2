@@ -24,7 +24,39 @@ class SaleRapController extends Controller
             $assignPros = User::where('role', 2)->where('assign_sales_rep', Auth::id())->count();
             $newPros = User::where('role', 2)->whereDate('created_at', Carbon::today())->count();
             $recentDeal = Deal::where('publish', 1)->whereDate('created_at', Carbon::today())->count();
-            $recetPublishDeals = Deal::leftjoin('users', 'deals.user_id', '=', 'users.id')->select('deals.*', 'users.personal_image', 'users.name')->where('deals.publish', 1)->where('users.assign_sales_rep', Auth::id())->orderBy('deals.id','desc')->limit(2)->get();
+            $recetPublishDeals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+        ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+        ->orderBy('deals.id', 'desc')
+        ->select(
+            'deals.id',
+            'deals.service_title',
+            'deals.service_category',
+            'deals.service_description',
+            'deals.flat_rate_price',
+            'deals.hourly_rate',
+            'deals.images',
+            'deals.videos',
+            'deals.price1',
+            'deals.user_id',
+            'deals.created_at',
+            'users.name as user_name',
+            'users.personal_image'
+        )
+        ->groupBy(
+            'deals.id',
+            'deals.service_title',
+            'deals.service_category',
+            'deals.service_description',
+            'deals.flat_rate_price',
+            'deals.hourly_rate',
+            'deals.price1',
+            'deals.images',
+            'deals.videos',
+            'deals.created_at',
+            'deals.user_id',
+            'users.name',
+            'users.personal_image'
+        )->where('deals.publish', 1)->orderBy('deals.id', 'desc')->limit(2)->get();
 
             $totalRevenue = Order::sum('total_amount');
 
