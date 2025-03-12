@@ -384,7 +384,7 @@ class CustomerController extends Controller
         $role = Auth::user()->role;
         if ($role == 1) {
 
-            $social = SocialProfile::find($request->id);
+            $social = SocialProfile::where('user_id',$request->id)->first();
 
             if ($request['facebook'] == $social->facebook) {
 
