@@ -96,7 +96,6 @@ class AuthController extends Controller
 
         try {
             $user = Socialite::driver('google')->stateless()->user();
-            dd($user);
             $findUser = User::where('email', $user->email)->first();
 
             if (!$findUser) {
@@ -135,7 +134,7 @@ class AuthController extends Controller
 
         try {
             $user = Socialite::driver('facebook')->stateless()->user();
-            dd($user);
+            
             $findUser = User::where('email', $user->email)->first();
             if (!$findUser) {
 
