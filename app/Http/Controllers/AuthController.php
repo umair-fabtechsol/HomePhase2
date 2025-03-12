@@ -87,13 +87,23 @@ class AuthController extends Controller
         ];
     }
 
-    public function googleLogin($role)
+    public function googleLogin($role = null)
     {
-
-        return Socialite::driver('google')
+     
+        if (!$role) {
+            
+            return Socialite::driver('google')
+            ->stateless()
+            ->redirect();
+        }else{
+           
+            return Socialite::driver('google')
             ->stateless()
             ->with(['state' => $role])
             ->redirect();
+            
+        }
+        
     }
 
     public function googleHandle()
@@ -104,7 +114,7 @@ class AuthController extends Controller
             $user = Socialite::driver('google')->stateless()->user();
             $role = request('state');
             $findUser = User::where('email', $user->email)->first();
-
+            
             if (!$findUser) {
 
                 $createUser = new User();
@@ -116,7 +126,13 @@ class AuthController extends Controller
                 $createUser->password = Hash::make('aszx1234');
                 $createUser->terms = 1;
                 $createUser->save();
-
+                Auth::login($createUser);
+                $token = $createUser->createToken('auth_token')->plainTextToken;
+                return response()->json([
+                    'message' => 'User registered successfully',
+                    'user' => $createUser,
+                    'token' => $token,
+                ]);
             }
         } catch (Exception $e) {
 
@@ -124,13 +140,24 @@ class AuthController extends Controller
         }
 
         $getuser=User::where('email','=',$user->email)->first();
+      
+        if($getuser){
         Auth::login($getuser);
         $token = $getuser->createToken('auth_token')->plainTextToken;
         return [
+            'message' => 'User logged in successfully',
             'token' =>$token,
             'getuser' => $getuser,
 
         ];
+    }else{
+
+        return [
+            'message' => 'Credentials Not Found',
+        ];
+        
+    }
+    
     }
 
     public function facebookLogin()
