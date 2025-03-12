@@ -1297,9 +1297,32 @@ class ServiceProviderController extends Controller
                 $provider_reviews['total'] = 0;
             }
 
+            $stars = Review::select(
+                DB::raw('SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_star'),
+                DB::raw('SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_star'),
+                DB::raw('SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_star'),
+                DB::raw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star'),
+                DB::raw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star')
+            )
+                ->where('provider_id', $userId)
+                ->first();
+
+            $detailReviews = Review::leftJoin('users', 'users.id', '=', 'reviews.user_id')
+                ->leftJoin('deals', 'deals.id', '=', 'reviews.deal_id')
+                ->select(
+                    'reviews.*',
+                    'users.name as user_name',
+                    'users.personal_image',
+                    'deals.service_title'
+                )
+                ->where('reviews.provider_id', $userId) // Filters by provider_id
+                ->get();
+
+
+
             if ($user) {
 
-                return response()->json(['user' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews], 200);
+                return response()->json(['user' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
             }
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
