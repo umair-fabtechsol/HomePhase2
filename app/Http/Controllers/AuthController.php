@@ -91,7 +91,7 @@ class AuthController extends Controller
         return Socialite::driver('google')->stateless()->redirect();
     }
 
-    public function googleHandle()
+    public function googleHandle(Request $request)
     {
 
         try {
@@ -104,7 +104,8 @@ class AuthController extends Controller
 
                 $createUser->name = $user->name;
                 $createUser->email = $user->email;
-                $createUser->role = 1;
+                $createUser->phone = '123456';
+                $createUser->role = 2;
                 $createUser->password = Hash::make('aszx1234');
                 $createUser->terms = 1;
                 $createUser->save();
