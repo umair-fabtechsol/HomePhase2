@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ResetPasswordMail;
 use Illuminate\Support\Facades\Session;
+
 class AuthController extends Controller
 {
     public function form()
@@ -67,7 +68,7 @@ class AuthController extends Controller
                 'message' => 'invalid credentials'
             ], 401);
         }
-        if($user->status == 1){
+        if ($user->status == 1) {
             return response()->json([
                 'message' => 'You account has been banned'
             ], 401);
@@ -78,7 +79,7 @@ class AuthController extends Controller
                 'message' => 'You must accept the terms and conditions to log in'
             ], 403);
         }
-        
+
         $token = $user->createToken('auth_token')->plainTextToken;
         return [
             'user' => $user,
@@ -88,11 +89,11 @@ class AuthController extends Controller
 
     public function googleLogin($role)
     {
-       
+
         return Socialite::driver('google')
-        ->stateless()
-        ->with(['state' => $role])
-        ->redirect();
+            ->stateless()
+            ->with(['state' => $role])
+            ->redirect();
     }
 
     public function googleHandle()
@@ -103,7 +104,7 @@ class AuthController extends Controller
             $user = Socialite::driver('google')->stateless()->user();
             $role = request('state');
             $findUser = User::where('email', $user->email)->first();
-       
+
             if (!$findUser) {
 
                 $createUser = new User();
@@ -139,7 +140,7 @@ class AuthController extends Controller
 
         try {
             $user = Socialite::driver('facebook')->stateless()->user();
-            
+
             $findUser = User::where('email', $user->email)->first();
             if (!$findUser) {
 
@@ -166,44 +167,45 @@ class AuthController extends Controller
         }
     }
 
-    public function ForgetPassword(Request $request){
+    public function ForgetPassword(Request $request)
+    {
 
 
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
         ]);
-        
+
         if ($validator->fails()) {
             return response()->json([
                 'errors' => $validator->errors()
             ], 422);
         }
-        
+
         $token = Password::createToken(User::where('email', $request->email)->first());
-    
+
         if (!$token) {
-            
+
             return response()->json(['error' => 'Unable to generate password reset token. Please try again later.'], 500);
         }
 
-    
+
         Mail::to($request->email)->send(new ResetPasswordMail($token, $request->email));
 
-        return response()->json(['message' => 'Password reset link sent to your email.'], 200);   
-        
+        return response()->json(['message' => 'Password reset link sent to your email.'], 200);
     }
 
-    public function ResetPassword(Request $request){
+    public function ResetPassword(Request $request)
+    {
 
-       dd('ok');
-        
+        dd('ok');
     }
 
-    public function ChangePassword(Request $request){
-       
+    public function ChangePassword(Request $request)
+    {
+
         $validator = Validator::make($request->all(), [
             'new_password' => ['required', 'string', 'min:8', 'confirmed'],
-        ],[
+        ], [
             'new_password.confirmed' => 'The new password and confirm password do not match.',
         ]);
 
@@ -213,10 +215,10 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $GetUserDetails=User::where('email','=',$request->email)->first();
+        $GetUserDetails = User::where('email', '=', $request->email)->first();
 
         $GetUserDetails->update(['password' => Hash::make($request->new_password)]);
-        
+
         return response()->json(['message' => 'Your password has been reset successfully.'], 200);
     }
 }

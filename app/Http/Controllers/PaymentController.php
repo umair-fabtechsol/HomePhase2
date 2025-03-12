@@ -11,6 +11,7 @@ use Stripe\PaymentMethod;
 use Stripe\Checkout\Session;
 use Stripe\Token;
 use Stripe\Charge;
+
 class PaymentController extends Controller
 {
 
@@ -19,10 +20,10 @@ class PaymentController extends Controller
         return view('payment');
     }
 
-        public function charge(Request $request)
+    public function charge(Request $request)
     {
-       
-       try {
+
+        try {
             \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
             $paymentIntent = \Stripe\PaymentIntent::create([
@@ -33,32 +34,29 @@ class PaymentController extends Controller
                 'confirm' => true,
                 'return_url' => url('/payment-success'),
             ]);
-           
-            return response()->json(['success' => true]);
 
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()]);
         }
-        
     }
 
-    public function pay(Request $request){
+    public function pay(Request $request)
+    {
 
         \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
 
-    
-        Charge::create ([
-                "amount" => 100 * 100,
-                "currency" => "usd",
-                "source" => $request->stripeToken,
-                "description" => "Test payment from itsolutionstuff.com." 
-        ]);
-      
-        Session::flash('success', 'Payment successful!');
-              
-        return back();
 
-        
+        Charge::create([
+            "amount" => 100 * 100,
+            "currency" => "usd",
+            "source" => $request->stripeToken,
+            "description" => "Test payment from itsolutionstuff.com."
+        ]);
+
+        Session::flash('success', 'Payment successful!');
+
+        return back();
     }
 
     public function checkout()
@@ -99,24 +97,25 @@ class PaymentController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    
+
     public function checkBalance()
-{
-    try {
-        Stripe::setApiKey(config('services.stripe.secret'));
+    {
+        try {
+            Stripe::setApiKey(config('services.stripe.secret'));
 
-        $balance = Balance::retrieve();
-        return response()->json(['balance' => $balance]);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
+            $balance = Balance::retrieve();
+            return response()->json(['balance' => $balance]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
-}
 
-public function my(){
-
-
+    public function my()
+    {
 
 
-    return view('pay');
-}
+
+
+        return view('pay');
+    }
 }

@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\SocialProfile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+
 class CustomerController extends Controller
 {
     public function MyDetail(Request $request)
@@ -168,44 +169,44 @@ class CustomerController extends Controller
         if ($role == 1) {
             // $deals = Deal::orderBy('id', 'desc')->get();
             $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-        ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-        ->orderBy('deals.id', 'desc')
-        ->select(
-            'deals.id',
-            'deals.service_title',
-            'deals.service_category',
-            'deals.service_description',
-            'deals.flat_rate_price',
-            'deals.hourly_rate',
-            'deals.images',
-            'deals.videos',
-            'deals.price1',
-            'deals.flat_estimated_service_time',
-            'deals.hourly_estimated_service_time',
-            'deals.estimated_service_timing1',
-            'deals.user_id',
-            'users.name as user_name',
-            'users.personal_image',
-            \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-            \DB::raw('COUNT(reviews.id) as total_reviews')
-        )
-        ->groupBy(
-            'deals.id',
-            'deals.service_title',
-            'deals.service_category',
-            'deals.service_description',
-            'deals.flat_rate_price',
-            'deals.hourly_rate',
-            'deals.price1',
-            'deals.images',
-            'deals.videos',
-            'deals.flat_estimated_service_time',
-            'deals.hourly_estimated_service_time',
-            'deals.estimated_service_timing1',
-            'deals.user_id',
-            'users.name',
-            'users.personal_image'
-        )->orderBy('deals.id', 'desc')->get();
+                ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+                ->orderBy('deals.id', 'desc')
+                ->select(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.price1',
+                    'deals.flat_estimated_service_time',
+                    'deals.hourly_estimated_service_time',
+                    'deals.estimated_service_timing1',
+                    'deals.user_id',
+                    'users.name as user_name',
+                    'users.personal_image',
+                    \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                    \DB::raw('COUNT(reviews.id) as total_reviews')
+                )
+                ->groupBy(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.price1',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.flat_estimated_service_time',
+                    'deals.hourly_estimated_service_time',
+                    'deals.estimated_service_timing1',
+                    'deals.user_id',
+                    'users.name',
+                    'users.personal_image'
+                )->orderBy('deals.id', 'desc')->get();
             if ($deals) {
                 return response()->json(['deals' => $deals], 200);
             } else {
@@ -230,38 +231,38 @@ class CustomerController extends Controller
                 ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
                 ->orderBy('deals.id', 'desc')
                 ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'reviews.rating as review_rating');
-                if($service){
-                    $deals = $deals->where('deals.service_category', $service);
-                }
-                if($reviews){
-                    $deals = $deals->where('reviews.rating', $reviews);
-                }
-                if($budget){
-                    $deals = $deals->where(function ($query) use ($budget) {
-                        $query->where('deals.flat_rate_price','<=' , $budget)
-                            ->orWhere('deals.hourly_rate','<=' , $budget)
-                            ->orWhere('deals.price1','<=' , $budget);
-                    });
-                }
-                if($estimate_time){
-                    $deals = $deals->where(function ($query) use ($estimate_time) {
-                        $query->where('deals.flat_estimated_service_time', $estimate_time)
-                            ->orWhere('deals.hourly_estimated_service_time', $estimate_time)
-                            ->orWhere('deals.estimated_service_timing1', $estimate_time);
-                    });
-                }
+            if ($service) {
+                $deals = $deals->where('deals.service_category', $service);
+            }
+            if ($reviews) {
+                $deals = $deals->where('reviews.rating', $reviews);
+            }
+            if ($budget) {
+                $deals = $deals->where(function ($query) use ($budget) {
+                    $query->where('deals.flat_rate_price', '<=', $budget)
+                        ->orWhere('deals.hourly_rate', '<=', $budget)
+                        ->orWhere('deals.price1', '<=', $budget);
+                });
+            }
+            if ($estimate_time) {
+                $deals = $deals->where(function ($query) use ($estimate_time) {
+                    $query->where('deals.flat_estimated_service_time', $estimate_time)
+                        ->orWhere('deals.hourly_estimated_service_time', $estimate_time)
+                        ->orWhere('deals.estimated_service_timing1', $estimate_time);
+                });
+            }
 
-                if($distance){
-                    $locationDistance = BusinessProfile::where('location_miles', '<=', $distance)->pluck('user_id')->toArray();
-                    $deals = $deals->whereIn('deals.user_id', $locationDistance);
-                }
+            if ($distance) {
+                $locationDistance = BusinessProfile::where('location_miles', '<=', $distance)->pluck('user_id')->toArray();
+                $deals = $deals->whereIn('deals.user_id', $locationDistance);
+            }
 
-                if($location){
-                    $locationDistance = BusinessProfile::where('service_location', '<=', $location)->pluck('user_id')->toArray();
-                    $deals = $deals->whereIn('deals.user_id', $locationDistance);
-                }
+            if ($location) {
+                $locationDistance = BusinessProfile::where('service_location', '<=', $location)->pluck('user_id')->toArray();
+                $deals = $deals->whereIn('deals.user_id', $locationDistance);
+            }
 
-                $deals = $deals->get();
+            $deals = $deals->get();
             if ($deals) {
                 return response()->json(['deals' => $deals], 200);
             } else {
@@ -272,7 +273,8 @@ class CustomerController extends Controller
         }
     }
 
-    public function SearchHomeDeals(Request $request){
+    public function SearchHomeDeals(Request $request)
+    {
         $role = Auth::user()->role;
         if ($role == 1) {
             $deals = Deal::query();
@@ -305,11 +307,11 @@ class CustomerController extends Controller
         $userId = Auth::id();
         if ($role == 1) {
             $deal = Deal::find($id);
-        
+
             if ($deal) {
                 $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
                 $getReviews = Review::where('deal_id', $id)->get();
-                if($getReviews->isNotEmpty()) {
+                if ($getReviews->isNotEmpty()) {
                     $reviews = [];
                     $reviews['average'] = floor($reviews->avg('rating'));
                     $reviews['total'] = $reviews->count();
@@ -320,17 +322,17 @@ class CustomerController extends Controller
                 }
 
                 $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
-                if($viewedDeal){
+                if ($viewedDeal) {
                     $viewedDeal->update([
                         'created_at' => now()
                     ]);
-                } else{
+                } else {
                     $recentDeal = RecentDealView::create([
                         'user_id' => $userId,
                         'deal_id' => $id,
                     ]);
                 }
-                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile , 'reviews' => $reviews], 200);
+                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile, 'reviews' => $reviews], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);
             }
@@ -464,7 +466,7 @@ class CustomerController extends Controller
             if ($user) {
                 $data = $request->all();
                 $provider = Deal::find($request->deal_id);
-                $data['provider_id'] = $provider->user_id; 
+                $data['provider_id'] = $provider->user_id;
                 $order = Order::create($data);
                 $notification = [
                     'title' => 'Added New Order',
@@ -513,26 +515,26 @@ class CustomerController extends Controller
         $role = Auth::user()->role;
         if ($role == 1) {
             $userId = Auth::id();
-            $orders = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title','users.email','users.phone','users.location','users.personal_image','deals.images')->where('orders.provider_id',3)
-            ->get()->map(function ($order) {
+            $orders = Order::leftjoin('users', 'users.id', '=', 'orders.customer_id')->leftjoin('deals', 'deals.id', '=', 'orders.deal_id')->select('orders.*', 'users.personal_image', 'users.name', 'deals.service_title', 'users.email', 'users.phone', 'users.location', 'users.personal_image', 'deals.images')->where('orders.provider_id', 3)
+                ->get()->map(function ($order) {
 
-                $beforeImages = DB::table('delivery_images')
-                    ->where('order_id', $order->id)
-                    ->where('type', 'before')
-                    ->get();
+                    $beforeImages = DB::table('delivery_images')
+                        ->where('order_id', $order->id)
+                        ->where('type', 'before')
+                        ->get();
 
 
-                $afterImages = DB::table('delivery_images')
-                    ->where('order_id', $order->id)
-                    ->where('type', 'after')
-                    ->get();
-                return [
-                    'order' => $order,
-                    'before_images' => $beforeImages,
-                    'after_images' => $afterImages,
+                    $afterImages = DB::table('delivery_images')
+                        ->where('order_id', $order->id)
+                        ->where('type', 'after')
+                        ->get();
+                    return [
+                        'order' => $order,
+                        'before_images' => $beforeImages,
+                        'after_images' => $afterImages,
 
-                ];
-            });
+                    ];
+                });
             if ($orders) {
                 return response()->json(['message' => 'Orders List', 'orders' => $orders], 200);
             } else {
@@ -676,15 +678,15 @@ class CustomerController extends Controller
                         $images[] = $photo_name1;
                     }
                 }
-                
+
                 $data['revision_images'] =  json_encode($images);
                 $data['type'] =  'revision';
                 $afterImages = DeliveryImage::create($data);
 
-                if($order->status == 'delivered'){
-                    
+                if ($order->status == 'delivered') {
+
                     $order->update([
-                    'status' => 'in_revision'
+                        'status' => 'in_revision'
                     ]);
                 }
                 $notification = [
@@ -768,7 +770,7 @@ class CustomerController extends Controller
             $order = Order::find($id);
             if ($order) {
                 $order->update(['status' => 'completed']);
-               
+
                 return response()->json(['message' => 'Order status completed successfully', 'order' => $order], 200);
             } else {
                 return response()->json(['message' => 'No Order found'], 401);
@@ -805,7 +807,7 @@ class CustomerController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         $request->validate([
-            'img' => 'required|image|mimes:jpeg,png,jpg,gif', 
+            'img' => 'required|image|mimes:jpeg,png,jpg,gif',
         ]);
 
         if ($request->hasFile('img')) {
@@ -819,8 +821,8 @@ class CustomerController extends Controller
             ], 200);
         }
 
-    return response()->json(['message' => 'No image uploaded'], 400);
-}
+        return response()->json(['message' => 'No image uploaded'], 400);
+    }
 
 
     public function PublishSetting($id)
@@ -889,19 +891,18 @@ class CustomerController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Updated Payment details successfully', 'payment' => $payment], 200);
             } else {
-                    $data['user_id'] = $userId;
-                    $payment = PaymentDetail::create($data);
-                    $notifications = [
-                        'title' => 'Create Payment details',
-                        'message' => 'Added Payment details successfully',
-                        'created_by' => $userId,
-                        'status' => 0,
-                        'clear' => 'no',
+                $data['user_id'] = $userId;
+                $payment = PaymentDetail::create($data);
+                $notifications = [
+                    'title' => 'Create Payment details',
+                    'message' => 'Added Payment details successfully',
+                    'created_by' => $userId,
+                    'status' => 0,
+                    'clear' => 'no',
 
-                    ];
-                    Notification::create($notifications);
-                    return response()->json(['message' => 'Added Payment details successfully', 'payment' => $payment], 200);
-                
+                ];
+                Notification::create($notifications);
+                return response()->json(['message' => 'Added Payment details successfully', 'payment' => $payment], 200);
             }
             return response()->json(['message' => 'User not found'], 401);
         } else {
@@ -909,71 +910,71 @@ class CustomerController extends Controller
         }
     }
 
-    public function GetCustomerFavoritService(){
+    public function GetCustomerFavoritService()
+    {
         $role = Auth::user()->role;
         if ($role == 1) {
-        $userId = Auth::id();
-        $favoritService = FavoritDeal::where('user_id', $userId)->pluck('deal_id')->toArray();
-        $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-        ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-        ->orderBy('deals.id', 'desc')
-        ->select(
-            'deals.id',
-            'deals.service_title',
-            'deals.service_category',
-            'deals.service_description',
-            'deals.flat_rate_price',
-            'deals.hourly_rate',
-            'deals.images',
-            'deals.videos',
-            'deals.price1',
-            'deals.flat_estimated_service_time',
-            'deals.hourly_estimated_service_time',
-            'deals.estimated_service_timing1',
-            'deals.user_id',
-            'users.name as user_name',
-            'users.personal_image',
-            \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-            \DB::raw('COUNT(reviews.id) as total_reviews')
-        )
-        ->groupBy(
-            'deals.id',
-            'deals.service_title',
-            'deals.service_category',
-            'deals.service_description',
-            'deals.flat_rate_price',
-            'deals.hourly_rate',
-            'deals.price1',
-            'deals.images',
-            'deals.videos',
-            'deals.flat_estimated_service_time',
-            'deals.hourly_estimated_service_time',
-            'deals.estimated_service_timing1',
-            'deals.user_id',
-            'users.name',
-            'users.personal_image'
-        )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->get();
-        
+            $userId = Auth::id();
+            $favoritService = FavoritDeal::where('user_id', $userId)->pluck('deal_id')->toArray();
+            $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+                ->orderBy('deals.id', 'desc')
+                ->select(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.price1',
+                    'deals.flat_estimated_service_time',
+                    'deals.hourly_estimated_service_time',
+                    'deals.estimated_service_timing1',
+                    'deals.user_id',
+                    'users.name as user_name',
+                    'users.personal_image',
+                    \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                    \DB::raw('COUNT(reviews.id) as total_reviews')
+                )
+                ->groupBy(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.price1',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.flat_estimated_service_time',
+                    'deals.hourly_estimated_service_time',
+                    'deals.estimated_service_timing1',
+                    'deals.user_id',
+                    'users.name',
+                    'users.personal_image'
+                )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->get();
+
             return response()->json(['deals' => $deals], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
 
-    public function HomeCustomerOrders(Request $request){
+    public function HomeCustomerOrders(Request $request)
+    {
         $role = Auth::user()->role;
         if ($role == 1) {
             $userId = Auth::id();
             $GetActiveOrders = Order::where('customer_id', $userId)->where('status', '!=', 'completed')->get();
-            if($GetActiveOrders){
+            if ($GetActiveOrders) {
                 return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
-            }else{
+            } else {
                 return response()->json(['message' => 'No order available'], 401);
             }
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
-        
     }
-    
 }
