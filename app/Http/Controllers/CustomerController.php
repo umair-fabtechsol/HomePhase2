@@ -432,7 +432,7 @@ class CustomerController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 1) {
-            $user = User::find($userId);
+            $userId = User::find($user_id);
             $businessProfile = BusinessProfile::where('user_id', $userId)->get();
 
             $getPayment = PaymentDetail::where('user_id', $userId)->get();
@@ -515,7 +515,7 @@ class CustomerController extends Controller
 
             if ($user) {
 
-                return response()->json(['provider' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
+                return response()->json(['provider' => $userId, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
             } else{
                 return response()->json(['message' => 'Provider not found'], 401);    
             }
