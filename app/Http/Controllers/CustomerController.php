@@ -433,9 +433,9 @@ class CustomerController extends Controller
         $role = Auth::user()->role;
         if ($role == 1) {
             $userId = User::find($user_id);
-            $businessProfile = BusinessProfile::where('user_id', $userId)->get();
+            $businessProfile = BusinessProfile::where('user_id', $userId->id)->get();
 
-            $getPayment = PaymentDetail::where('user_id', $userId)->get();
+            $getPayment = PaymentDetail::where('user_id', $userId->id)->get();
             $getDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
                 ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
                 ->orderBy('deals.id', 'desc')
@@ -476,10 +476,10 @@ class CustomerController extends Controller
                     'deals.user_id',
                     'users.name',
                     'users.personal_image'
-                )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
-            $getSocial = SocialProfile::where('user_id', $userId)->get();
+                )->where('deals.user_id', $userId->id)->orderBy('deals.id', 'desc')->get();
+            $getSocial = SocialProfile::where('user_id', $userId->id)->get();
 
-            $getReviews = Review::where('provider_id', $userId)->get();
+            $getReviews = Review::where('provider_id', $userId->id)->get();
             if ($getReviews->isNotEmpty()) {
                 $provider_reviews = [];
                 $provider_reviews['average'] = floor($getReviews->avg('rating'));
@@ -497,7 +497,7 @@ class CustomerController extends Controller
                 DB::raw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star'),
                 DB::raw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star')
             )
-                ->where('provider_id', $userId)
+                ->where('provider_id', $userId->id)
                 ->first();
 
             $detailReviews = Review::leftJoin('users', 'users.id', '=', 'reviews.user_id')
@@ -508,7 +508,7 @@ class CustomerController extends Controller
                     'users.personal_image',
                     'deals.service_title'
                 )
-                ->where('reviews.provider_id', $userId) // Filters by provider_id
+                ->where('reviews.provider_id', $userId->id) // Filters by provider_id
                 ->get();
 
 
