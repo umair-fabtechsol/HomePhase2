@@ -144,9 +144,7 @@ class AuthController extends Controller
         if($getuser){
         Auth::login($getuser);
         $token = $getuser->createToken('auth_token')->plainTextToken;
-        if ($getuser->role == 2) {
-            return redirect()->away('https://homerservice-ph2.netlify.app/provider/services');
-        }
+        
     }else{
 
         return [
