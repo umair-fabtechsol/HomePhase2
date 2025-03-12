@@ -432,10 +432,93 @@ class CustomerController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 1) {
-            $user = User::find($user_id);
-            $deals = Deal::where('user_id', $user_id)->get();
-            $business = BusinessProfile::where('user_id', $user_id)->first();
-            return response()->json(['message' => 'Social Added successfully', 'user' => $user, 'deals' => $deals, 'business' => $business], 200);
+            $user = User::find($userId);
+            $businessProfile = BusinessProfile::where('user_id', $userId)->get();
+
+            $getPayment = PaymentDetail::where('user_id', $userId)->get();
+            $getDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+                ->orderBy('deals.id', 'desc')
+                ->select(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.price1',
+                    'deals.pricing_model',
+                    'deals.flat_estimated_service_time',
+                    'deals.hourly_estimated_service_time',
+                    'deals.estimated_service_timing1',
+                    'deals.user_id',
+                    'users.name as user_name',
+                    'users.personal_image',
+                    \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                    \DB::raw('COUNT(reviews.id) as total_reviews')
+                )
+                ->groupBy(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.price1',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.pricing_model',
+                    'deals.flat_estimated_service_time',
+                    'deals.hourly_estimated_service_time',
+                    'deals.estimated_service_timing1',
+                    'deals.user_id',
+                    'users.name',
+                    'users.personal_image'
+                )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
+            $getSocial = SocialProfile::where('user_id', $userId)->get();
+
+            $getReviews = Review::where('provider_id', $userId)->get();
+            if ($getReviews->isNotEmpty()) {
+                $provider_reviews = [];
+                $provider_reviews['average'] = floor($getReviews->avg('rating'));
+                $provider_reviews['total'] = $getReviews->count();
+            } else {
+                $provider_reviews = [];
+                $provider_reviews['average'] = 0;
+                $provider_reviews['total'] = 0;
+            }
+
+            $stars = Review::select(
+                DB::raw('SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_star'),
+                DB::raw('SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_star'),
+                DB::raw('SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_star'),
+                DB::raw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star'),
+                DB::raw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star')
+            )
+                ->where('provider_id', $userId)
+                ->first();
+
+            $detailReviews = Review::leftJoin('users', 'users.id', '=', 'reviews.user_id')
+                ->leftJoin('deals', 'deals.id', '=', 'reviews.deal_id')
+                ->select(
+                    'reviews.*',
+                    'users.name as user_name',
+                    'users.personal_image',
+                    'deals.service_title'
+                )
+                ->where('reviews.provider_id', $userId) // Filters by provider_id
+                ->get();
+
+
+
+            if ($user) {
+
+                return response()->json(['provider' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
+            } else{
+                return response()->json(['message' => 'Provider not found'], 401);    
+            }
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
