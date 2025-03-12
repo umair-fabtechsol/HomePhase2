@@ -520,7 +520,7 @@ class CustomerController extends Controller
         }
     }
 
-    public function DetailUser()
+    public function DetailUser($user_id)
     {
         $role = Auth::user()->role;
         if ($role == 1) {
