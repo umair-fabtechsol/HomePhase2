@@ -146,6 +146,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('DeleteSocial', 'DeleteSocial')->name('DeleteSocial');
             // Route::get('DealProvider/{user_id}', 'DealProvider')->name('DealProvider');
             Route::get('DetailUser/{user_id}', 'DetailUser')->name('DetailUser');
+            Route::get('CustomerSocial/{user_id}', 'CustomerSocial')->name('CustomerSocial');
 
             Route::post('AddOrder', 'AddOrder')->name('AddOrder');
             Route::post('UpdateOrder', 'UpdateOrder')->name('UpdateOrder');
