@@ -136,7 +136,7 @@ class AuthController extends Controller
             }else{
 
                 return response()->json([
-                    'message' => 'Credentials Not Found Please SignUp First.',
+                    'message' => 'User Role Not Found.',
                 ]);
                 
             }
