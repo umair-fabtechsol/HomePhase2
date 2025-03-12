@@ -1289,7 +1289,7 @@ class ServiceProviderController extends Controller
         )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
             $getSocial = SocialProfile::where('user_id', $userId)->get();
 
-            $getReviews = Review::where('provider_id', $id)->get();
+            $getReviews = Review::where('provider_id', $userId)->get();
             if($getReviews->isNotEmpty()) {
                 $provider_reviews = [];
                 $provider_reviews['average'] = floor($getReviews->avg('rating'));
