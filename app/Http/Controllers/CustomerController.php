@@ -313,8 +313,8 @@ class CustomerController extends Controller
                 $getReviews = Review::where('deal_id', $id)->get();
                 if ($getReviews->isNotEmpty()) {
                     $reviews = [];
-                    $reviews['average'] = floor($reviews->avg('rating'));
-                    $reviews['total'] = $reviews->count();
+                    $reviews['average'] = floor($getReviews->avg('rating'));
+                    $reviews['total'] = $getReviews->count();
                 } else {
                     $reviews = [];
                     $reviews['average'] = 0;
@@ -967,7 +967,7 @@ class CustomerController extends Controller
         $role = Auth::user()->role;
         if ($role == 1) {
             $userId = Auth::id();
-            $GetActiveOrders = Order::where('customer_id', $userId)->where('status', '!=', 'completed')->get();
+            $GetActiveOrders = Order::where('customer_id', $userId)->where('status', '!=', 'completed')->orderBy('id', 'desc')->limit(3)->get();
             if ($GetActiveOrders) {
                 return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
             } else {
