@@ -32,6 +32,8 @@ Route::get('salesrep', [CommonController::class, 'salesrep'])->name('salesrep');
 Route::get('GetAllDeals', [CommonController::class, 'GetAllDeals'])->name('GetAllDeals');
 Route::get('GetDealDetail/{id}', [CommonController::class, 'GetDealDetail'])->name('GetDealDetail');
 Route::get('FilterHomeDeals', [ServiceProviderController::class, 'FilterHomeDeals'])->name('FilterHomeDeals');
+// Route::get('DealProvider/{user_id}', 'DealProvider')->name('DealProvider');
+Route::get('DealProvider/{user_id}', [CustomerController::class, 'DealProvider'])->name('DealProvider');
 
 
 Route::controller(AuthController::class)->group(function () {
@@ -142,7 +144,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('UpdatePaymentMethod', 'UpdatePaymentMethod')->name('UpdatePaymentMethod');
             Route::post('AddSocial', 'AddSocial')->name('AddSocial');
             Route::post('DeleteSocial', 'DeleteSocial')->name('DeleteSocial');
-            Route::get('DealProvider/{user_id}', 'DealProvider')->name('DealProvider');
+            // Route::get('DealProvider/{user_id}', 'DealProvider')->name('DealProvider');
             Route::get('DetailUser', 'DetailUser')->name('DetailUser');
 
             Route::post('AddOrder', 'AddOrder')->name('AddOrder');
