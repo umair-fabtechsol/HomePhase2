@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ResetPasswordMail;
 use Illuminate\Support\Facades\Session;
-
+use Illuminate\Support\Facades\Auth;
 class AuthController extends Controller
 {
     public function form()
@@ -117,16 +117,20 @@ class AuthController extends Controller
                 $createUser->terms = 1;
                 $createUser->save();
 
-                return [
-
-                    'createUser' => $createUser,
-
-                ];
             }
         } catch (Exception $e) {
 
             dd($e->getMessage());
         }
+
+        $getuser=User::where('email','=',$user->email)->first();
+        Auth::login($getuser);
+        $token = $getuser->createToken('auth_token')->plainTextToken;
+        return [
+            'token' =>$token,
+            'getuser' => $getuser,
+
+        ];
     }
 
     public function facebookLogin()
