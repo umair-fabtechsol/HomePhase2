@@ -132,8 +132,8 @@ class CommonController extends Controller
             $getReviews = Review::where('deal_id', $id)->get();
             if($getReviews->isNotEmpty()) {
                 $reviews = [];
-                $reviews['average'] = floor($reviews->avg('rating'));
-                $reviews['total'] = $reviews->count();
+                $reviews['average'] = floor($getReviews->avg('rating'));
+                $reviews['total'] = $getReviews->count();
             } else {
                 $reviews = [];
                 $reviews['average'] = 0;
