@@ -515,7 +515,7 @@ class CustomerController extends Controller
 
             if ($userId) {
 
-                return response()->json(['providerProfile' => $userId, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
+                return response()->json(['user' => $userId, 'businessProfile' => $businessProfile, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
             } else{
                 return response()->json(['message' => 'Provider not found'], 401);    
             }
