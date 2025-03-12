@@ -118,7 +118,7 @@ class AuthController extends Controller
             if (!$findUser) {
 
                 $createUser = new User();
-
+                if(!empty($role)){
                 $createUser->name = $user->name;
                 $createUser->email = $user->email;
                 $createUser->phone = '123456';
@@ -133,6 +133,13 @@ class AuthController extends Controller
                     'user' => $createUser,
                     'token' => $token,
                 ]);
+            }else{
+
+                return response()->json([
+                    'message' => 'Credentials Not Found Please SignUp First.',
+                ]);
+                
+            }
             }
         } catch (Exception $e) {
 
