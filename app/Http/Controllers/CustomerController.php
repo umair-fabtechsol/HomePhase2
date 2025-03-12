@@ -441,17 +441,19 @@ class CustomerController extends Controller
         }
     }
 
-    public function DetailUser($id)
+    public function DetailUser()
     {
         $role = Auth::user()->role;
         if ($role == 1) {
-            $user = User::find($id);
+            $userId = Auth::id();
+            $user = User::find($userId);
 
-            $getPayment = PaymentDetail::where('user_id', $id)->get();
-            $getSocial = SocialProfile::where('user_id', $id)->get();
+            $paymentDetail = PaymentDetail::where('user_id', $userId)->first();
+            $SocialDetail = SocialProfile::where('user_id', $userId)->first();
             if ($user) {
-
-                return response()->json(['user' => $user, 'getPayment' => $getPayment], 200);
+                return response()->json(['user' => $user, 'paymentDetail' => $paymentDetail, 'SocialDetail' => $SocialDetail], 200);
+            } else{
+                return response()->json(['message' => 'User not found'], 401);
             }
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
