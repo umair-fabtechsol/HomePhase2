@@ -31,7 +31,7 @@ class AuthController extends Controller
             ], 422);
         }
         $data = $request->all();
-
+       $data['terms'] =$request->term;  
         $user = User::create($data);
 
         return response()->json([
