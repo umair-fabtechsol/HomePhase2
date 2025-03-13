@@ -14,45 +14,33 @@ use Exception;
 
 class PayController extends Controller
 {
-    // public function createStripeAccount(Request $request)
-    // {
-    //     try {
-    //         Stripe::setApiKey(env('STRIPE_SECRET'));
-
-    //         $account = Account::create([
-    //             'type' => 'express',
-    //             'country' => 'US',
-    //             'email' => $request->email,
-    //         ]);
-    //         $account = Account::create([
-    //             'type' => 'express',
-    //             'country' => 'US',
-    //             'email' => $request->email,
-    //             'capabilities' => [
-    //                 'transfers' => ['requested' => true],
-    //             ],
-    //         ]);
-
-    //         // Store stripe_account_id in the database
-    //         $user = User::where('email', $request->email)->first();
-    //         $user->stripe_account_id = $account->id;
-    //         $user->save();
-
-    //         return response()->json([
-    //             'message' => 'Stripe Connect Account Created',
-    //             'stripe_account_id' => $account->id
-    //         ]);
-    //     } catch (Exception $e) {
-    //         return response()->json(['error' => $e->getMessage()], 500);
-    //     }
-    // }
-
     public function createStripeAccount(Request $request)
     {
         try {
             Stripe::setApiKey(env('STRIPE_SECRET'));
     
-            // Create a Stripe Express Account
+            $user = User::where('email', $request->email)->first();
+            if (!$user) {
+                return response()->json(['error' => 'User not found'], 404);
+            }
+    
+            // Check if user already has a Stripe account
+            if ($user->stripe_account_id) {
+                $accountLink = \Stripe\AccountLink::create([
+                    'account' => $user->stripe_account_id,
+                    'refresh_url' => route('stripe.onboarding', ['id' => $user->id]),
+                    'return_url' => route('home'),
+                    'type' => 'account_onboarding',
+                ]);
+    
+                return response()->json([
+                    'message' => 'Stripe account already exists',
+                    'stripe_account_id' => $user->stripe_account_id,
+                    'onboarding_url' => $accountLink->url // Always return a fresh onboarding link
+                ]);
+            }
+    
+            // Create new Stripe Express account
             $account = Account::create([
                 'type' => 'express',
                 'country' => 'US',
@@ -62,16 +50,11 @@ class PayController extends Controller
                 ],
             ]);
     
-            // Store stripe_account_id in the database
-            $user = User::where('email', $request->email)->first();
-            if (!$user) {
-                return response()->json(['error' => 'User not found'], 404);
-            }
-    
+            // Save new stripe_account_id in database
             $user->stripe_account_id = $account->id;
             $user->save();
     
-            // Generate an onboarding link
+            // Generate onboarding link
             $accountLink = \Stripe\AccountLink::create([
                 'account' => $account->id,
                 'refresh_url' => route('stripe.onboarding', ['id' => $user->id]),
@@ -88,6 +71,8 @@ class PayController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    
+    
     
     public function onboardStripe($id)
     {
@@ -123,17 +108,24 @@ class PayController extends Controller
         try {
             Stripe::setApiKey(env('STRIPE_SECRET'));
 
+            // $charge = Charge::create([
+            //     'amount' => $request->amount * 100,
+            //     'currency' => 'usd',
+            //     'source' => $request->stripeToken,
+            //     'description' => 'Payment for services',
+            //     'transfer_data' => [
+            //         'destination' => $request->stripe_account_id, // Send to connected account
+            //     ]
+            // ]);
+
+            // Customer Pays Superadmin
             $charge = Charge::create([
                 'amount' => $request->amount * 100,
                 'currency' => 'usd',
                 'source' => $request->stripeToken,
-                'description' => 'Payment for services',
-                'transfer_data' => [
-                    'destination' => $request->stripe_account_id, // Send to connected account
-                ]
+                'description' => 'Payment for services'
             ]);
-
-
+            
             return response()->json([
                 'message' => 'Payment Successful',
                 'charge' => $charge
@@ -158,6 +150,12 @@ class PayController extends Controller
             $amount = $request->amount * 100; // Convert to cents
             $platform_fee = $amount * 0.20; // 20% Superadmin fee
             $payout_amount = $amount - $platform_fee;
+
+            // Check if Provider is Onboarded
+            $account = \Stripe\Account::retrieve($provider->stripe_account_id);
+            if (!$account->charges_enabled) {
+                return response()->json(['error' => 'Provider has not completed Stripe onboarding'], 400);
+            }
 
             $transfer = Transfer::create([
                 'amount' => $payout_amount,
