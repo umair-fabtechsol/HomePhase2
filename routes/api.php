@@ -12,6 +12,8 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\CommonController;
 use App\Http\Controllers\StripePaymentController;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\PayController;
+
 Route::post('createPayout', [PaymentController::class, 'createPayout'])->name('createPayout');
 Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('checkBalance');
 Route::get('contact',[SuperAdminController::class,'contact'])->name('contact');
@@ -245,14 +247,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::controller(StripePaymentController::class)->group(function () {
-
     Route::get('callpro', 'callpro')->name('callpro');
-
-    
-
-  
 });
+
 // common provider and customer
 // FilterHomeDeals
 //RecentViewDeals
 //HomeProviderOrders
+
+Route::post('/stripe/account/create', [PayController::class, 'createStripeAccount']);
+Route::post('/stripe/payment', [PayController::class, 'chargeCustomer']);
+Route::post('/stripe/payout', [PayController::class, 'payoutProvider']);
+Route::post('/stripe/webhook', [PayController::class, 'stripeWebhook']);
+Route::get('/stripe/onboarding/{id}', [PayController::class, 'onboardStripe'])->name('stripe.onboarding');

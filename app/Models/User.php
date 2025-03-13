@@ -43,6 +43,7 @@ class User extends Authenticatable
         'message_notification',
         'status',
         'assign_sales_rep',
+        'stripe_account_id',
         '',
         
     ];

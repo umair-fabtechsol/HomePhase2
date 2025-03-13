@@ -41,9 +41,14 @@ return [
         'redirect' => 'http://127.0.0.1:8000/api/auth/google/callback',
     ],
 
+    // 'stripe' => [
+    //     'secret' => env('STRIPE_SECRET'),
+    //     'public' => env('STRIPE_PUBLIC'),
+    // ],
     'stripe' => [
+        'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
-        'public' => env('STRIPE_PUBLIC'),
     ],
+
 
 ];
