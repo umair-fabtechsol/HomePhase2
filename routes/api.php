@@ -130,6 +130,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('GetSalesRep', 'GetSalesRep')->name('GetSalesRep');
         Route::get('AssignSalesRep/{id}', 'AssignSalesRep')->name('AssignSalesRep');
         Route::post('AddScheduleOrder', 'AddScheduleOrder')->name('AddScheduleOrder');
+
+        Route::post('AddRecentDeal/{id}', 'AddRecentDeal')->name('AddRecentDeal');
     });
 
     Route::prefix('Customer')->group(function () {
@@ -250,3 +252,4 @@ Route::controller(StripePaymentController::class)->group(function () {
 // FilterHomeDeals
 //RecentViewDeals
 //HomeProviderOrders
+// AddRecentDeal
