@@ -79,10 +79,10 @@ class ServiceProviderController extends Controller
                     'users.personal_image'
                 )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
 
-                $deals->transform(function ($deal) {
-                    $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
-                    return $deal;
-                });
+            $deals->transform(function ($deal) {
+                $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+                return $deal;
+            });
 
             if ($deals) {
                 if ($request->user_id) {
@@ -1253,7 +1253,7 @@ class ServiceProviderController extends Controller
 
             $getPayment = PaymentDetail::where('user_id', $userId)->get();
             $getDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
                 ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
                 ->orderBy('deals.id', 'desc')
                 ->select(
@@ -1297,10 +1297,10 @@ class ServiceProviderController extends Controller
                     'users.name',
                     'users.personal_image'
                 )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
-                $getDeal->transform(function ($deal) {
-                    $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
-                    return $deal;
-                });
+            $getDeal->transform(function ($deal) {
+                $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+                return $deal;
+            });
             $getSocial = SocialProfile::where('user_id', $userId)->get();
 
             $getReviews = Review::where('provider_id', $userId)->get();
@@ -1382,7 +1382,7 @@ class ServiceProviderController extends Controller
                 $social->update(['google_business' => null]);
                 $message = 'Social Google Business has been removed successfully';
             }
-            
+
             $notifications = [
                 'title' => 'Delete Social Link',
                 'message' => 'Socials Link deleted successfully',
@@ -1830,10 +1830,10 @@ class ServiceProviderController extends Controller
                 'users.personal_image'
             )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->get();
 
-            $deals->transform(function ($deal) {
-                $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
-                return $deal;
-            });
+        $deals->transform(function ($deal) {
+            $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+            return $deal;
+        });
 
         return response()->json(['deals' => $deals], 200);
     }
@@ -2177,10 +2177,10 @@ class ServiceProviderController extends Controller
                 'users.personal_image'
             )->whereIn('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->limit(8)->get();
 
-            $recentDeal->transform(function ($deal) {
-                $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
-                return $deal;
-            });
+        $recentDeal->transform(function ($deal) {
+            $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+            return $deal;
+        });
         if ($recentDeal) {
             return response()->json(['message' => 'Orders List', 'recentDeal' => $recentDeal, 'recentDealId' => $recentDealId], 200);
         } else {
