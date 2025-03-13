@@ -7,7 +7,9 @@ use App\Models\User;
 use App\Models\Deal;
 use App\Models\BusinessProfile;
 use App\Models\Review;
+use App\Models\RecentDealView;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class CommonController extends Controller
 {
@@ -130,18 +132,31 @@ class CommonController extends Controller
         }
     }
 
-    public function GetDealDetail($id)
+    public function GetDealDetail(Request $request, $id)
     {
         $deal = Deal::find($id);
-        $userId = Auth::id();
+
+        $token = $request->bearerToken();
+
+        if ($token) {
+            // Find the user by token
+            $accessToken = PersonalAccessToken::findToken($token);
+
+            if ($accessToken) {
+                $user = $accessToken->tokenable; // Get the associated user
+                $userId = $user->id;
+            }
+        } else {
+            $userId = null;
+        }
 
         if ($deal) {
             $favoriteUserIds = \DB::table('favorit_deals')
-        ->where('deal_id', $deal->id)
-        ->pluck('user_id') // Get only user IDs
-        ->toArray();
+                ->where('deal_id', $deal->id)
+                ->pluck('user_id') // Get only user IDs
+                ->toArray();
 
-        $deal->favorite_user_ids = $favoriteUserIds;
+            $deal->favorite_user_ids = $favoriteUserIds;
 
             $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
             $getReviews = Review::where('deal_id', $id)->get();
