@@ -1365,9 +1365,7 @@ class ServiceProviderController extends Controller
                 $social->update(['google_business' => null]);
                 $message = 'Social Google Business has been removed successfully';
             }
-            if ($social && is_null($social->facebook) && is_null($social->twitter) && is_null($social->instagram) && is_null($social->linkedin) && is_null($social->youtube) && is_null($social->google_business)) {
-                $social->delete();
-            }
+            
             $notifications = [
                 'title' => 'Delete Social Link',
                 'message' => 'Socials Link deleted successfully',
