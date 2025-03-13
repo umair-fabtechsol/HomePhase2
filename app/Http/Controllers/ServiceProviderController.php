@@ -1335,29 +1335,35 @@ class ServiceProviderController extends Controller
         if ($role == 2) {
             $social = SocialProfile::where('user_id', $request->id)->first();
 
-            if ($request['facebook'] == $social->facebook) {
+            if ($social->facebook != null && $request['facebook'] == $social->facebook) {
 
                 $social->update(['facebook' => null]);
+                $message = 'Social facebook has been removed successfully';
             }
-            if ($request['twitter'] == $social->twitter) {
+            if ($social->twitter != null && $request['twitter'] == $social->twitter) {
 
                 $social->update(['twitter' => null]);
+                $message = 'Social twitter has been removed successfully';
             }
-            if ($request['instagram'] == $social->instagram) {
+            if ($social->instagram != null && $request['instagram'] == $social->instagram) {
 
                 $social->update(['instagram' => null]);
+                $message = 'Social Instagram has been removed successfully';
             }
-            if ($request['linkedin'] == $social->linkedin) {
+            if ($social->linkedin != null && $request['linkedin'] == $social->linkedin) {
 
                 $social->update(['linkedin' => null]);
+                $message = 'Social Linkdin has been removed successfully';
             }
-            if ($request['youtube'] == $social->youtube) {
+            if ($social->youtube != null && $request['youtube'] == $social->youtube) {
 
                 $social->update(['youtube' => null]);
+                $message = 'Social Youtube has been removed successfully';
             }
-            if ($request['google_business'] == $social->google_business) {
+            if ($social->google_business != null && $request['google_business'] == $social->google_business) {
 
                 $social->update(['google_business' => null]);
+                $message = 'Social Google Business has been removed successfully';
             }
             if ($social && is_null($social->facebook) && is_null($social->twitter) && is_null($social->instagram) && is_null($social->linkedin) && is_null($social->youtube) && is_null($social->google_business)) {
                 $social->delete();
@@ -1371,7 +1377,7 @@ class ServiceProviderController extends Controller
 
             ];
             Notification::create($notifications);
-            return response()->json(['social' => $social], 200);
+            return response()->json(['message' => $message, 'social' => $social], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
