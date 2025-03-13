@@ -2176,14 +2176,15 @@ class ServiceProviderController extends Controller
                 'deals.user_id',
                 'users.name',
                 'users.personal_image'
-            )->whereIn('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->limit(8)->get();
+            )->whereIn('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
+            $totalViewDeals = $recentDeal->total();
 
         $recentDeal->transform(function ($deal) {
             $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
             return $deal;
         });
         if ($recentDeal) {
-            return response()->json(['message' => 'Orders List', 'recentDeal' => $recentDeal, 'recentDealId' => $recentDealId], 200);
+            return response()->json(['message' => 'Recent View Deals', 'recentDeal' => $recentDeal, 'totalViewDeals' => $totalViewDeals], 200);
         } else {
             return response()->json(['message' => 'No deal available'], 401);
         }
