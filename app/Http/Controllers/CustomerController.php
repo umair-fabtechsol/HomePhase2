@@ -411,9 +411,6 @@ class CustomerController extends Controller
                 $social->update(['google_business' => null]);
             }
 
-            if ($social && is_null($social->facebook) && is_null($social->twitter) && is_null($social->instagram) && is_null($social->linkedin) && is_null($social->youtube) && is_null($social->google_business)) {
-                $social->delete();
-            }
             $notification = [
                 'title' => 'Delete Social Link',
                 'message' => 'Social link has been deleted successfully',
