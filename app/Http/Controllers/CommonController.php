@@ -32,7 +32,7 @@ class CommonController extends Controller
 
         $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
     ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-    ->leftJoin('favorites', 'favorites.deal_id', '=', 'deals.id') // Join favorites table
+    ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
     ->orderBy('deals.id', 'desc')
     ->select(
         'deals.id',
@@ -52,7 +52,7 @@ class CommonController extends Controller
         'users.personal_image',
         \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
         \DB::raw('COUNT(reviews.id) as total_reviews'),
-        \DB::raw('GROUP_CONCAT(DISTINCT favorites.user_id ORDER BY favorites.user_id ASC) as favorite_user_ids') // Get all user_ids from favorites
+        \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
     )
     ->groupBy(
         'deals.id',
