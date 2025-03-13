@@ -243,6 +243,13 @@ Route::middleware('auth:sanctum')->group(function () {
         });
     });
     
+    // --------------Payments by Mehak---------
+    Route::post('/stripe/account/create', [PayController::class, 'createStripeAccount']);
+    Route::post('/stripe/payment', [PayController::class, 'chargeCustomer']);
+    Route::post('/stripe/payout', [PayController::class, 'payoutProvider']);
+    Route::post('/stripe/webhook', [PayController::class, 'stripeWebhook']);
+    Route::get('/stripe/onboarding/{id}', [PayController::class, 'onboardStripe'])->name('stripe.onboarding');
+
 });
 
 
@@ -255,8 +262,3 @@ Route::controller(StripePaymentController::class)->group(function () {
 //RecentViewDeals
 //HomeProviderOrders
 
-Route::post('/stripe/account/create', [PayController::class, 'createStripeAccount']);
-Route::post('/stripe/payment', [PayController::class, 'chargeCustomer']);
-Route::post('/stripe/payout', [PayController::class, 'payoutProvider']);
-Route::post('/stripe/webhook', [PayController::class, 'stripeWebhook']);
-Route::get('/stripe/onboarding/{id}', [PayController::class, 'onboardStripe'])->name('stripe.onboarding');
