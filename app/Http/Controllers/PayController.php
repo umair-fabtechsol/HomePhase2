@@ -9,7 +9,7 @@ use Stripe\Account;
 use Stripe\Charge;
 use Stripe\Transfer;
 use Stripe\Webhook;
-
+use App\Models\Transection;
 use App\Models\User;
 use Exception;
 
@@ -134,6 +134,17 @@ class PayController extends Controller
                 'description' => 'Payment for services'
             ]);
 
+            Transection::create([
+                'user_id' => $user->id, 
+                'user_role' => $user->role, 
+                'stripe_charge_id' => $charge->id,
+                'amount' => $request->amount,
+                'currency' => 'usd',
+                'type' => 'payment',
+                'status' => 'successful'
+            ]);
+         
+    
             return response()->json([
                 'message' => 'Payment Successful',
                 'charge' => $charge
@@ -158,9 +169,9 @@ class PayController extends Controller
                 return response()->json(['error' => 'Access Denied! Only superadmin can do payouts'], 403);
             }
 
-            $provider = User::find($request->id);
+            $actor = User::find($request->id);
 
-            if (!$provider || !$provider->stripe_account_id) {
+            if (!$actor || !$actor->stripe_account_id) {
                 return response()->json(['error' => 'Provider not found or not connected to Stripe'], 400);
             }
 
@@ -169,7 +180,7 @@ class PayController extends Controller
             $payout_amount = $amount - $platform_fee;
 
             //-------------- Check if Provider is Onboarded
-            $account = \Stripe\Account::retrieve($provider->stripe_account_id);
+            $account = \Stripe\Account::retrieve($actor->stripe_account_id);
             if (!$account->charges_enabled) {
                 return response()->json(['error' => 'Provider has not completed Stripe onboarding'], 400);
             }
@@ -183,10 +194,18 @@ class PayController extends Controller
             $transfer = Transfer::create([
                 'amount' => $payout_amount,
                 'currency' => 'usd',
-                'destination' => $provider->stripe_account_id,
-                'transfer_group' => 'ORDER_' . $request->provider_id
+                'destination' => $actor->stripe_account_id,
+                'transfer_group' => 'ORDER_' . $actor->id,
             ]);
-
+            Transection::create([
+                'user_id' => $actor->id, 
+                'user_role' => $actor->role, 
+                'stripe_transfer_id' => $transfer->id,
+                'amount' => $payout_amount / 100, 
+                'currency' => 'usd',
+                'type' => 'payout',
+                'status' => 'successful'
+            ]);
             return response()->json([
                 'message' => 'Payout Successful',
                 'transfer' => $transfer
