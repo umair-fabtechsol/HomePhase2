@@ -37,12 +37,14 @@ class ServiceProviderController extends Controller
             $userId = Auth::id();
             $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
                 ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
                 ->orderBy('deals.id', 'desc')
                 ->select(
                     'deals.id',
                     'deals.service_title',
                     'deals.service_category',
                     'deals.service_description',
+                    'deals.pricing_model',
                     'deals.flat_rate_price',
                     'deals.hourly_rate',
                     'deals.images',
@@ -55,13 +57,15 @@ class ServiceProviderController extends Controller
                     'users.name as user_name',
                     'users.personal_image',
                     \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                    \DB::raw('COUNT(reviews.id) as total_reviews')
+                    \DB::raw('COUNT(reviews.id) as total_reviews'),
+                    \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
                 )
                 ->groupBy(
                     'deals.id',
                     'deals.service_title',
                     'deals.service_category',
                     'deals.service_description',
+                    'deals.pricing_model',
                     'deals.flat_rate_price',
                     'deals.hourly_rate',
                     'deals.price1',
@@ -74,6 +78,11 @@ class ServiceProviderController extends Controller
                     'users.name',
                     'users.personal_image'
                 )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
+
+                $deals->transform(function ($deal) {
+                    $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+                    return $deal;
+                });
 
             if ($deals) {
                 if ($request->user_id) {
@@ -1244,6 +1253,7 @@ class ServiceProviderController extends Controller
 
             $getPayment = PaymentDetail::where('user_id', $userId)->get();
             $getDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
                 ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
                 ->orderBy('deals.id', 'desc')
                 ->select(
@@ -1251,6 +1261,7 @@ class ServiceProviderController extends Controller
                     'deals.service_title',
                     'deals.service_category',
                     'deals.service_description',
+                    'deals.pricing_model',
                     'deals.flat_rate_price',
                     'deals.hourly_rate',
                     'deals.images',
@@ -1264,13 +1275,15 @@ class ServiceProviderController extends Controller
                     'users.name as user_name',
                     'users.personal_image',
                     \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                    \DB::raw('COUNT(reviews.id) as total_reviews')
+                    \DB::raw('COUNT(reviews.id) as total_reviews'),
+                    \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
                 )
                 ->groupBy(
                     'deals.id',
                     'deals.service_title',
                     'deals.service_category',
                     'deals.service_description',
+                    'deals.pricing_model',
                     'deals.flat_rate_price',
                     'deals.hourly_rate',
                     'deals.price1',
@@ -1284,6 +1297,10 @@ class ServiceProviderController extends Controller
                     'users.name',
                     'users.personal_image'
                 )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
+                $getDeal->transform(function ($deal) {
+                    $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+                    return $deal;
+                });
             $getSocial = SocialProfile::where('user_id', $userId)->get();
 
             $getReviews = Review::where('provider_id', $userId)->get();
@@ -1769,12 +1786,14 @@ class ServiceProviderController extends Controller
         $favoritService = FavoritDeal::where('user_id', $userId)->pluck('deal_id')->toArray();
         $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
             ->orderBy('deals.id', 'desc')
             ->select(
                 'deals.id',
                 'deals.service_title',
                 'deals.service_category',
                 'deals.service_description',
+                'deals.pricing_model',
                 'deals.flat_rate_price',
                 'deals.hourly_rate',
                 'deals.images',
@@ -1788,13 +1807,15 @@ class ServiceProviderController extends Controller
                 'users.name as user_name',
                 'users.personal_image',
                 \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                \DB::raw('COUNT(reviews.id) as total_reviews')
+                \DB::raw('COUNT(reviews.id) as total_reviews'),
+                \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
             )
             ->groupBy(
                 'deals.id',
                 'deals.service_title',
                 'deals.service_category',
                 'deals.service_description',
+                'deals.pricing_model',
                 'deals.flat_rate_price',
                 'deals.hourly_rate',
                 'deals.price1',
@@ -1809,6 +1830,10 @@ class ServiceProviderController extends Controller
                 'users.personal_image'
             )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->get();
 
+            $deals->transform(function ($deal) {
+                $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+                return $deal;
+            });
 
         return response()->json(['deals' => $deals], 200);
     }
@@ -1957,6 +1982,7 @@ class ServiceProviderController extends Controller
 
         $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
             ->orderBy('deals.id', 'desc')
             ->select(
                 'deals.id',
@@ -1964,6 +1990,7 @@ class ServiceProviderController extends Controller
                 'deals.search_tags',
                 'deals.service_category',
                 'deals.service_description',
+                'deals.pricing_model',
                 'deals.flat_rate_price',
                 'deals.hourly_rate',
                 'deals.images',
@@ -1976,7 +2003,8 @@ class ServiceProviderController extends Controller
                 'users.name as user_name',
                 'users.personal_image',
                 \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                \DB::raw('COUNT(reviews.id) as total_reviews')
+                \DB::raw('COUNT(reviews.id) as total_reviews'),
+                \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
             )
             ->groupBy(
                 'deals.id',
@@ -1984,6 +2012,7 @@ class ServiceProviderController extends Controller
                 'deals.search_tags',
                 'deals.service_category',
                 'deals.service_description',
+                'deals.pricing_model',
                 'deals.flat_rate_price',
                 'deals.hourly_rate',
                 'deals.price1',
@@ -2043,6 +2072,11 @@ class ServiceProviderController extends Controller
 
         $deals = $deals->get();
 
+        $deals->transform(function ($deal) {
+            $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+            return $deal;
+        });
+
         if ($request->user_id) {
             $userId = $request->user_id;
             $favoritDeals = FavoritDeal::where('user_id', $userId)->pluck('deal_id')->toArray();
@@ -2101,12 +2135,14 @@ class ServiceProviderController extends Controller
         $recentDealId = RecentDealView::where('user_id', $userId)->orderBy('created_at', 'desc')->pluck('deal_id')->toArray();
         $recentDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
             ->orderBy('deals.id', 'desc')
             ->select(
                 'deals.id',
                 'deals.service_title',
                 'deals.service_category',
                 'deals.service_description',
+                'deals.pricing_model',
                 'deals.flat_rate_price',
                 'deals.hourly_rate',
                 'deals.images',
@@ -2119,13 +2155,15 @@ class ServiceProviderController extends Controller
                 'users.name as user_name',
                 'users.personal_image',
                 \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                \DB::raw('COUNT(reviews.id) as total_reviews')
+                \DB::raw('COUNT(reviews.id) as total_reviews'),
+                \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
             )
             ->groupBy(
                 'deals.id',
                 'deals.service_title',
                 'deals.service_category',
                 'deals.service_description',
+                'deals.pricing_model',
                 'deals.flat_rate_price',
                 'deals.hourly_rate',
                 'deals.price1',
@@ -2139,6 +2177,10 @@ class ServiceProviderController extends Controller
                 'users.personal_image'
             )->whereIn('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->limit(8)->get();
 
+            $recentDeal->transform(function ($deal) {
+                $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+                return $deal;
+            });
         if ($recentDeal) {
             return response()->json(['message' => 'Orders List', 'recentDeal' => $recentDeal, 'recentDealId' => $recentDealId], 200);
         } else {
