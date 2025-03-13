@@ -111,7 +111,8 @@ class CommonController extends Controller
             $deals = $deals->whereIn('deals.user_id', $locationDistance);
         }
 
-        $deals = $deals->get();
+        $deals = $deals->paginate($request->number_of_deals ?? 12);
+        $totalDeals = $deals->total();
 
         $deals->transform(function ($deal) {
             $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
@@ -126,7 +127,7 @@ class CommonController extends Controller
         }
 
         if ($deals->isNotEmpty()) {
-            return response()->json(['deals' => $deals, 'favoritDeals' => $favoritDeals], 200);
+            return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
         } else {
             return response()->json(['message' => 'No deals found'], 401);
         }
