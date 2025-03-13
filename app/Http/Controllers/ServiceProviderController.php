@@ -2187,4 +2187,25 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'No deal available'], 401);
         }
     }
+    // common but not use 
+    public function AddRecentDeal($id)
+    {
+        $userId = Auth::id();
+        if ($userId) {
+            $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
+                if ($viewedDeal) {
+                    $viewedDeal->update([
+                        'created_at' => now()
+                    ]);
+                } else {
+                    $viewedDeal = RecentDealView::create([
+                        'user_id' => $userId,
+                        'deal_id' => $id,
+                    ]);
+                }
+            return response()->json(['message' => 'Add in recent view successfully','recentDeal' => $viewedDeal], 200);
+        } else {
+            return response()->json(['message' => 'You need to login'], 200);
+        }
+    }
 }
