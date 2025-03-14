@@ -1066,14 +1066,16 @@ class CustomerController extends Controller
                     'deals.user_id',
                     'users.name',
                     'users.personal_image'
-                )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->get();
+                )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
+
+                $totalDeals = $deals->total();
 
             $deals->transform(function ($deal) {
                 $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
                 return $deal;
             });
 
-            return response()->json(['deals' => $deals], 200);
+            return response()->json(['deals' => $deals,'totalDeals' => $totalDeals], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
