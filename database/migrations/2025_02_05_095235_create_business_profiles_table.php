@@ -44,6 +44,12 @@ return new class extends Migration
             $table->text('restrict_location')->nullable();
             $table->text('location_miles')->nullable();
             $table->integer('publish')->nullable();
+
+            $table->string('postalCode')->nullable();
+            $table->string('city')->nullable();
+            $table->string('longitude')->nullable();
+            $table->string('latitude')->nullable();
+            $table->string('place')->nullable();
             $table->timestamps();
         });
     }

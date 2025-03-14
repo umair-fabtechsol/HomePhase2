@@ -36,13 +36,10 @@ class BusinessProfile extends Model
         'restrict_location',
         'location_miles',
         'publish',
-
-
-
-
-
-
-
-
+        'postalCode',
+        'city',
+        'longitude',
+        'latitude',
+        'place',
     ];
 }
