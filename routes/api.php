@@ -127,7 +127,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('SearchDealLocation', 'SearchDealLocation')->name('SearchDealLocation');
         Route::post('CustomerSupport', 'CustomerSupport')->name('CustomerSupport');
-        Route::get('GetSalesRep', 'GetSalesRep')->name('GetSalesRep');
+        Route::get('GetSalesRep/{role}', 'GetSalesRep')->name('GetSalesRep');
         Route::get('AssignSalesRep/{id}', 'AssignSalesRep')->name('AssignSalesRep');
         Route::post('AddScheduleOrder', 'AddScheduleOrder')->name('AddScheduleOrder');
 
