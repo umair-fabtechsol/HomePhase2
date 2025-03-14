@@ -32,6 +32,7 @@ class ServiceProviderController extends Controller
 
     public function Deals(Request $request)
     {
+        $service = $request->service;
         $role = Auth::user()->role;
         if ($role == 2) {
             $userId = Auth::id();
@@ -77,7 +78,22 @@ class ServiceProviderController extends Controller
                     'deals.user_id',
                     'users.name',
                     'users.personal_image'
-                )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
+                )->where('deals.user_id', $userId);
+                
+                if ($service) {
+                    $deals = $deals->where(function ($query) use ($service) {
+                        $query->where('deals.service_category', 'like', '%' . $service . '%')
+                            ->orWhere('deals.service_title', 'like', '%' . $service . '%')
+                            ->orWhere('deals.search_tags', 'like', '%' . $service . '%')
+                            ->orWhere('deals.service_description', 'like', '%' . $service . '%')
+                            ->orWhere('deals.commercial', 'like', '%' . $service . '%')
+                            ->orWhere('deals.residential', 'like', '%' . $service . '%');
+                    });
+                }
+                
+                $deals = $deals->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ??12);
+
+                $totalDeals = $deals->total();
 
             $deals->transform(function ($deal) {
                 $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
@@ -91,7 +107,7 @@ class ServiceProviderController extends Controller
                 } else {
                     $favoritDeals = null;
                 }
-                return response()->json(['deals' => $deals, 'favoritDeals' => $favoritDeals], 200);
+                return response()->json(['deals' => $deals,'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
             } else {
                 return response()->json(['message' => 'No deals found'], 401);
             }
