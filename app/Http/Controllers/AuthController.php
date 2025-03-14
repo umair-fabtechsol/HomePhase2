@@ -128,12 +128,11 @@ class AuthController extends Controller
                 $createUser->save();
                 Auth::login($createUser);
                 $token = $createUser->createToken('auth_token')->plainTextToken;
-                
-                if ($createUser->role == 2) {
-                    return redirect()->away('https://homerservice-ph2.netlify.app/provider/services');
-                } elseif ($createUser->role == 1) {
-                    return redirect()->away('https://homerservice-ph2.netlify.app/customer/services');
-                }
+                return response()->json([
+                    'message' => 'User registered successfully',
+                    'user' => $createUser,
+                    'token' => $token,
+                ]);
             }else{
 
                 return response()->json([
@@ -151,13 +150,12 @@ class AuthController extends Controller
       
         if($getuser){
         Auth::login($getuser);
-        $token = $getuser->createToken('auth_token')->plainTextToken;   
-        
-        if ($getuser->role == 2) {
-        return redirect()->away('https://homerservice-ph2.netlify.app/provider/services');
-    } elseif ($getuser->role == 1) {
-        return redirect()->away('https://homerservice-ph2.netlify.app/customer/services');
-    }
+        $token = $getuser->createToken('auth_token')->plainTextToken;
+        return response()->json([
+            'message' => 'User logged in successfully',
+            'token' => $token,
+            'user' => $getuser,
+        ]);  
     }else{
 
         return [
