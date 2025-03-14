@@ -117,7 +117,7 @@ class AuthController extends Controller
             if (!$findUser) {
 
                 $createUser = new User();
-                if(!empty($role)){
+                if(!empty($request->role)){
                 $createUser->name = $request->name;
                 $createUser->email = $request->email;
                 $createUser->phone = $request->phone;
