@@ -32,7 +32,7 @@ class ServiceProviderController extends Controller
 
     public function Deals(Request $request)
     {
-        $service = $request->service;
+        $service = $request->search;
         $role = Auth::user()->role;
         if ($role == 2) {
             $userId = Auth::id();
