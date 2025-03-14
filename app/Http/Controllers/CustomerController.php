@@ -1018,7 +1018,7 @@ class CustomerController extends Controller
         }
     }
 
-    public function GetCustomerFavoritService()
+    public function GetCustomerFavoritService(Request $request)
     {
         $role = Auth::user()->role;
         if ($role == 1) {
