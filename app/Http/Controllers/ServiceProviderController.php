@@ -1895,11 +1895,11 @@ class ServiceProviderController extends Controller
         return response()->json(['CustomerSupport' => $CustomerSupport], 200);
     }
 
-    public function GetSalesRep(Request $request)
+    public function GetSalesRep($role)
     {
-        $role = Auth::user()->role;
-        if ($role == 2) {
-            $GetSalesRep = User::where('role', $request->role)->orderBy('id', 'desc')->get();
+        $providerRole = Auth::user()->role;
+        if ($providerRole == 2) {
+            $GetSalesRep = User::where('role', $role)->orderBy('id', 'desc')->get();
 
             return response()->json(['sales_reps' => $GetSalesRep]);
         } else {
