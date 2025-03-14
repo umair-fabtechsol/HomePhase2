@@ -25,6 +25,8 @@ return new class extends Migration
             $table->string('personal_image')->nullable();
             $table->string('sales_referred')->nullable();
             $table->integer('sales_representative')->nullable();
+            $table->string('referral_type')->nullable();
+
 
             $table->text('location')->nullable();
             $table->integer('created_by')->nullable();
