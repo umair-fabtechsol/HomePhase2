@@ -106,23 +106,22 @@ class AuthController extends Controller
         
     }
 
-    public function googleHandle()
+    public function googleHandle(Request $request)
     {
 
 
         try {
-            $user = Socialite::driver('google')->stateless()->user();
-            $role = request('state');
-            $findUser = User::where('email', $user->email)->first();
+            
+            $findUser = User::where('email', $request->email)->first();
             
             if (!$findUser) {
 
                 $createUser = new User();
                 if(!empty($role)){
-                $createUser->name = $user->name;
-                $createUser->email = $user->email;
-                $createUser->phone = '123456';
-                $createUser->role = $role;
+                $createUser->name = $request->name;
+                $createUser->email = $request->email;
+                $createUser->phone = $request->phone;
+                $createUser->role = $request->role;
                 $createUser->password = Hash::make('aszx1234');
                 $createUser->terms = 1;
                 $createUser->save();
@@ -136,7 +135,7 @@ class AuthController extends Controller
             }else{
 
                 return response()->json([
-                    'message' => 'User Role Not Found Please Sign Up First.',
+                    'message' => 'User Role Not Found.',
                 ]);
                 
             }

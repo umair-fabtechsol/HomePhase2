@@ -41,7 +41,7 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('UpdateUser', 'UpdateUser')->name('UpdateUser');
     Route::post('Userlogin', 'Userlogin')->name('Userlogin');
     Route::get('googleLogin/{role?}', 'googleLogin')->name('googleLogin');
-    Route::get('auth/google/callback', 'googleHandle');
+    Route::post('googleHandle', 'googleHandle')->name('googleHandle');
     Route::get('facebookLogin', 'facebookLogin')->name('facebookLogin');
     Route::post('auth/facebook/callback', 'facebookHandle');
 });
