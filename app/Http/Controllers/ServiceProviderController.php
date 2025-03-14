@@ -1780,7 +1780,7 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function GetFavoritService()
+    public function GetFavoritService(Request $request)
     {
         $userId = Auth::id();
         $favoritService = FavoritDeal::where('user_id', $userId)->pluck('deal_id')->toArray();
@@ -1828,14 +1828,15 @@ class ServiceProviderController extends Controller
                 'deals.user_id',
                 'users.name',
                 'users.personal_image'
-            )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->get();
+            )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
+            $totalDeals = $deals->total();
 
         $deals->transform(function ($deal) {
             $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
             return $deal;
         });
 
-        return response()->json(['deals' => $deals], 200);
+        return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals], 200);
     }
 
     public function SearchDealLocation(Request $request)
