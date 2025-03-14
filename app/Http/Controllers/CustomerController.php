@@ -1082,9 +1082,16 @@ class CustomerController extends Controller
     public function HomeCustomerOrders(Request $request)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 1) {
-            $userId = Auth::id();
             $GetActiveOrders = Order::where('customer_id', $userId)->where('status', '!=', 'completed')->orderBy('id', 'desc')->limit(3)->get();
+            if ($GetActiveOrders) {
+                return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
+            } else {
+                return response()->json(['message' => 'No order available'], 401);
+            }
+        } elseif($role == 2) {
+            $GetActiveOrders = Order::where('provider_id', $userId)->where('status', '!=', 'completed')->orderBy('id', 'desc')->limit(3)->get();
             if ($GetActiveOrders) {
                 return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
             } else {
