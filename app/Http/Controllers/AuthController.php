@@ -130,9 +130,9 @@ class AuthController extends Controller
                 $token = $createUser->createToken('auth_token')->plainTextToken;
                 
                 if ($createUser->role == 2) {
-                    return redirect()->away('https://homerservice-ph2.netlify.app/provider/services?role=2');
+                    return redirect()->away('https://homerservice-ph2.netlify.app/provider/services');
                 } elseif ($createUser->role == 1) {
-                    return redirect()->away('https://homerservice-ph2.netlify.app/customer/services?role=1');
+                    return redirect()->away('https://homerservice-ph2.netlify.app/customer/services');
                 }
             }else{
 
@@ -154,9 +154,9 @@ class AuthController extends Controller
         $token = $getuser->createToken('auth_token')->plainTextToken;   
         
         if ($getuser->role == 2) {
-        return redirect()->away('https://homerservice-ph2.netlify.app/provider/services?role=2');
+        return redirect()->away('https://homerservice-ph2.netlify.app/provider/services');
     } elseif ($getuser->role == 1) {
-        return redirect()->away('https://homerservice-ph2.netlify.app/customer/services?role=1');
+        return redirect()->away('https://homerservice-ph2.netlify.app/customer/services');
     }
     }else{
 
