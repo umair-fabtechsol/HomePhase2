@@ -145,7 +145,7 @@ class AuthController extends Controller
             dd($e->getMessage());
         }
 
-        $getuser=User::where('email','=',$user->email)->first();
+        $getuser=User::where('email','=',$request->email)->first();
       
         if($getuser){
         Auth::login($getuser);
