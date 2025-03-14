@@ -1416,8 +1416,9 @@ class ServiceProviderController extends Controller
     public function AddBusinessLocation(Request $request)
     {
         $role = Auth::user()->role;
+        $data = $request->all();
         if ($role == 2) {
-            $data = $request->all();
+            
             $businesslocation = BusinessProfile::where('user_id', $request->user_id)->first();
             if ($businesslocation) {
                 if ($request->service_location_type == 'location') {
