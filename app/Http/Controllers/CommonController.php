@@ -74,7 +74,7 @@ class CommonController extends Controller
                 'deals.user_id',
                 'users.name',
                 'users.personal_image'
-            );
+            )->where('publish', 1);
 
         // Apply Filters
         if ($service) {
