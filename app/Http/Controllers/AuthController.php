@@ -33,10 +33,12 @@ class AuthController extends Controller
         $data = $request->all();
        $data['terms'] =$request->term;  
         $user = User::create($data);
-
+        Auth::login($user);
+        $token = $user->createToken('auth_token')->plainTextToken;
         return response()->json([
             'message' => 'User successfully registered!',
             'user' => $user,
+            'token' => $token
         ], 200);
     }
 
