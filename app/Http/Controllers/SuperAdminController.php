@@ -25,11 +25,10 @@ class SuperAdminController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 0) {
-
             $total_revenue_generated = Order::where('status', 'completed')->sum('total_amount');
             $total_service_providers = User::where('role', 2)->count();
             $total_customers = User::where('role', 1)->count();
-            $total_service_listed = Deal::all()->count();
+            $total_service_listed = Deal::count();
 
             $total_active_sales = User::where('role', 3)->where('status', 0)->count();
             $total_active_providers = User::where('role', 2)->where('status', 0)->count();
@@ -40,11 +39,12 @@ class SuperAdminController extends Controller
             // Calculate the number of new providers added each day of the current week
             $startOfWeek = Carbon::now()->startOfWeek();
             $endOfWeek = Carbon::now()->endOfWeek();
+
             $newProvidersByDay = User::where('role', 2)
                 ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                 ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
-                ->groupBy('day')
-                ->orderBy('created_at')
+                ->groupBy(DB::raw('DAYNAME(created_at)'))
+                ->orderBy('day')
                 ->get()
                 ->pluck('count', 'day')
                 ->toArray();
@@ -52,8 +52,8 @@ class SuperAdminController extends Controller
             $newCustomersByDay = User::where('role', 1)
                 ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                 ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
-                ->groupBy('day')
-                ->orderBy('created_at')
+                ->groupBy(DB::raw('DAYNAME(created_at)'))
+                ->orderBy('day')
                 ->get()
                 ->pluck('count', 'day')
                 ->toArray();
@@ -61,34 +61,24 @@ class SuperAdminController extends Controller
             $newSaleRapByDay = User::where('role', 3)
                 ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
                 ->select(DB::raw('DAYNAME(created_at) as day'), DB::raw('COUNT(*) as count'))
-                ->groupBy('day')
-                ->orderBy('created_at')
+                ->groupBy(DB::raw('DAYNAME(created_at)'))
+                ->orderBy('day')
                 ->get()
                 ->pluck('count', 'day')
                 ->toArray();
 
             $dayName = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            $addCurrentWeeklyProvider = [];
-            foreach ($dayName as $day) {
-                $addCurrentWeeklyProvider[] = $newProvidersByDay[$day] ?? 0;
-            }
+            $addCurrentWeeklyProvider = array_map(fn($day) => $newProvidersByDay[$day] ?? 0, $dayName);
+            $addCurrentWeeklyCustomer = array_map(fn($day) => $newCustomersByDay[$day] ?? 0, $dayName);
+            $addCurrentWeeklySales = array_map(fn($day) => $newSaleRapByDay[$day] ?? 0, $dayName);
 
-            $addCurrentWeeklyCustomer = [];
-            foreach ($dayName as $day) {
-                $addCurrentWeeklyCustomer[] = $newCustomersByDay[$day] ?? 0;
-            }
-
-            $addCurrentWeeklySales = [];
-            foreach ($dayName as $day) {
-                $addCurrentWeeklySales[] = $newSaleRapByDay[$day] ?? 0;
-            }
-
-            // Calculate the number of active users for each day of the current month
+            // Calculate active users for each day of the current month
             $currentMonth = Carbon::now()->month;
             $previousMonth = Carbon::now()->subMonth()->month;
             $currentYear = Carbon::now()->year;
             $daysInMonth = Carbon::now()->daysInMonth;
             $daysInPreviousMonth = Carbon::now()->subMonth()->daysInMonth;
+
             $currentMonthActiveUser = [];
             for ($i = 1; $i <= $daysInMonth; $i++) {
                 $date = Carbon::create($currentYear, $currentMonth, $i);
@@ -106,17 +96,18 @@ class SuperAdminController extends Controller
                 $date = Carbon::create($currentYear, $currentMonth, $i);
                 $monthlySales[] = User::where('role', 3)->whereDate('created_at', $date)->count();
             }
+
             $monthlyProviders = [];
             for ($i = 1; $i <= $daysInMonth; $i++) {
                 $date = Carbon::create($currentYear, $currentMonth, $i);
                 $monthlyProviders[] = User::where('role', 2)->whereDate('created_at', $date)->count();
             }
+
             $monthlyClient = [];
             for ($i = 1; $i <= $daysInMonth; $i++) {
                 $date = Carbon::create($currentYear, $currentMonth, $i);
                 $monthlyClient[] = User::where('role', 1)->whereDate('created_at', $date)->count();
             }
-
 
             return response()->json([
                 'total_service_providers' => $total_service_providers,
