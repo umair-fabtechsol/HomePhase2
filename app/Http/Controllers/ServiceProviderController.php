@@ -1312,7 +1312,7 @@ class ServiceProviderController extends Controller
                     'deals.user_id',
                     'users.name',
                     'users.personal_image'
-                )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
+                )->where('publish', 1)->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
             $getDeal->transform(function ($deal) {
                 $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
                 return $deal;
@@ -2036,7 +2036,7 @@ class ServiceProviderController extends Controller
                 'deals.user_id',
                 'users.name',
                 'users.personal_image'
-            );
+            )->where('publish', 1);
 
         // Category Filters 
         if ($service) {
@@ -2188,7 +2188,7 @@ class ServiceProviderController extends Controller
                 'deals.user_id',
                 'users.name',
                 'users.personal_image'
-            )->whereIn('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
+            )->where('publish', 1)->whereIn('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
             $totalViewDeals = $recentDeal->total();
 
         $recentDeal->transform(function ($deal) {
