@@ -1916,14 +1916,8 @@ class ServiceProviderController extends Controller
 
     public function GetSalesRep($role)
     {
-        $providerRole = Auth::user()->role;
-        if ($providerRole == 2) {
-            $GetSalesRep = User::where('role', $role)->orderBy('id', 'desc')->get();
-
-            return response()->json(['sales_reps' => $GetSalesRep]);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
+        $GetSalesRep = User::where('role', $role)->orderBy('id', 'desc')->get();
+        return response()->json(['sales_reps' => $GetSalesRep]);
     }
 
     public function AssignSalesRep($id)
