@@ -124,6 +124,13 @@ class ServiceProviderController extends Controller
             $deal = Deal::find($id);
 
             if ($deal) {
+                $favoriteUserIds = \DB::table('favorit_deals')
+                ->where('deal_id', $deal->id)
+                ->pluck('user_id') // Get only user IDs
+                ->toArray();
+
+                $deal->favorite_user_ids = $favoriteUserIds;
+                
                 $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
                 $getReviews = Review::where('deal_id', $id)->get();
                 if ($getReviews->isNotEmpty()) {
