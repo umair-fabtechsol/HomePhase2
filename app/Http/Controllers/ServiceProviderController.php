@@ -1408,6 +1408,7 @@ class ServiceProviderController extends Controller
                     $data['business_location'] = null;
                     $data['restrict_location'] = null;
                 }
+                $data['business_location'] = json_encode($data['business_location']);
                 $data['service_location'] = json_encode($data['service_location']);
                 $data['restrict_location'] = json_encode($data['restrict_location']);
                 $updatedbusinesslocation = $businesslocation->update($data);
@@ -1422,6 +1423,7 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Service Area updated successfully', 'servicelocation' => $businesslocation], 200);
             } else {
+                $data['business_location'] = json_encode($data['business_location']);
                 $data['service_location'] = json_encode($data['service_location']);
                 $data['restrict_location'] = json_encode($data['restrict_location']);
                 $servicelocation = BusinessProfile::create($data);
