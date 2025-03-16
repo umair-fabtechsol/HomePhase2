@@ -406,8 +406,6 @@ class ServiceProviderController extends Controller
 
     public function MediaUpload(Request $request)
     {
-        dd($request->all());
-        exit;
         $role = Auth::user()->role;
         if ($role == 2) {
             $userId = Auth::id();
