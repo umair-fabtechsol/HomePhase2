@@ -129,7 +129,7 @@ class CommonController extends Controller
         if ($deals->isNotEmpty()) {
             return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
         } else {
-            return response()->json(['message' => 'No deals found'], 401);
+            return response()->json(['message' => 'No deals found'], 200);
         }
     }
 
