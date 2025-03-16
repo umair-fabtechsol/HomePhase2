@@ -126,11 +126,11 @@ class CommonController extends Controller
             $favoritDeals = null;
         }
 
-        if ($deals->isNotEmpty()) {
+        // if ($deals->isNotEmpty()) {
             return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
-        } else {
-            return response()->json(['message' => 'No deals found'], 200);
-        }
+        // } else {
+        //     return response()->json(['message' => 'No deals found'], 200);
+        // }
     }
 
     public function GetDealDetail(Request $request, $id)
