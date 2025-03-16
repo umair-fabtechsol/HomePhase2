@@ -2057,7 +2057,10 @@ class ServiceProviderController extends Controller
         }
 
         if ($location) {
-            $locationDistance = BusinessProfile::where('service_location', 'like', '%' . $location . '%')->pluck('user_id')->toArray();
+            $locationDistance = BusinessProfile::where(function ($query) use ($location) {
+                $query->where('business_location', 'like', '%' . $location . '%')
+                    ->orWhere('service_location','like', '%' . $location . '%');
+            })->pluck('user_id')->toArray();
             $deals = $deals->whereIn('deals.user_id', $locationDistance);
         }
 
