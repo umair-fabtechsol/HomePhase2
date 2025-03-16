@@ -413,7 +413,6 @@ class ServiceProviderController extends Controller
             $validator = Validator::make($request->all(), [
 
                 'images' => 'required',
-                'videos' => 'required',
 
             ]);
             if ($validator->fails()) {
@@ -1409,6 +1408,7 @@ class ServiceProviderController extends Controller
                     $data['business_location'] = null;
                     $data['restrict_location'] = null;
                 }
+                $data['service_location'] = json_encode($data['service_location']);
                 $data['restrict_location'] = json_encode($data['restrict_location']);
                 $updatedbusinesslocation = $businesslocation->update($data);
                 $notifications = [
@@ -1422,7 +1422,7 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Service Area updated successfully', 'servicelocation' => $businesslocation], 200);
             } else {
-
+                $data['service_location'] = json_encode($data['service_location']);
                 $data['restrict_location'] = json_encode($data['restrict_location']);
                 $servicelocation = BusinessProfile::create($data);
                 $notifications = [
