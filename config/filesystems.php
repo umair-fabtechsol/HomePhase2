@@ -74,7 +74,7 @@ return [
     */
 
     'links' => [
-        public_path('storage') => storage_path('/home/ubuntu/HomePhase2/public'),
+        public_path('storage') => storage_path('app/public'),
     ],
 
 ];
