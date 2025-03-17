@@ -45,6 +45,7 @@ return new class extends Migration
             $table->string('_id')->nullable();
             $table->integer('status')->default(0);
             $table->integer('assign_sales_rep')->nullable();
+            $table->string('stripe_account_id')->nullable();
             $table->text('token')->nullable();
             $table->rememberToken();
             $table->timestamps();

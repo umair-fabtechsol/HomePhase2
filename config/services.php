@@ -40,10 +40,15 @@ return [
         'client_secret' => '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',
         'redirect' => 'https://marketplace.thefabulousshow.com/api/auth/google/callback',
     ],
-    
+
+    // 'stripe' => [
+    //     'secret' => env('STRIPE_SECRET'),
+    //     'public' => env('STRIPE_PUBLIC'),
+    // ],
+
     'stripe' => [
+        'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
-        'public' => env('STRIPE_PUBLIC'),
     ],
 
 ];
