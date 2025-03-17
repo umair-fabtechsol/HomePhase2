@@ -450,6 +450,7 @@ class ServiceProviderController extends Controller
 
 
                 $existingImages = json_decode($deal->images, true) ?? [];
+                $uniqueImages = array_diff($existingImages, $request->images);
                 $existingVideos = json_decode($deal->videos, true) ?? [];
                 $deal->update([
                     'images' => json_encode(array_merge($existingImages, $DealImages)),
@@ -460,6 +461,7 @@ class ServiceProviderController extends Controller
                     'message' => 'Deal Images updated successfully',
                     'deal' => $deal,
                     'images' => $request->images,
+                    'uniqueImages' => $uniqueImages,
                 ], 200);
             } else {
 
