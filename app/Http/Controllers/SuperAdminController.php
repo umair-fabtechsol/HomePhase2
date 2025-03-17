@@ -515,14 +515,16 @@ class SuperAdminController extends Controller
     public function AddPriceDetails(Request $request)
     {
         $role = Auth::user()->role;
+        $userid = Auth::user()->id;
+
         if ($role == 0) {
-            $getPriceDetail = Price::where('user_id', $request->user_id)->first();
+            $getPriceDetail = Price::where('user_id', $userid)->first();
             if ($getPriceDetail) {
                 $getPriceDetail->update($request->all());
                 return response()->json(['message' => 'Price Details updated successfully', 'price' => $getPriceDetail], 200);
             }
             $data = $request->all();
-
+            $data['user_id'] = $userid;
             $price = Price::create($data);
             return response()->json(['message' => 'Price Details create successfully', 'price' => $price], 200);
         } else {
