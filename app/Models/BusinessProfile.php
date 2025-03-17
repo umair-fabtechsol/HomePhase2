@@ -35,6 +35,7 @@ class BusinessProfile extends Model
         'service_location',
         'restrict_location',
         'location_miles',
+        'service_bulk',
         'publish',
         'postalCode',
         'city',

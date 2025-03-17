@@ -61,6 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('UpdatePriceAndPackage', 'UpdatePriceAndPackage')->name('UpdatePriceAndPackage');
 
         Route::post('MediaUpload', 'MediaUpload')->name('MediaUpload');
+        Route::post('DeleteMediaUpload', 'DeleteMediaUpload')->name('DeleteMediaUpload');
         Route::post('PublishMediaUpload', 'PublishMediaUpload')->name('PublishMediaUpload');
 
         Route::post('UpdateMediaUpload', 'UpdateMediaUpload')->name('UpdateMediaUpload');
