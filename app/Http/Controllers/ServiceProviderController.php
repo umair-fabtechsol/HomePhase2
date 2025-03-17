@@ -459,6 +459,7 @@ class ServiceProviderController extends Controller
                 return response()->json([
                     'message' => 'Deal Images updated successfully',
                     'deal' => $deal,
+                    'images' => $request->images,
                 ], 200);
             } else {
 
