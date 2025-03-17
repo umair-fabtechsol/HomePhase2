@@ -43,6 +43,8 @@ return new class extends Migration
             $table->text('service_location')->nullable();
             $table->text('restrict_location')->nullable();
             $table->text('location_miles')->nullable();
+            $table->integer('service_bulk')->nullable();
+    
             $table->integer('publish')->nullable();
 
             $table->string('postalCode')->nullable();

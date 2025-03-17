@@ -410,14 +410,14 @@ class ServiceProviderController extends Controller
         if ($role == 2) {
             $userId = Auth::id();
             $userRole = Auth::user()->role;
-            $validator = Validator::make($request->all(), [
+            // $validator = Validator::make($request->all(), [
 
-                'images' => 'required',
+            //     'images' => 'required',
 
-            ]);
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
-            }
+            // ]);
+            // if ($validator->fails()) {
+            //     return response()->json(['errors' => $validator->errors()], 422);
+            // }
             if ($userRole != 2) {
                 return response()->json(['message' => 'Access denied. Only providers can perform this action.'], 400);
             }
@@ -473,6 +473,42 @@ class ServiceProviderController extends Controller
         }
     }
 
+    public function DeleteMediaUpload(Request $request){
+
+        $getDeal=Deal::find($request->id);
+          
+        if($request->type == 'images'){
+
+            $images= json_decode($getDeal->images);
+            $imagePath = public_path('uploads/' . $images[$request->index]);
+        if (file_exists($imagePath)) {
+            unlink($imagePath);
+        }
+            unset($images[$request->index]);
+            $updateimages=array_values($images);
+
+            $getDeal->update(['images' => json_encode($updateimages)]);
+            return response()->json([
+            'message' => 'Image deleted successfully'
+        ], 200);
+            
+        }elseif($request->type == 'videos'){
+            $videos= json_decode($getDeal->videos);
+            $videoPath = public_path('uploads/' . $videos[$request->index]);
+            if (file_exists($videoPath)) {
+            unlink($videoPath);
+            }
+            unset($videos[$request->index]);
+            $updatevideos=array_values($videos);
+
+            $getDeal->update(['videos' => json_encode($updatevideos)]);
+            return response()->json([
+            'message' => 'Video deleted successfully'
+        ], 200);
+
+        }
+        
+    }
     public function PublishMediaUpload(Request $request)
     {
         $role = Auth::user()->role;
