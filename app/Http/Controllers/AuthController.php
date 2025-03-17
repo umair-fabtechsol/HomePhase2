@@ -7,7 +7,11 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
-
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ResetPasswordMail;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
 class AuthController extends Controller
 {
     public function form()
@@ -27,12 +31,14 @@ class AuthController extends Controller
             ], 422);
         }
         $data = $request->all();
-
+       $data['terms'] =$request->term;  
         $user = User::create($data);
-
+        Auth::login($user);
+        $token = $user->createToken('auth_token')->plainTextToken;
         return response()->json([
             'message' => 'User successfully registered!',
             'user' => $user,
+            'token' => $token
         ], 200);
     }
 
@@ -64,7 +70,7 @@ class AuthController extends Controller
                 'message' => 'invalid credentials'
             ], 401);
         }
-        if($user->status == 1){
+        if ($user->status == 1) {
             return response()->json([
                 'message' => 'You account has been banned'
             ], 401);
@@ -75,7 +81,7 @@ class AuthController extends Controller
                 'message' => 'You must accept the terms and conditions to log in'
             ], 403);
         }
-        
+
         $token = $user->createToken('auth_token')->plainTextToken;
         return [
             'user' => $user,
@@ -83,43 +89,82 @@ class AuthController extends Controller
         ];
     }
 
-    public function googleLogin()
+    public function googleLogin($role = null)
     {
-
-        return Socialite::driver('google')->stateless()->redirect();
+     
+        if (!$role) {
+            
+            return Socialite::driver('google')
+            ->stateless()
+            ->redirect();
+        }else{
+           
+            return Socialite::driver('google')
+            ->stateless()
+            ->with(['state' => $role])
+            ->redirect();
+            
+        }
+        
     }
 
-    public function googleHandle()
+    public function googleHandle(Request $request)
     {
 
-        try {
-            $user = Socialite::driver('google')->stateless()->user();
-            dd($user);
-            $findUser = User::where('email', $user->email)->first();
 
+        try {
+            
+            $findUser = User::where('email', $request->email)->first();
+            
             if (!$findUser) {
 
                 $createUser = new User();
-
-                $createUser->name = $user->name;
-                $createUser->email = $user->email;
-                $createUser->role = 1;
+                if(!empty($request->role)){
+                $createUser->name = $request->name;
+                $createUser->email = $request->email;
+                $createUser->phone = $request->phone;
+                $createUser->role = $request->role;
                 $createUser->password = Hash::make('aszx1234');
                 $createUser->terms = 1;
                 $createUser->save();
+                Auth::login($createUser);
+                $token = $createUser->createToken('auth_token')->plainTextToken;
+                return response()->json([
+                    'message' => 'User registered successfully',
+                    'user' => $createUser,
+                    'token' => $token,
+                ]);
+            }else{
 
-
-
-                return [
-
-                    'createUser' => $createUser,
-
-                ];
+                return response()->json([
+                    'message' => 'User Role Not Found Please Sing Up First.',
+                ]);
+                
+            }
             }
         } catch (Exception $e) {
 
             dd($e->getMessage());
         }
+
+        $getuser=User::where('email','=',$request->email)->first();
+      
+        if($getuser){
+        Auth::login($getuser);
+        $token = $getuser->createToken('auth_token')->plainTextToken;
+        return response()->json([
+            'message' => 'User logged in successfully',
+            'token' => $token,
+            'user' => $getuser,
+        ]);  
+    }else{
+
+        return [
+            'message' => 'Credentials Not Found',
+        ];
+        
+    }
+    
     }
 
     public function facebookLogin()
@@ -133,7 +178,7 @@ class AuthController extends Controller
 
         try {
             $user = Socialite::driver('facebook')->stateless()->user();
-            dd($user);
+
             $findUser = User::where('email', $user->email)->first();
             if (!$findUser) {
 
@@ -158,5 +203,68 @@ class AuthController extends Controller
 
             dd($e->getMessage());
         }
+    }
+
+    public function ForgetPassword(Request $request)
+    {
+
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $token = Password::createToken(User::where('email', $request->email)->first());
+        User::where('email','=',$request->email)->update(['token' => $token]);
+
+        if (!$token) {
+
+            return response()->json(['error' => 'Unable to generate password reset token. Please try again later.'], 500);
+        }
+
+
+        Mail::to($request->email)->send(new ResetPasswordMail($token, $request->email));
+
+        return response()->json(['message' => 'Password reset link sent to your email.'], 200);
+    }
+
+    public function ResetPassword(Request $request)
+    {
+
+        dd('ok');
+    }
+
+    public function ChangePassword(Request $request)
+    {
+     
+        $validator = Validator::make($request->all(), [
+            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+            'token' => ['required', 'string'],
+        ], [
+            'new_password.confirmed' => 'The new password and confirm password do not match.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
+        }
+    
+
+    
+        $GetUserDetails = User::where('email', '=', $request->email)->first();
+        if ($GetUserDetails->token != $request->token) {
+            return response()->json(['error' => 'Invalid token.'], 400);
+        }
+        $GetUserDetails->update(['password' => Hash::make($request->new_password),
+        'token' => null,
+    ]);
+        
+        return response()->json(['message' => 'Your password has been reset successfully.'], 200);
     }
 }

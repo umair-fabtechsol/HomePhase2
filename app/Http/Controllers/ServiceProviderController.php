@@ -32,51 +32,82 @@ class ServiceProviderController extends Controller
 
     public function Deals(Request $request)
     {
+        $service = $request->search;
         $role = Auth::user()->role;
         if ($role == 2) {
             $userId = Auth::id();
             $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-            ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-            ->orderBy('deals.id', 'desc')
-            ->select(
-                'deals.id',
-                'deals.service_title',
-                'deals.service_category',
-                'deals.service_description',
-                'deals.flat_rate_price',
-                'deals.hourly_rate',
-                'deals.images',
-                'deals.videos',
-                'deals.price1',
-                'deals.flat_estimated_service_time',
-                'deals.hourly_estimated_service_time',
-                'deals.estimated_service_timing1',
-                'deals.user_id',
-                'users.name as user_name',
-                'users.personal_image',
-                \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                \DB::raw('COUNT(reviews.id) as total_reviews')
-            )
-            ->groupBy(
-                'deals.id',
-                'deals.service_title',
-                'deals.service_category',
-                'deals.service_description',
-                'deals.flat_rate_price',
-                'deals.hourly_rate',
-                'deals.price1',
-                'deals.images',
-                'deals.videos',
-                'deals.flat_estimated_service_time',
-                'deals.hourly_estimated_service_time',
-                'deals.estimated_service_timing1',
-                'deals.user_id',
-                'users.name',
-                'users.personal_image'
-            )->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
+                ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+                ->orderBy('deals.id', 'desc')
+                ->select(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.pricing_model',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.price1',
+                    'deals.flat_estimated_service_time',
+                    'deals.hourly_estimated_service_time',
+                    'deals.estimated_service_timing1',
+                    'deals.user_id',
+                    'users.name as user_name',
+                    'users.personal_image',
+                    \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                    \DB::raw('COUNT(reviews.id) as total_reviews'),
+                    \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+                )
+                ->groupBy(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.pricing_model',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.price1',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.flat_estimated_service_time',
+                    'deals.hourly_estimated_service_time',
+                    'deals.estimated_service_timing1',
+                    'deals.user_id',
+                    'users.name',
+                    'users.personal_image'
+                )->where('deals.user_id', $userId);
+                
+                if ($service) {
+                    $deals = $deals->where(function ($query) use ($service) {
+                        $query->where('deals.service_category', 'like', '%' . $service . '%')
+                            ->orWhere('deals.service_title', 'like', '%' . $service . '%')
+                            ->orWhere('deals.search_tags', 'like', '%' . $service . '%')
+                            ->orWhere('deals.service_description', 'like', '%' . $service . '%')
+                            ->orWhere('deals.commercial', 'like', '%' . $service . '%')
+                            ->orWhere('deals.residential', 'like', '%' . $service . '%');
+                    });
+                }
+                
+                $deals = $deals->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ??12);
+
+                $totalDeals = $deals->total();
+
+            $deals->transform(function ($deal) {
+                $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+                return $deal;
+            });
 
             if ($deals) {
-                return response()->json(['deals' => $deals], 200);
+                if ($request->user_id) {
+                    $userId = $request->user_id;
+                    $favoritDeals = FavoritDeal::where('user_id', $userId)->pluck('deal_id')->toArray();
+                } else {
+                    $favoritDeals = null;
+                }
+                return response()->json(['deals' => $deals,'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
             } else {
                 return response()->json(['message' => 'No deals found'], 401);
             }
@@ -91,14 +122,21 @@ class ServiceProviderController extends Controller
         $userId = Auth::id();
         if ($role == 2) {
             $deal = Deal::find($id);
-        
+
             if ($deal) {
+                $favoriteUserIds = \DB::table('favorit_deals')
+                ->where('deal_id', $deal->id)
+                ->pluck('user_id') // Get only user IDs
+                ->toArray();
+
+                $deal->favorite_user_ids = $favoriteUserIds;
+                
                 $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
                 $getReviews = Review::where('deal_id', $id)->get();
-                if($getReviews->isNotEmpty()) {
+                if ($getReviews->isNotEmpty()) {
                     $reviews = [];
-                    $reviews['average'] = floor($reviews->avg('rating'));
-                    $reviews['total'] = $reviews->count();
+                    $reviews['average'] = floor($getReviews->avg('rating'));
+                    $reviews['total'] = $getReviews->count();
                 } else {
                     $reviews = [];
                     $reviews['average'] = 0;
@@ -106,17 +144,17 @@ class ServiceProviderController extends Controller
                 }
 
                 $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
-                if($viewedDeal){
+                if ($viewedDeal) {
                     $viewedDeal->update([
                         'created_at' => now()
                     ]);
-                } else{
+                } else {
                     $recentDeal = RecentDealView::create([
                         'user_id' => $userId,
                         'deal_id' => $id,
                     ]);
                 }
-                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile , 'reviews' => $reviews], 200);
+                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile, 'reviews' => $reviews], 200);
             } else {
                 return response()->json(['message' => 'No deal found'], 401);
             }
@@ -213,6 +251,45 @@ class ServiceProviderController extends Controller
         }
     }
 
+
+    public function PublishBasicInfo(Request $request)
+    {
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $userId = Auth::id();
+            $userRole = Auth::user()->role;
+            $validator = Validator::make($request->all(), [
+                'service_title' => 'required',
+                'service_category' => 'required',
+                'search_tags' => 'required',
+                'service_description' => 'required',
+                'commercial' => 'nullable',
+                'residential' => 'nullable',
+            ], [
+                'at_least_one.required' => 'At least one of commercial or residential is required.',
+            ]);
+
+            $validator->after(function ($validator) use ($request) {
+                if (empty($request->commercial) && empty($request->residential)) {
+                    $validator->errors()->add('at_least_one', 'At least one of commercial or residential is required.');
+                }
+            });
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+            $data = $request->all();
+
+            $data['user_id'] = $userId;
+            $data['publish'] = 1;
+            $deal = Deal::create($data);
+
+            return response()->json(['message' => 'Added new deal and Publish successfully', 'deal' => $deal], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
     public function PriceAndPackage(Request $request)
     {
         $role = Auth::user()->role;
@@ -304,6 +381,29 @@ class ServiceProviderController extends Controller
         }
     }
 
+    public function PublishPriceAndPackage(Request $request)
+    {
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $userId = Auth::id();
+            $userRole = Auth::user()->role;
+
+            $data = $request->all();
+            if ($userRole != 2) {
+                return response()->json(['message' => 'Access denied. Only providers can perform this action.'], 400);
+            }
+
+
+            $data['user_id'] = $userId;
+            $data['publish'] = 1;
+            $deal = Deal::create($data);
+
+            return response()->json(['message' => 'Added new package deal and Publish successfully', 'deal' => $deal], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
     public function MediaUpload(Request $request)
     {
         $role = Auth::user()->role;
@@ -313,7 +413,6 @@ class ServiceProviderController extends Controller
             $validator = Validator::make($request->all(), [
 
                 'images' => 'required',
-                'videos' => 'required',
 
             ]);
             if ($validator->fails()) {
@@ -360,6 +459,7 @@ class ServiceProviderController extends Controller
                 return response()->json([
                     'message' => 'Deal Images updated successfully',
                     'deal' => $deal,
+                    'images' => $request->images,
                 ], 200);
             } else {
 
@@ -367,8 +467,61 @@ class ServiceProviderController extends Controller
                 return response()->json([
                     'message' => 'Added new deal with Images successfully',
                     'deal' => $deal,
+                    'images' => $request->images,
                 ], 200);
             }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+
+    public function PublishMediaUpload(Request $request)
+    {
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $userId = Auth::id();
+            $userRole = Auth::user()->role;
+            $validator = Validator::make($request->all(), [
+
+                'images' => 'required',
+                'videos' => 'required',
+
+            ]);
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $data = $request->all();
+            $DealImages = [];
+            $DealVideos = [];
+
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $photo) {
+                    $photo_name = time() . '-' . $photo->getClientOriginalName();
+                    $photo->move(public_path('uploads'), $photo_name);
+                    $DealImages[] = $photo_name;
+                }
+            }
+
+            if ($request->hasFile('videos')) {
+                foreach ($request->file('videos') as $video) {
+                    $video_name = time() . '-' . $video->getClientOriginalName();
+                    $video->move(public_path('uploads'), $video_name);
+                    $DealVideos[] = $video_name;
+                }
+            }
+
+
+            $data['images'] = json_encode($DealImages);
+            $data['videos'] = json_encode($DealVideos);
+            $data['user_id'] = $userId;
+            $data['publish'] = 1;
+
+            $deal = Deal::create($data);
+            return response()->json([
+                'message' => 'Added new deal with Images and Publish successfully',
+                'deal' => $deal,
+            ], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
@@ -1054,35 +1207,7 @@ class ServiceProviderController extends Controller
             $data = $request->all();
 
 
-            if ($request->has('facebook') && !preg_match('/^(https?:\/\/)?(www\.)?facebook\.com\/[a-zA-Z0-9(\.\?)?]/', $request->facebook)) {
-                return response()->json(['message' => 'Invalid Facebook URL'], 400);
-            }
-
-
-            if ($request->has('twitter') && !preg_match('/^(https?:\/\/)?(www\.)?twitter\.com\/[a-zA-Z0-9_]+$/', $request->twitter)) {
-                return response()->json(['message' => 'Invalid Twitter URL'], 400);
-            }
-
-
-            if ($request->has('instagram') && !preg_match('/^(https?:\/\/)?(www\.)?instagram\.com\/[a-zA-Z0-9_]+\/?$/', $request->instagram)) {
-                return response()->json(['message' => 'Invalid Instagram URL'], 400);
-            }
-
-
-            if ($request->has('linkedin') && !preg_match('/^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?$/', $request->linkedin)) {
-                return response()->json(['message' => 'Invalid LinkedIn URL'], 400);
-            }
-
-
-            if ($request->has('youtube') && !preg_match('/^(https?:\/\/)?(www\.)?youtube\.com\/(channel|c|user)\/[a-zA-Z0-9_-]+$/', $request->youtube)) {
-                return response()->json(['message' => 'Invalid YouTube URL'], 400);
-            }
-
-
-            if ($request->has('google_business') && !preg_match('/^(https?:\/\/)?(www\.)?g\.page\/[a-zA-Z0-9_-]+$/', $request->google_business)) {
-                return response()->json(['message' => 'Invalid Google Business URL'], 400);
-            }
-
+           
             if ($social) {
                 $social->update($data);
                 $certificate = BusinessProfile::create($data);
@@ -1123,11 +1248,94 @@ class ServiceProviderController extends Controller
             $businessProfile = BusinessProfile::where('user_id', $userId)->get();
 
             $getPayment = PaymentDetail::where('user_id', $userId)->get();
-            $getDeal = Deal::where('user_id', $userId)->get();
+            $getDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+                ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+                ->orderBy('deals.id', 'desc')
+                ->select(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.pricing_model',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.price1',
+                    'deals.pricing_model',
+                    'deals.flat_estimated_service_time',
+                    'deals.hourly_estimated_service_time',
+                    'deals.estimated_service_timing1',
+                    'deals.user_id',
+                    'users.name as user_name',
+                    'users.personal_image',
+                    \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                    \DB::raw('COUNT(reviews.id) as total_reviews'),
+                    \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+                )
+                ->groupBy(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.pricing_model',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.price1',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.pricing_model',
+                    'deals.flat_estimated_service_time',
+                    'deals.hourly_estimated_service_time',
+                    'deals.estimated_service_timing1',
+                    'deals.user_id',
+                    'users.name',
+                    'users.personal_image'
+                )->where('publish', 1)->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
+            $getDeal->transform(function ($deal) {
+                $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+                return $deal;
+            });
             $getSocial = SocialProfile::where('user_id', $userId)->get();
+
+            $getReviews = Review::where('provider_id', $userId)->get();
+            if ($getReviews->isNotEmpty()) {
+                $provider_reviews = [];
+                $provider_reviews['average'] = floor($getReviews->avg('rating'));
+                $provider_reviews['total'] = $getReviews->count();
+            } else {
+                $provider_reviews = [];
+                $provider_reviews['average'] = 0;
+                $provider_reviews['total'] = 0;
+            }
+
+            $stars = Review::select(
+                DB::raw('SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_star'),
+                DB::raw('SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_star'),
+                DB::raw('SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_star'),
+                DB::raw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star'),
+                DB::raw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star')
+            )
+                ->where('provider_id', $userId)
+                ->first();
+
+            $detailReviews = Review::leftJoin('users', 'users.id', '=', 'reviews.user_id')
+                ->leftJoin('deals', 'deals.id', '=', 'reviews.deal_id')
+                ->select(
+                    'reviews.*',
+                    'users.name as user_name',
+                    'users.personal_image',
+                    'deals.service_title'
+                )
+                ->where('reviews.provider_id', $userId) // Filters by provider_id
+                ->get();
+
+
+
             if ($user) {
 
-                return response()->json(['user' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial], 200);
+                return response()->json(['user' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
             }
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
@@ -1140,33 +1348,37 @@ class ServiceProviderController extends Controller
         if ($role == 2) {
             $social = SocialProfile::where('user_id', $request->id)->first();
 
-            if ($request['facebook'] == $social->facebook) {
+            if ($social->facebook != null && $request['facebook'] == $social->facebook) {
 
                 $social->update(['facebook' => null]);
+                $message = 'Social facebook has been removed successfully';
             }
-            if ($request['twitter'] == $social->twitter) {
+            if ($social->twitter != null && $request['twitter'] == $social->twitter) {
 
                 $social->update(['twitter' => null]);
+                $message = 'Social twitter has been removed successfully';
             }
-            if ($request['instagram'] == $social->instagram) {
+            if ($social->instagram != null && $request['instagram'] == $social->instagram) {
 
                 $social->update(['instagram' => null]);
+                $message = 'Social Instagram has been removed successfully';
             }
-            if ($request['linkedin'] == $social->linkedin) {
+            if ($social->linkedin != null && $request['linkedin'] == $social->linkedin) {
 
                 $social->update(['linkedin' => null]);
+                $message = 'Social Linkdin has been removed successfully';
             }
-            if ($request['youtube'] == $social->youtube) {
+            if ($social->youtube != null && $request['youtube'] == $social->youtube) {
 
                 $social->update(['youtube' => null]);
+                $message = 'Social Youtube has been removed successfully';
             }
-            if ($request['google_business'] == $social->google_business) {
+            if ($social->google_business != null && $request['google_business'] == $social->google_business) {
 
                 $social->update(['google_business' => null]);
+                $message = 'Social Google Business has been removed successfully';
             }
-            if ($social && is_null($social->facebook) && is_null($social->twitter) && is_null($social->instagram) && is_null($social->linkedin) && is_null($social->youtube) && is_null($social->google_business)) {
-                $social->delete();
-            }
+
             $notifications = [
                 'title' => 'Delete Social Link',
                 'message' => 'Socials Link deleted successfully',
@@ -1176,7 +1388,7 @@ class ServiceProviderController extends Controller
 
             ];
             Notification::create($notifications);
-            return response()->json(['social' => $social], 200);
+            return response()->json(['message' => $message, 'social' => $social], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
@@ -1184,8 +1396,9 @@ class ServiceProviderController extends Controller
     public function AddBusinessLocation(Request $request)
     {
         $role = Auth::user()->role;
+        $data = $request->all();
         if ($role == 2) {
-            $data = $request->all();
+            
             $businesslocation = BusinessProfile::where('user_id', $request->user_id)->first();
             if ($businesslocation) {
                 if ($request->service_location_type == 'location') {
@@ -1197,6 +1410,9 @@ class ServiceProviderController extends Controller
                     $data['business_location'] = null;
                     $data['restrict_location'] = null;
                 }
+                $data['business_location'] = json_encode($data['business_location']);
+                $data['service_location'] = json_encode($data['service_location']);
+                $data['restrict_location'] = json_encode($data['restrict_location']);
                 $updatedbusinesslocation = $businesslocation->update($data);
                 $notifications = [
                     'title' => 'Update Service Area',
@@ -1209,7 +1425,9 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Service Area updated successfully', 'servicelocation' => $businesslocation], 200);
             } else {
-
+                $data['business_location'] = json_encode($data['business_location']);
+                $data['service_location'] = json_encode($data['service_location']);
+                $data['restrict_location'] = json_encode($data['restrict_location']);
                 $servicelocation = BusinessProfile::create($data);
                 $notifications = [
                     'title' => 'Created Service Area',
@@ -1564,19 +1782,61 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function GetFavoritService()
+    public function GetFavoritService(Request $request)
     {
         $userId = Auth::id();
+        $favoritService = FavoritDeal::where('user_id', $userId)->pluck('deal_id')->toArray();
         $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-            ->leftJoin('orders', 'orders.deal_id', '=', 'deals.id')
-            ->leftJoin('reviews', 'reviews.order_id', '=', 'orders.id')
-            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
+            ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
             ->orderBy('deals.id', 'desc')
-            ->select('deals.*', 'users.name as user_name', 'users.personal_image', 'orders.id as order_id', 'reviews.rating as review_rating')
-            ->where('favorit_deals.user_id', $userId)
-            ->get();
+            ->select(
+                'deals.id',
+                'deals.service_title',
+                'deals.service_category',
+                'deals.service_description',
+                'deals.pricing_model',
+                'deals.flat_rate_price',
+                'deals.hourly_rate',
+                'deals.images',
+                'deals.videos',
+                'deals.price1',
+                'deals.flat_estimated_service_time',
+                'deals.hourly_estimated_service_time',
+                'deals.estimated_service_timing1',
+                'deals.user_id',
+                'users.name as user_name',
+                'users.personal_image',
+                \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                \DB::raw('COUNT(reviews.id) as total_reviews'),
+                \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+            )
+            ->groupBy(
+                'deals.id',
+                'deals.service_title',
+                'deals.service_category',
+                'deals.service_description',
+                'deals.pricing_model',
+                'deals.flat_rate_price',
+                'deals.hourly_rate',
+                'deals.price1',
+                'deals.images',
+                'deals.videos',
+                'deals.flat_estimated_service_time',
+                'deals.hourly_estimated_service_time',
+                'deals.estimated_service_timing1',
+                'deals.user_id',
+                'users.name',
+                'users.personal_image'
+            )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
+            $totalDeals = $deals->total();
 
-        return response()->json(['deals' => $deals], 200);
+        $deals->transform(function ($deal) {
+            $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+            return $deal;
+        });
+
+        return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals], 200);
     }
 
     public function SearchDealLocation(Request $request)
@@ -1637,16 +1897,10 @@ class ServiceProviderController extends Controller
         return response()->json(['CustomerSupport' => $CustomerSupport], 200);
     }
 
-    public function GetSalesRep()
+    public function GetSalesRep($role)
     {
-        $role = Auth::user()->role;
-        if ($role == 2) {
-            $GetSalesRep = User::where('role', 3)->orderBy('id', 'desc')->get();
-
-            return response()->json(['sales_reps' => $GetSalesRep]);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
+        $GetSalesRep = User::where('role', $role)->orderBy('id', 'desc')->get();
+        return response()->json(['sales_reps' => $GetSalesRep]);
     }
 
     public function AssignSalesRep($id)
@@ -1723,6 +1977,7 @@ class ServiceProviderController extends Controller
 
         $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
             ->orderBy('deals.id', 'desc')
             ->select(
                 'deals.id',
@@ -1730,6 +1985,7 @@ class ServiceProviderController extends Controller
                 'deals.search_tags',
                 'deals.service_category',
                 'deals.service_description',
+                'deals.pricing_model',
                 'deals.flat_rate_price',
                 'deals.hourly_rate',
                 'deals.images',
@@ -1742,7 +1998,8 @@ class ServiceProviderController extends Controller
                 'users.name as user_name',
                 'users.personal_image',
                 \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                \DB::raw('COUNT(reviews.id) as total_reviews')
+                \DB::raw('COUNT(reviews.id) as total_reviews'),
+                \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
             )
             ->groupBy(
                 'deals.id',
@@ -1750,6 +2007,7 @@ class ServiceProviderController extends Controller
                 'deals.search_tags',
                 'deals.service_category',
                 'deals.service_description',
+                'deals.pricing_model',
                 'deals.flat_rate_price',
                 'deals.hourly_rate',
                 'deals.price1',
@@ -1761,7 +2019,7 @@ class ServiceProviderController extends Controller
                 'deals.user_id',
                 'users.name',
                 'users.personal_image'
-            );
+            )->where('publish', 1);
 
         // Category Filters 
         if ($service) {
@@ -1770,13 +2028,15 @@ class ServiceProviderController extends Controller
                 $query->where('deals.service_category', 'like', '%' . $service . '%')
                     ->orWhere('deals.service_title', 'like', '%' . $service . '%')
                     ->orWhere('deals.search_tags', 'like', '%' . $service . '%')
-                    ->orWhere('deals.service_description', 'like', '%' . $service . '%');
+                    ->orWhere('deals.service_description', 'like', '%' . $service . '%')
+                    ->orWhere('deals.commercial', 'like', '%' . $service . '%')
+                    ->orWhere('deals.residential', 'like', '%' . $service . '%');
             });
         }
 
 
         if ($reviews) {
-            $deals = $deals->having('avg_rating', '<=', $reviews);
+            $deals = $deals->havingRaw('avg_rating >= ? AND avg_rating < ?', [$reviews, $reviews + 1]);
         }
 
         if ($budget) {
@@ -1801,14 +2061,30 @@ class ServiceProviderController extends Controller
         }
 
         if ($location) {
-            $locationDistance = BusinessProfile::where('service_location', 'like', '%' . $location . '%')->pluck('user_id')->toArray();
+            $locationDistance = BusinessProfile::where(function ($query) use ($location) {
+                $query->where('business_location', 'like', '%' . $location . '%')
+                    ->orWhere('service_location','like', '%' . $location . '%');
+            })->pluck('user_id')->toArray();
             $deals = $deals->whereIn('deals.user_id', $locationDistance);
         }
 
-        $deals = $deals->get();
+        $deals = $deals->paginate($request->number_of_deals ?? 12);
+        $totalDeals = $deals->total();
+
+        $deals->transform(function ($deal) {
+            $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+            return $deal;
+        });
+
+        if ($request->user_id) {
+            $userId = $request->user_id;
+            $favoritDeals = FavoritDeal::where('user_id', $userId)->pluck('deal_id')->toArray();
+        } else {
+            $favoritDeals = null;
+        }
 
         // if ($deals->isNotEmpty()) {
-        return response()->json(['deals' => $deals], 200);
+        return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
         // } else {
         //     return response()->json(['message' => 'No deals found'], 401);
         // }
@@ -1836,19 +2112,16 @@ class ServiceProviderController extends Controller
     public function HomeProviderOrders(Request $request)
     {
         $role = Auth::user()->role;
-        $userId = Auth::id();
-        $GetActiveOrders = Order::where('status', '!=', 'completed');
-        if ($role == 1) {
-            $GetActiveOrders = $GetActiveOrders->where('customer_id', $userId);
-        }
         if ($role == 2) {
-            $GetActiveOrders = $GetActiveOrders->where('provider_id', $userId);
-        }
-        $GetActiveOrders = $GetActiveOrders->orderBy('id', 'desc')->limit(3)->get();
-        if ($GetActiveOrders) {
-            return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
+            $userId = Auth::id();
+            $GetActiveOrders = Order::where('provider_id', $userId)->where('status', '!=', 'completed')->orderBy('id', 'desc')->limit(3)->get();
+            if ($GetActiveOrders) {
+                return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
+            } else {
+                return response()->json(['message' => 'No order available'], 401);
+            }
         } else {
-            return response()->json(['message' => 'No order available'], 401);
+            return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
 
@@ -1860,49 +2133,79 @@ class ServiceProviderController extends Controller
         $userId = Auth::id();
         $recentDealId = RecentDealView::where('user_id', $userId)->orderBy('created_at', 'desc')->pluck('deal_id')->toArray();
         $recentDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-        ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-        ->orderBy('deals.id', 'desc')
-        ->select(
-            'deals.id',
-            'deals.service_title',
-            'deals.service_category',
-            'deals.service_description',
-            'deals.flat_rate_price',
-            'deals.hourly_rate',
-            'deals.images',
-            'deals.videos',
-            'deals.price1',
-            'deals.flat_estimated_service_time',
-            'deals.hourly_estimated_service_time',
-            'deals.estimated_service_timing1',
-            'deals.user_id',
-            'users.name as user_name',
-            'users.personal_image',
-            \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-            \DB::raw('COUNT(reviews.id) as total_reviews')
-        )
-        ->groupBy(
-            'deals.id',
-            'deals.service_title',
-            'deals.service_category',
-            'deals.service_description',
-            'deals.flat_rate_price',
-            'deals.hourly_rate',
-            'deals.price1',
-            'deals.images',
-            'deals.videos',
-            'deals.flat_estimated_service_time',
-            'deals.hourly_estimated_service_time',
-            'deals.estimated_service_timing1',
-            'deals.user_id',
-            'users.name',
-            'users.personal_image'
-        )->where('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->limit(8)->get();
+            ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+            ->orderBy('deals.id', 'desc')
+            ->select(
+                'deals.id',
+                'deals.service_title',
+                'deals.service_category',
+                'deals.service_description',
+                'deals.pricing_model',
+                'deals.flat_rate_price',
+                'deals.hourly_rate',
+                'deals.images',
+                'deals.videos',
+                'deals.price1',
+                'deals.flat_estimated_service_time',
+                'deals.hourly_estimated_service_time',
+                'deals.estimated_service_timing1',
+                'deals.user_id',
+                'users.name as user_name',
+                'users.personal_image',
+                \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                \DB::raw('COUNT(reviews.id) as total_reviews'),
+                \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+            )
+            ->groupBy(
+                'deals.id',
+                'deals.service_title',
+                'deals.service_category',
+                'deals.service_description',
+                'deals.pricing_model',
+                'deals.flat_rate_price',
+                'deals.hourly_rate',
+                'deals.price1',
+                'deals.images',
+                'deals.videos',
+                'deals.flat_estimated_service_time',
+                'deals.hourly_estimated_service_time',
+                'deals.estimated_service_timing1',
+                'deals.user_id',
+                'users.name',
+                'users.personal_image'
+            )->where('publish', 1)->whereIn('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
+            $totalViewDeals = $recentDeal->total();
 
+        $recentDeal->transform(function ($deal) {
+            $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+            return $deal;
+        });
         if ($recentDeal) {
-            return response()->json(['message' => 'Orders List', 'recentDeal' => $recentDeal], 200);
+            return response()->json(['message' => 'Recent View Deals', 'recentDeal' => $recentDeal, 'totalViewDeals' => $totalViewDeals], 200);
         } else {
             return response()->json(['message' => 'No deal available'], 401);
+        }
+    }
+    // common but not use 
+    public function AddRecentDeal($id)
+    {
+        $userId = Auth::id();
+        if ($userId) {
+            $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
+                if ($viewedDeal) {
+                    $viewedDeal->update([
+                        'created_at' => now()
+                    ]);
+                } else {
+                    $viewedDeal = RecentDealView::create([
+                        'user_id' => $userId,
+                        'deal_id' => $id,
+                    ]);
+                }
+            return response()->json(['message' => 'Add in recent view successfully','recentDeal' => $viewedDeal], 200);
+        } else {
+            return response()->json(['message' => 'You need to login'], 200);
         }
     }
 }

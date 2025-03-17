@@ -24,7 +24,41 @@ class SaleRapController extends Controller
             $assignPros = User::where('role', 2)->where('assign_sales_rep', Auth::id())->count();
             $newPros = User::where('role', 2)->whereDate('created_at', Carbon::today())->count();
             $recentDeal = Deal::where('publish', 1)->whereDate('created_at', Carbon::today())->count();
-            $recetPublishDeals = Deal::leftjoin('users', 'deals.user_id', '=', 'users.id')->select('deals.*', 'users.personal_image', 'users.name')->where('deals.publish', 1)->where('users.assign_sales_rep', Auth::id())->orderBy('deals.id','desc')->limit(2)->get();
+            $recetPublishDeals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+                ->orderBy('deals.id', 'desc')
+                ->select(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.pricing_model',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.price1',
+                    'deals.user_id',
+                    'deals.created_at',
+                    'users.name as user_name',
+                    'users.personal_image'
+                )
+                ->groupBy(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.pricing_model',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.price1',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.created_at',
+                    'deals.user_id',
+                    'users.name',
+                    'users.personal_image'
+                )->where('deals.publish', 1)->orderBy('deals.id', 'desc')->limit(2)->get();
 
             $totalRevenue = Order::sum('total_amount');
 
@@ -32,21 +66,21 @@ class SaleRapController extends Controller
                 DB::raw('MONTH(created_at) as month'),
                 DB::raw('SUM(total_amount) as revenue')
             )
-            ->whereYear('created_at', Carbon::now()->year)
-            ->groupBy('month')
-            ->orderBy('month', 'asc')
-            ->get()
-            ->keyBy('month')
-            ->toArray();
-            
+                ->whereYear('created_at', Carbon::now()->year)
+                ->groupBy('month')
+                ->orderBy('month', 'asc')
+                ->get()
+                ->keyBy('month')
+                ->toArray();
+
             // Initialize an array with all months set to 0
             $allMonths = array_fill(1, 12, 0);
-            
+
             // Update the array with actual revenue data
             foreach ($monthlyRevenue as $month => $data) {
                 $allMonths[$month] = $data['revenue'];
             }
-            
+
             // Format the data for the response
             $formattedMonthlyRevenue = [];
             foreach ($allMonths as $month => $revenue) {
@@ -60,21 +94,21 @@ class SaleRapController extends Controller
                 DB::raw('DAYOFWEEK(created_at) as day'),
                 DB::raw('SUM(total_amount) as revenue')
             )
-            ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
-            ->groupBy('day')
-            ->orderBy('day', 'asc')
-            ->get()
-            ->keyBy('day')
-            ->toArray();
-            
+                ->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                ->groupBy('day')
+                ->orderBy('day', 'asc')
+                ->get()
+                ->keyBy('day')
+                ->toArray();
+
             // Initialize an array with all days of the week set to 0
             $allDays = array_fill(1, 7, 0);
-            
+
             // Update the array with actual revenue data
             foreach ($weeklyRevenue as $day => $data) {
                 $allDays[$day] = $data['revenue'];
             }
-            
+
             // Format the data for the response
             $formattedWeeklyRevenue = [];
             foreach ($allDays as $day => $revenue) {
@@ -88,23 +122,23 @@ class SaleRapController extends Controller
                 DB::raw('DAY(created_at) as day'),
                 DB::raw('SUM(total_amount) as revenue')
             )
-            ->whereMonth('created_at', Carbon::now()->month)
-            ->whereYear('created_at', Carbon::now()->year)
-            ->groupBy('day')
-            ->orderBy('day', 'asc')
-            ->get()
-            ->keyBy('day')
-            ->toArray();
-            
+                ->whereMonth('created_at', Carbon::now()->month)
+                ->whereYear('created_at', Carbon::now()->year)
+                ->groupBy('day')
+                ->orderBy('day', 'asc')
+                ->get()
+                ->keyBy('day')
+                ->toArray();
+
             // Initialize an array with all days of the month set to 0
             $daysInMonth = Carbon::now()->daysInMonth;
             $allDays = array_fill(1, $daysInMonth, 0);
-            
+
             // Update the array with actual revenue data
             foreach ($dailyRevenue as $day => $data) {
                 $allDays[$day] = $data['revenue'];
             }
-            
+
             // Format the data for the response
             $formattedDailyRevenue = [];
             foreach ($allDays as $day => $revenue) {
@@ -114,21 +148,21 @@ class SaleRapController extends Controller
                 ];
             }
 
-      
+
             $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
-            ->join('orders', 'orders.deal_id', '=', 'deals.id')
-            ->groupBy('deals.service_category')
-            ->get()
-            ->map(function ($data) use ($totalRevenue) {
-                return [
-                    'category' => $data->service_category,
-                    'revenue' => $data->revenue,
-                ];
-            })
-            ->sortByDesc('revenue');
+                ->join('orders', 'orders.deal_id', '=', 'deals.id')
+                ->groupBy('deals.service_category')
+                ->get()
+                ->map(function ($data) use ($totalRevenue) {
+                    return [
+                        'category' => $data->service_category,
+                        'revenue' => $data->revenue,
+                    ];
+                })
+                ->sortByDesc('revenue');
 
             $commission = $totalRevenue * 0.02;
-        
+
 
             return response()->json([
                 'assignPros' => $assignPros,
@@ -151,7 +185,41 @@ class SaleRapController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 3) {
-            $recetPublishDeals = Deal::leftjoin('users', 'deals.user_id', '=', 'users.id')->select('deals.*', 'users.personal_image', 'users.name')->where('deals.publish', 1)->where('users.assign_sales_rep', Auth::id())->orderBy('deals.id','desc')->get();
+            $recetPublishDeals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+                ->orderBy('deals.id', 'desc')
+                ->select(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.pricing_model',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.price1',
+                    'deals.user_id',
+                    'deals.created_at',
+                    'users.name as user_name',
+                    'users.personal_image'
+                )
+                ->groupBy(
+                    'deals.id',
+                    'deals.service_title',
+                    'deals.service_category',
+                    'deals.service_description',
+                    'deals.pricing_model',
+                    'deals.flat_rate_price',
+                    'deals.hourly_rate',
+                    'deals.price1',
+                    'deals.images',
+                    'deals.videos',
+                    'deals.created_at',
+                    'deals.user_id',
+                    'users.name',
+                    'users.personal_image'
+                )->where('deals.publish', 1)->orderBy('deals.id', 'desc')->get();
 
             return response()->json([
                 'recetPublishDeals' => $recetPublishDeals
@@ -195,7 +263,7 @@ class SaleRapController extends Controller
 
 
             if ($allProviders) {
-                return response()->json(['totalProviders' => $totalProviders, 'allProviders' => $allProviders ], 200);
+                return response()->json(['totalProviders' => $totalProviders, 'allProviders' => $allProviders], 200);
             } else {
                 return response()->json(['message' => 'No Service Provider Available'], 401);
             }
@@ -208,7 +276,7 @@ class SaleRapController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 3) {
-            
+
             // Assiged
 
             $assignProviders = DB::table('users')
@@ -241,7 +309,7 @@ class SaleRapController extends Controller
             $totalAssignProviders = $assignProviders->total();
 
             if ($assignProviders) {
-                return response()->json(['totalAssignProviders' => $totalAssignProviders,'assignProviders' => $assignProviders ], 200);
+                return response()->json(['totalAssignProviders' => $totalAssignProviders, 'assignProviders' => $assignProviders], 200);
             } else {
                 return response()->json(['message' => 'No Service Provider Available'], 401);
             }
@@ -284,7 +352,7 @@ class SaleRapController extends Controller
             $data = $request->all();
 
             $getProvider = User::find($request->id);
-            if($getProvider->role != 2){
+            if ($getProvider->role != 2) {
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
             if ($request->hasFile('personal_image')) {
@@ -323,7 +391,6 @@ class SaleRapController extends Controller
                     $photo_destination = public_path('uploads');
                     $photo1->move($photo_destination, $photo_name1);
                     $data['personal_image'] = $photo_name1;
-                    
                 }
                 $user->update($data);
                 return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
@@ -369,7 +436,7 @@ class SaleRapController extends Controller
                 $photo1->move($photo_destination, $photo_name1);
                 $data['files'] = $photo_name1;
             }
-            $data['created_by']=$userId;
+            $data['created_by'] = $userId;
             $task = Task::create($data);
             return response()->json(['message' => 'Task created successfully', 'task' => $task], 200);
         } else {
@@ -469,7 +536,7 @@ class SaleRapController extends Controller
     public function SaleCustomers(Request $request)
     {
         $role = Auth::user()->role;
-        
+
         if ($role == 3) {
             $customers = User::where('role', 1);
             if ($request->has('search')) {
@@ -535,12 +602,13 @@ class SaleRapController extends Controller
         }
     }
 
-    public function GetServiceRevenue(){
-            
-      
+    public function GetServiceRevenue()
+    {
+
+
         $totalRevenue = Order::sum('total_amount');
 
-      
+
         $reportData = Deal::select('deals.service_category', DB::raw('SUM(orders.total_amount) as revenue'))
             ->join('orders', 'orders.deal_id', '=', 'deals.id')
             ->groupBy('deals.service_category')
@@ -555,8 +623,7 @@ class SaleRapController extends Controller
 
 
         return response()->json(['reportData' => $reportData], 200);
-        
-    } 
+    }
 
     public function quarterlyReport()
     {
@@ -566,33 +633,32 @@ class SaleRapController extends Controller
             'Q3' => [7, 9],  // July - September
             'Q4' => [10, 12] // October - December
         ];
-        
+
         $quarterlyData = [];
-        $previousRevenue = null; 
-        
+        $previousRevenue = null;
+
         foreach ($quarters as $quarter => $months) {
             $revenue = Order::whereMonth('created_at', '>=', $months[0])
                 ->whereMonth('created_at', '<=', $months[1])
                 ->sum('total_amount');
-        
-           
+
+
             $growth = ($previousRevenue !== null && $previousRevenue > 0)
                 ? round((($revenue - $previousRevenue) / $previousRevenue) * 100, 2) . '%'
                 : '-';
-        
-            
+
+
             $previousRevenue = $revenue;
-        
-          
+
+
             $quarterlyData[] = [
                 'quarter' => $quarter,
                 'revenue' => $revenue,
                 'growth' => $growth
             ];
         }
-        
-        
+
+
         return response()->json(['quarterlyData' => $quarterlyData], 200);
-        
     }
 }

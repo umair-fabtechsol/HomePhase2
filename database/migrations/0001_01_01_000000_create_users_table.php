@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('lastname')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('phone');
+            $table->string('phone')->nullable();
             $table->integer('role');
             $table->string('password');
             $table->integer('terms')->nullable();
@@ -25,6 +25,8 @@ return new class extends Migration
             $table->string('personal_image')->nullable();
             $table->string('sales_referred')->nullable();
             $table->integer('sales_representative')->nullable();
+            $table->string('referral_type')->nullable();
+
 
             $table->text('location')->nullable();
             $table->integer('created_by')->nullable();
@@ -44,6 +46,7 @@ return new class extends Migration
             $table->integer('status')->default(0);
             $table->integer('assign_sales_rep')->nullable();
             $table->string('stripe_account_id')->nullable();
+            $table->text('token')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

@@ -9,6 +9,7 @@ class RecentDealView extends Model
     //
     protected $fillable = [
         'user_id',
-        'deal_id',  
+        'deal_id',
+        'created_at',
     ];
 }
