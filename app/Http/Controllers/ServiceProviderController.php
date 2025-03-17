@@ -782,11 +782,12 @@ class ServiceProviderController extends Controller
     public function BusinessProfile(Request $request)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 2) {
-            $user = User::find($request->user_id);
+            $user = User::find($userId);
             if ($user) {
                 $data = $request->all();
-                $businessProfile = BusinessProfile::where('user_id', $user->id)->first();
+                $businessProfile = BusinessProfile::where('user_id', $userId)->first();
                 if ($businessProfile) {
                     if ($request->hasFile('business_logo')) {
                         $imagePath = public_path('uploads/' . $businessProfile->business_logo);
@@ -820,12 +821,13 @@ class ServiceProviderController extends Controller
                         $photo1->move($photo_destination, $photo_name1);
                         $data['business_logo'] = $photo_name1;
                     }
+                    $data['user_id'] = $userId;
                     $businessProfile = BusinessProfile::create($data);
 
                     $notifications = [
                         'title' => 'Created User Business Profile',
                         'message' => 'User Business Profile created successfully',
-                        'created_by' => $request->user_id,
+                        'created_by' => $userId,
                         'status' => 0,
                         'clear' => 'no',
 
@@ -913,11 +915,12 @@ class ServiceProviderController extends Controller
     public function AdditionalPhotos(Request $request)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 2) {
-            $user = User::find($request->user_id);
+            $user = User::find($userId);
             if ($user) {
                 $data = $request->all();
-                $businessProfile = BusinessProfile::where('user_id', $user->id)->first();
+                $businessProfile = BusinessProfile::where('user_id', $userId)->first();
                 if ($businessProfile) {
                     if ($request->hasFile('about_video')) {
                         $imagePath = public_path('uploads/' . $businessProfile->about_video);
@@ -1026,11 +1029,12 @@ class ServiceProviderController extends Controller
                         $photo1->move($photo_destination, $photo_name1);
                         $data['project_photo'] = $photo_name1;
                     }
+                    $data['user_id'] = $userId;
                     $businessProfile = BusinessProfile::create($data);
                     $notifications = [
                         'title' => 'Created User Business Additional Info',
                         'message' => 'User Business Additional Info created successfully',
-                        'created_by' => $request->user_id,
+                        'created_by' => $userId,
                         'status' => 0,
                         'clear' => 'no',
 
@@ -1050,9 +1054,10 @@ class ServiceProviderController extends Controller
     public function AddCertificateHours(Request $request)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 2) {
             $data = $request->all();
-            $updateCertificateHours = BusinessProfile::where('user_id', $request->user_id)->first();
+            $updateCertificateHours = BusinessProfile::where('user_id', $userId)->first();
             if ($updateCertificateHours) {
 
                 if ($request->hasFile('insurance_certificate')) {
@@ -1125,13 +1130,12 @@ class ServiceProviderController extends Controller
                     $data['award_certificate'] = $photo_name3;
                 }
 
-
-
+                $data['user_id'] = $userId;
                 $certificate = BusinessProfile::create($data);
                 $notifications = [
                     'title' => 'Business CertificateHour ',
                     'message' => 'Business CertificateHour created successfully',
-                    'created_by' => $request->user_id,
+                    'created_by' => $userId,
                     'status' => 0,
                     'clear' => 'no',
 
@@ -1199,9 +1203,8 @@ class ServiceProviderController extends Controller
             $userId = Auth::id();
 
             $data = $request->all();
-            $conversation = BusinessProfile::where('user_id', $request->id)->first();
+            $conversation = BusinessProfile::where('user_id', $userId)->first();
             if ($conversation) {
-
 
                 $conversation->update($data);
                 $notifications = [
@@ -1220,7 +1223,7 @@ class ServiceProviderController extends Controller
                 $notifications = [
                     'title' => 'Created Conversation Details',
                     'message' => 'Conversation Details created successfully',
-                    'created_by' => $request->id,
+                    'created_by' => $userId,
                     'status' => 0,
                     'clear' => 'no',
 
@@ -1235,24 +1238,18 @@ class ServiceProviderController extends Controller
     public function Social(Request $request)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         if ($role == 2) {
-            $user = User::find($request->user_id);
-            if (!$user) {
-                return response()->json(['message' => 'No user found'], 404);
-            }
 
-            $social = SocialProfile::where('user_id', $user->id)->first();
+            $social = SocialProfile::where('user_id', $userId)->first();
             $data = $request->all();
 
-
-           
             if ($social) {
                 $social->update($data);
-                $certificate = BusinessProfile::create($data);
                 $notifications = [
                     'title' => 'Updated Social Link',
                     'message' => 'Social Link updated successfully',
-                    'created_by' => $social->user_id,
+                    'created_by' => $userId,
                     'status' => 0,
                     'clear' => 'no',
 
@@ -1260,11 +1257,12 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Social Link updated successfully', 'user' => $user, 'Social' => $social], 200);
             } else {
+                $data['user_id'] = $userId;
                 $social = SocialProfile::create($data);
                 $notifications = [
                     'title' => 'Added Social Link',
                     'message' => 'Social Link added successfully',
-                    'created_by' => $request->user_id,
+                    'created_by' => $userId,
                     'status' => 0,
                     'clear' => 'no',
 
@@ -1434,10 +1432,11 @@ class ServiceProviderController extends Controller
     public function AddBusinessLocation(Request $request)
     {
         $role = Auth::user()->role;
+        $userId = Auth::id();
         $data = $request->all();
         if ($role == 2) {
             
-            $businesslocation = BusinessProfile::where('user_id', $request->user_id)->first();
+            $businesslocation = BusinessProfile::where('user_id', $userId)->first();
             if ($businesslocation) {
                 if ($request->service_location_type == 'location') {
 
@@ -1466,11 +1465,12 @@ class ServiceProviderController extends Controller
                 $data['business_location'] = json_encode($data['business_location']);
                 $data['service_location'] = json_encode($data['service_location']);
                 $data['restrict_location'] = json_encode($data['restrict_location']);
+                $data['user_id'] = $userId;
                 $servicelocation = BusinessProfile::create($data);
                 $notifications = [
                     'title' => 'Created Service Area',
                     'message' => 'Service Area created successfully',
-                    'created_by' => $request->user_id,
+                    'created_by' => $userId,
                     'status' => 0,
                     'clear' => 'no',
 
