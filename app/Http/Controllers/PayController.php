@@ -152,7 +152,7 @@ class PayController extends Controller
                 else {
                     // --------Case 3::If new customer but threshold reach--------
                     $charge = Charge::create([
-                        'amount' => $request->amount * 100,
+                        'amount' => $contactProPrice * 100,
                         'currency' => 'usd',
                         'source' => $request->stripeToken,
                         'description' => 'Payment for services'
@@ -163,7 +163,7 @@ class PayController extends Controller
                         'payer_role' => $payerRole, 
                         'providers_cus_id' => $user->id, 
                         'stripe_charge_id' => $charge->id,
-                        'amount' => $request->amount,
+                        'amount' => $contactProPrice,
                         'currency' => 'usd',
                         'type' => 'payment',
                         'status' => 'successful'
