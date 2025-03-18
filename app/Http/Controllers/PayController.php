@@ -11,6 +11,7 @@ use Stripe\Transfer;
 use Stripe\Webhook;
 use App\Models\Transection;
 use App\Models\User;
+use App\Models\Price;
 use Exception;
 
 class PayController extends Controller
@@ -103,52 +104,84 @@ class PayController extends Controller
     }
 
     // Step 2: Charge a Customer (Payment to Superadmin)
+   
     public function chargeCustomer(Request $request)
     {
         try {
             Stripe::setApiKey(env('STRIPE_SECRET'));
-
-            // $charge = Charge::create([
-            //     'amount' => $request->amount * 100,
-            //     'currency' => 'usd',
-            //     'source' => $request->stripeToken,
-            //     'description' => 'Payment for services',
-            //     'transfer_data' => [
-            //         'destination' => $request->stripe_account_id, // Send to connected account
-            //     ]
-            // ]);
-
             // Only Providers (role 2) and Admin (role 1) can make payments
             $user = Auth::user();
             if (!$user) {
                 return response()->json(['error' => 'Unauthorized. Please login first.'], 401);
             }
-            if (!in_array($user->role, [1, 2])) {
-                return response()->json(['error' => 'Access Denied! Login with customer or provider'], 403);
+            if (!in_array($user->role, [1])) {
+                return response()->json(['error' => 'Access Denied! Login with customer.'], 403);
             }
-            // Customer Pays Superadmin
-            $charge = Charge::create([
-                'amount' => $request->amount * 100,
-                'currency' => 'usd',
-                'source' => $request->stripeToken,
-                'description' => 'Payment for services'
-            ]);
+            // -----get login id, role-----------------
+            $loginId = $user->id;
+            $login = User::find($loginId);
+            $loginRole = $login->role; 
+            // -----get payer id, role-----------------
+            $payerId = $request->payerId;
+            $payer = User::find($payerId);
+            $payerRole = $payer->role; 
+            // ===============================================================
+            //  for contact pro::if login is customer and payer is provider
+            // ================================================================
+            if($loginRole==1 && $payerRole==2)  {
+                // -----get payer clickable contact pro and thrash-----
+                $contactProName = $request->contactProName;
+                $contactProThrashName = "th_".$contactProName;
+                // -----------get value of clickable contact pro---------
+                $price = Price::first(); 
+                if ($price && isset($price[$contactProName])) {
+                    $contactProPrice = $price[$contactProName]; 
+                } 
+                // -----------get value of clickable th_contact pro---------
+                if ($price && isset($price[$contactProThrashName])) {
+                    $contactProThrashPrice = $price[$contactProThrashName]; 
+                } 
+                // echo $customerId; die();
+                // -----------check customer is new or old---------
+                $customerRecord = Transection::where('providers_cus_id', $loginId)->first();
+                // -------Case 1::If old customer-----------
+                if ($customerRecord) {
+                    echo "You are not charged because customer is old.";
+                } 
+                // ---------Case 2::If new customer----------
+                else {
+                    // --------Case 3::If new customer but threshold reach--------
+                    $charge = Charge::create([
+                        'amount' => $request->amount * 100,
+                        'currency' => 'usd',
+                        'source' => $request->stripeToken,
+                        'description' => 'Payment for services'
+                    ]);
+        
+                    Transection::create([
+                        'payer_id' => $payerId, 
+                        'payer_role' => $payerRole, 
+                        'providers_cus_id' => $user->id, 
+                        'stripe_charge_id' => $charge->id,
+                        'amount' => $request->amount,
+                        'currency' => 'usd',
+                        'type' => 'payment',
+                        'status' => 'successful'
+                    ]);
+                    return response()->json([
+                        'message' => 'Payment Successful',
+                        'charge' => $charge
+                    ]);
+                    
+                }
+            }
+            elseif($loginRole==1) {
+                return response()->json(['error' => 'Access Denied! You are not allowed to access this.'], 403);
+            }
+            else {
+                return response()->json(['error' => 'Access Denied! You are not allowed to access this.'], 403);
+            }
 
-            Transection::create([
-                'user_id' => $user->id, 
-                'user_role' => $user->role, 
-                'stripe_charge_id' => $charge->id,
-                'amount' => $request->amount,
-                'currency' => 'usd',
-                'type' => 'payment',
-                'status' => 'successful'
-            ]);
-         
-    
-            return response()->json([
-                'message' => 'Payment Successful',
-                'charge' => $charge
-            ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
@@ -178,6 +211,8 @@ class PayController extends Controller
             $amount = $request->amount * 100; // Convert to cents
             $platform_fee = $amount * 0.20; // 20% Superadmin fee
             $payout_amount = $amount - $platform_fee;
+            $payout_amount = $amount;
+
 
             //-------------- Check if Provider is Onboarded
             $account = \Stripe\Account::retrieve($actor->stripe_account_id);

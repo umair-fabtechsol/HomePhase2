@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('transections', function (Blueprint $table) {
             $table->id();
-            $table->integer('user_id'); 
-            $table->integer('user_role'); 
+            $table->integer('payer_id'); 
+            $table->integer('payer_role'); 
+            $table->integer('providers_cus_id'); 
             $table->string('stripe_charge_id')->nullable();
             $table->string('stripe_transfer_id')->nullable();
             $table->integer('amount');

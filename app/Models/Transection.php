@@ -7,8 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class Transection extends Model
 {
     protected $fillable = [
-        'user_id', 
-        'user_role', 
+        'payer_id', 
+        'payer_role', 
+        'providers_cus_id', 
         'stripe_charge_id',
         'stripe_transfer_id',
         'amount',
