@@ -12,6 +12,8 @@ use Stripe\Webhook;
 use App\Models\Transection;
 use App\Models\User;
 use App\Models\Price;
+use App\Models\Deal;
+use App\Models\Order;
 use Exception;
 
 class PayController extends Controller
@@ -104,7 +106,6 @@ class PayController extends Controller
     }
 
     // Step 2: Charge a Customer (Payment to Superadmin)
-   
     public function chargeCustomer(Request $request)
     {
         try {
@@ -121,29 +122,36 @@ class PayController extends Controller
             $loginId = $user->id;
             $login = User::find($loginId);
             $loginRole = $login->role; 
-            // -----get payer id, role-----------------
+
+            // -----get payer id and role-----------------
             $payerId = $request->payerId;
             $payer = User::find($payerId);
             $payerRole = $payer->role; 
             // ===============================================================
             //  for contact pro::if login is customer and payer is provider
-            // ================================================================
+            // ===============================================================
             if($loginRole==1 && $payerRole==2)  {
+                $request->validate([
+                    'stripeToken'  => 'required',
+                    'payerId'  => 'required',
+                    'contactProName'  => 'required',
+                ]);
                 // -----get payer clickable contact pro and thrash-----
                 $contactProName = $request->contactProName;
                 $contactProThrashName = "th_".$contactProName;
-                // -----------get value of clickable contact pro---------
+                // -----------find value of clickable contact pro---------
                 $price = Price::first(); 
                 if ($price && isset($price[$contactProName])) {
                     $contactProPrice = $price[$contactProName]; 
                 } 
-                // -----------get value of clickable th_contact pro---------
+                // -----------find value of clickable th_contact pro---------
                 if ($price && isset($price[$contactProThrashName])) {
                     $contactProThrashPrice = $price[$contactProThrashName]; 
                 } 
                 // echo $customerId; die();
                 // -----------check customer is new or old---------
-                $customerRecord = Transection::where('providers_cus_id', $loginId)->first();
+                $customerRecord = Transection::where('customer_id', $loginId)
+                ->where('provider_id', $payerId)->first();
                 // -------Case 1::If old customer-----------
                 if ($customerRecord) {
                     echo "You are not charged because customer is old.";
@@ -159,14 +167,23 @@ class PayController extends Controller
                     ]);
         
                     Transection::create([
+                        'type' => 'contactPro', 
                         'payer_id' => $payerId, 
                         'payer_role' => $payerRole, 
-                        'providers_cus_id' => $user->id, 
+                        'customer_id' => $user->id, 
+                        'provider_id' => $payerId, 
                         'stripe_charge_id' => $charge->id,
                         'amount' => $contactProPrice,
                         'currency' => 'usd',
-                        'type' => 'payment',
-                        'status' => 'successful'
+                        'admin_balance' => $contactProPrice,
+                        'provider_deduction' => $contactProPrice,
+                        'provider_balance' => 0,
+                        'customer_deduction' => 0,
+                        'provider_payment_status' => 'success',
+                        'customer_payment_status' => 'NA',
+                        'provider_payout_status' => 'success',
+                        'customer_payout_status' => 'NA',
+
                     ]);
                     return response()->json([
                         'message' => 'Payment Successful',
@@ -175,8 +192,64 @@ class PayController extends Controller
                     
                 }
             }
-            elseif($loginRole==1) {
-                return response()->json(['error' => 'Access Denied! You are not allowed to access this.'], 403);
+            // ===============================================================
+            //  for purchasing deals::if login is customer
+            // ===============================================================
+            elseif($loginRole==1 && $payerRole==1) {
+                $request->validate([
+                    'stripeToken'  => 'required',
+                    'payerId'  => 'required',
+                    'orderId'  => 'required',
+                ]);
+                $order = Order::find($request->orderId);
+                $providerId = $order->provider_id;
+                if($order) {
+                    // ---------get percentages that are set by superadmin-------
+                    $orderPrice = $order->total_amount;
+                    $PlatformPricing = Price::first();
+                    $PFCustomerFee = $PlatformPricing->customer_service_fee;
+                    $PFProviderFee = $PlatformPricing->provider_service_fee;
+                    // --------calculate amount on base of above percentages-------
+                    $CustomerFeeAmount = $orderPrice * ($PFCustomerFee / 100);
+                    $ProviderFeeAmount = $orderPrice * ($PFProviderFee / 100);
+
+                    $customerDeduction = $orderPrice + $CustomerFeeAmount;
+                    $providerDeduction = $ProviderFeeAmount;
+
+                    $providerBalance = $orderPrice - $providerDeduction;
+                    $adminBalance = $ProviderFeeAmount + $CustomerFeeAmount;
+
+                    // echo $adminBalance; die();
+
+                    $charge = Charge::create([
+                        'amount' => $customerDeduction * 100,
+                        'currency' => 'usd',
+                        'source' => $request->stripeToken,
+                        'description' => 'Payment for deals'
+                    ]);
+        
+                    Transection::create([
+                        'type' => 'dealPayment',
+                        'payer_id' => $payerId, 
+                        'payer_role' => $payerRole, 
+                        'customer_id' => $payerId, 
+                        'provider_id' => $providerId,
+                        'order_id' => $request->orderId, 
+                        'stripe_charge_id' => $charge->id,
+                        'amount' => $customerDeduction,
+                        'currency' => 'usd',
+                        'admin_balance' => $adminBalance,
+                        'provider_deduction' => $providerDeduction,
+                        'provider_balance' => $providerBalance,
+                        'customer_deduction' => $customerDeduction,
+                        'customer_payment_status' => 'success',
+                        'provider_payment_status' => 'NA',
+                    ]);
+                    return response()->json([
+                        'message' => 'Payment Successful',
+                        'charge' => $charge
+                    ]);
+                }
             }
             else {
                 return response()->json(['error' => 'Access Denied! You are not allowed to access this.'], 403);
@@ -194,57 +267,58 @@ class PayController extends Controller
             Stripe::setApiKey(env('STRIPE_SECRET'));
             // ------------Only Superadmin (role 0) can process payouts
             $user = Auth::user();
-
             if (!$user) {
                 return response()->json(['error' => 'Unauthorized. Please login first.'], 401);
             }
             if ($user->role != 0) {
                 return response()->json(['error' => 'Access Denied! Only superadmin can do payouts'], 403);
             }
+            $request->validate([
+                'transection_id'  => 'required',
+            ]);
 
-            $actor = User::find($request->id);
+            $transectionId = $request->transection_id;
+            $trans = Transection::find($transectionId);
+            $providerPayout = $trans->provider_balance;
+            $providerId = $trans->provider_id;
+            $amount = $providerPayout * 100;
+            $payout_amount = $amount;
 
+            $actor = User::find($providerId);
             if (!$actor || !$actor->stripe_account_id) {
                 return response()->json(['error' => 'Provider not found or not connected to Stripe'], 400);
             }
-
-            $amount = $request->amount * 100; // Convert to cents
-            $platform_fee = $amount * 0.20; // 20% Superadmin fee
-            $payout_amount = $amount - $platform_fee;
-            $payout_amount = $amount;
-
-
-            //-------------- Check if Provider is Onboarded
+            //-------------- Check if Provider is not Onboarded
             $account = \Stripe\Account::retrieve($actor->stripe_account_id);
             if (!$account->charges_enabled) {
                 return response()->json(['error' => 'Provider has not completed Stripe onboarding'], 400);
             }
-
+            //-------------- Check if S.Admin's balance is insufficient
             $balance = \Stripe\Balance::retrieve();
-            // print_r($balance); die();
             if ($balance->available[0]->amount < $payout_amount) {
                 return response()->json(['error' => 'Insufficient balance for payout'], 400);
             }
 
-            $transfer = Transfer::create([
-                'amount' => $payout_amount,
-                'currency' => 'usd',
-                'destination' => $actor->stripe_account_id,
-                'transfer_group' => 'ORDER_' . $actor->id,
-            ]);
-            Transection::create([
-                'user_id' => $actor->id, 
-                'user_role' => $actor->role, 
-                'stripe_transfer_id' => $transfer->id,
-                'amount' => $payout_amount / 100, 
-                'currency' => 'usd',
-                'type' => 'payout',
-                'status' => 'successful'
-            ]);
-            return response()->json([
-                'message' => 'Payout Successful',
-                'transfer' => $transfer
-            ]);
+            // ---------------if not already payout ----------
+            if($trans->provider_payout_status=="pending") {
+                $transfer = Transfer::create([
+                    'amount' => $payout_amount,
+                    'currency' => 'usd',
+                    'destination' => $actor->stripe_account_id,
+                    'transfer_group' => 'ORDER_' . $actor->id,
+                ]);
+                Transection::where('id', $transectionId)->update([
+                    'provider_payout_status' => 'success'
+                ]);
+                return response()->json([
+                    'message' => 'Payout Successful',
+                    'transfer' => $transfer
+                ]);
+            }
+            else {
+                return response()->json(['error' => 'Already payout'], 400);
+            }
+          
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

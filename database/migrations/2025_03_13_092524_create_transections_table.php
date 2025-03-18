@@ -13,15 +13,23 @@ return new class extends Migration
     {
         Schema::create('transections', function (Blueprint $table) {
             $table->id();
+            $table->string('type'); 
             $table->integer('payer_id'); 
             $table->integer('payer_role'); 
-            $table->integer('providers_cus_id'); 
+            $table->integer('provider_id')->nullable();
+            $table->integer('customer_id')->nullable();
+            $table->integer('order_id')->nullable();
             $table->string('stripe_charge_id')->nullable();
             $table->string('stripe_transfer_id')->nullable();
             $table->integer('amount');
-            $table->string('type');
             $table->string('currency', 10)->default('usd');
-            $table->string('status')->default('pending');
+            $table->integer('admin_balance')->nullable();
+            $table->integer('provider_deduction')->nullable();
+            $table->integer('provider_balance')->nullable();
+            $table->integer('customer_deduction')->nullable();
+            $table->string('customer_payment_status')->default('pending');
+            $table->string('provider_payment_status')->default('pending');
+            $table->string('provider_payout_status')->default('pending');
             $table->timestamps();
         });
     }
