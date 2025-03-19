@@ -1240,6 +1240,7 @@ class ServiceProviderController extends Controller
         $role = Auth::user()->role;
         $userId = Auth::id();
         if ($role == 2) {
+            $user = User::find($userId);
 
             $social = SocialProfile::where('user_id', $userId)->first();
             $data = $request->all();
@@ -1438,15 +1439,7 @@ class ServiceProviderController extends Controller
             
             $businesslocation = BusinessProfile::where('user_id', $userId)->first();
             if ($businesslocation) {
-                if ($request->service_location_type == 'location') {
-
-
-                    $data['location_miles'] = null;
-                }
-                if ($request->service_location_type == 'radius') {
-                    $data['business_location'] = null;
-                    $data['restrict_location'] = null;
-                }
+                
                 $data['business_location'] = json_encode($data['business_location']);
                 $data['service_location'] = json_encode($data['service_location']);
                 $data['restrict_location'] = json_encode($data['restrict_location']);
