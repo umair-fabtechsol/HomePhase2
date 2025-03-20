@@ -15,7 +15,7 @@ use App\Models\Price;
 use App\Models\Deal;
 use App\Models\Order;
 use Exception;
-
+use Carbon\Carbon;
 class PayController extends Controller
 {
     // -------connect account------
@@ -148,47 +148,65 @@ class PayController extends Controller
                 if ($price && isset($price[$contactProThrashName])) {
                     $contactProThrashPrice = $price[$contactProThrashName]; 
                 } 
-                // echo $customerId; die();
                 // -----------check customer is new or old---------
-                $customerRecord = Transection::where('customer_id', $loginId)
+                $customerRecord = Transection::where('type',"contactPro")
+                ->where('customer_id', $loginId)
                 ->where('provider_id', $payerId)->first();
-                // -------Case 1::If old customer-----------
+                // ---------------------------------
+                //  Case 1::If old customer
+                //  --------------------------------
                 if ($customerRecord) {
-                    echo "You are not charged because customer is old.";
-                } 
-                // ---------Case 2::If new customer----------
+                    return response()->json(['alert' => 'You are not charged because customer is old.'], 403);
+                }
+                // ---------------------------------
+                //  Case 2::If new customer
+                //  --------------------------------
                 else {
-                    // --------Case 3::If new customer but threshold reach--------
-                    $charge = Charge::create([
-                        'amount' => $contactProPrice * 100,
-                        'currency' => 'usd',
-                        'source' => $request->stripeToken,
-                        'description' => 'Payment for services'
-                    ]);
-        
-                    Transection::create([
-                        'type' => 'contactPro', 
-                        'payer_id' => $payerId, 
-                        'payer_role' => $payerRole, 
-                        'customer_id' => $user->id, 
-                        'provider_id' => $payerId, 
-                        'stripe_charge_id' => $charge->id,
-                        'amount' => $contactProPrice,
-                        'currency' => 'usd',
-                        'admin_balance' => $contactProPrice,
-                        'provider_deduction' => $contactProPrice,
-                        'provider_balance' => 0,
-                        'customer_deduction' => 0,
-                        'provider_payment_status' => 'success',
-                        'customer_payment_status' => 'NA',
-                        'provider_payout_status' => 'success',
-                        'customer_payout_status' => 'NA',
-
-                    ]);
-                    return response()->json([
-                        'message' => 'Payment Successful',
-                        'charge' => $charge
-                    ]);
+                    $totalAmount = Transection::where('provider_id', $payerId)
+                    ->where('type', "dealPayment")
+                    ->where('created_at', '>=', Carbon::now()->subDays(60))
+                    ->sum('amount');
+                    // -----------------------------------------------
+                    //  Case 2a::If new customer & threshold reach
+                    //  -----------------------------------------------
+                    if($totalAmount >= $contactProThrashPrice) {
+                        return response()->json(['alert' => 'You are not charged because threshold reached.'], 403);
+                    }
+                    // -----------------------------------------------
+                    //  Case 2a::If new customer but threshold not reach
+                    //  -----------------------------------------------
+                    else {
+                        $charge = Charge::create([
+                            'amount' => $contactProPrice * 100,
+                            'currency' => 'usd',
+                            'source' => $request->stripeToken,
+                            'description' => 'Payment for services'
+                        ]);
+            
+                        Transection::create([
+                            'type' => 'contactPro', 
+                            'payer_id' => $payerId, 
+                            'payer_role' => $payerRole, 
+                            'customer_id' => $user->id, 
+                            'provider_id' => $payerId, 
+                            'stripe_charge_id' => $charge->id,
+                            'amount' => $contactProPrice,
+                            'currency' => 'usd',
+                            'admin_balance' => $contactProPrice,
+                            'provider_deduction' => $contactProPrice,
+                            'provider_balance' => 0,
+                            'customer_deduction' => 0,
+                            'provider_payment_status' => 'success',
+                            'customer_payment_status' => 'NA',
+                            'provider_payout_status' => 'NA',
+                            'customer_payout_status' => 'NA',
+    
+                        ]);
+                        return response()->json([
+                            'message' => 'Payment Successful',
+                            'charge' => $charge
+                        ]);
+                    }
                     
                 }
             }
@@ -211,6 +229,7 @@ class PayController extends Controller
                     $PFProviderFee = $PlatformPricing->provider_service_fee;
                     // --------calculate amount on base of above percentages-------
                     $CustomerFeeAmount = $orderPrice * ($PFCustomerFee / 100);
+                    $CustomerFeeAmount = 0;
                     $ProviderFeeAmount = $orderPrice * ($PFProviderFee / 100);
 
                     $customerDeduction = $orderPrice + $CustomerFeeAmount;
@@ -236,7 +255,7 @@ class PayController extends Controller
                         'provider_id' => $providerId,
                         'order_id' => $request->orderId, 
                         'stripe_charge_id' => $charge->id,
-                        'amount' => $customerDeduction,
+                        'amount' => $orderPrice,
                         'currency' => 'usd',
                         'admin_balance' => $adminBalance,
                         'provider_deduction' => $providerDeduction,
