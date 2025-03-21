@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('payer_role'); 
             $table->integer('provider_id')->nullable();
             $table->integer('customer_id')->nullable();
+            $table->integer('referral_id')->nullable();
             $table->integer('order_id')->nullable();
             $table->string('stripe_charge_id')->nullable();
             $table->string('stripe_transfer_id')->nullable();
@@ -27,9 +28,11 @@ return new class extends Migration
             $table->integer('provider_deduction')->nullable();
             $table->integer('provider_balance')->nullable();
             $table->integer('customer_deduction')->nullable();
+            $table->integer('referral_balance')->nullable();
             $table->string('customer_payment_status')->default('pending');
             $table->string('provider_payment_status')->default('pending');
             $table->string('provider_payout_status')->default('pending');
+            $table->string('referral_payout_status')->default('pending');
             $table->timestamps();
         });
     }

@@ -27,7 +27,7 @@ class PayController extends Controller
             if (!$user) {
                 return response()->json(['error' => 'User not found'], 404);
             }
-            if (!in_array($user->role, [1, 2])) {
+            if (!in_array($user->role, [1, 2, 3])) {
                 return response()->json(['Access Denied!' => 'Only provider and customer can create payments'], 403);
             }
 
@@ -36,7 +36,8 @@ class PayController extends Controller
                 $accountLink = \Stripe\AccountLink::create([
                     'account' => $user->stripe_account_id,
                     'refresh_url' => route('stripe.onboarding', ['id' => $user->id]),
-                    'return_url' => route('home'),
+                    // 'return_url' => route('home'),
+                    'return_url' => 'https://homeprodeals.com',
                     'type' => 'account_onboarding',
                 ]);
 
@@ -92,7 +93,8 @@ class PayController extends Controller
             $accountLink = \Stripe\AccountLink::create([
                 'account' => $user->stripe_account_id,
                 'refresh_url' => route('stripe.onboarding', ['id' => $user->id]),
-                'return_url' => route('home'),
+                // 'return_url' => route('home'),
+                'return_url' => 'https://homeprodeals.com',
                 'type' => 'account_onboarding',
             ]);
 
@@ -220,54 +222,93 @@ class PayController extends Controller
                     'orderId'  => 'required',
                 ]);
                 $order = Order::find($request->orderId);
+                $orCustomerId = $order->customer_id;
                 $providerId = $order->provider_id;
-                if($order) {
-                    // ---------get percentages that are set by superadmin-------
-                    $orderPrice = $order->total_amount;
-                    $PlatformPricing = Price::first();
-                    $PFCustomerFee = $PlatformPricing->customer_service_fee;
-                    $PFProviderFee = $PlatformPricing->provider_service_fee;
-                    // --------calculate amount on base of above percentages-------
-                    $CustomerFeeAmount = $orderPrice * ($PFCustomerFee / 100);
-                    $CustomerFeeAmount = 0;
-                    $ProviderFeeAmount = $orderPrice * ($PFProviderFee / 100);
+                $orderStatus = $order->status;
+               
+                // -------if payercustomer id and order customer id is same--------
+                if($orCustomerId == $payerId && $orCustomerId == $loginId ) {
+                  
+                     // ------------if order is not already paid-------
+                    if($order && $orderStatus !="paid") {
+                        // ---------get percentages that are set by superadmin-------
+                        $orderPrice = $order->total_amount;
+                        $PlatformPricing = Price::first();
+                        $PFCustomerFee = $PlatformPricing->customer_service_fee;
+                        $PFProviderFee = $PlatformPricing->provider_service_fee;
+                        // --------calculate amount on base of above percentages-------
+                        $CustomerFeeAmount = $orderPrice * ($PFCustomerFee / 100);
+                        $CustomerFeeAmount = 0;
+                        $ProviderFeeAmount = $orderPrice * ($PFProviderFee / 100);
 
-                    $customerDeduction = $orderPrice + $CustomerFeeAmount;
-                    $providerDeduction = $ProviderFeeAmount;
+                        $customerDeduction = $orderPrice + $CustomerFeeAmount;
+                        $providerDeduction = $ProviderFeeAmount;
 
-                    $providerBalance = $orderPrice - $providerDeduction;
-                    $adminBalance = $ProviderFeeAmount + $CustomerFeeAmount;
+                        $providerBalance = $orderPrice - $providerDeduction;
+                        $adminBalance = $ProviderFeeAmount + $CustomerFeeAmount;
 
-                    // echo $adminBalance; die();
+                        // -------------------------------------
+                        //           refferals
+                        // -------------------------------------
+                        $userdata = User::find($payerId);
+                        $refId = $userdata->sales_representative;
+                        if($refId) {
+                            // **********------------change variable later------------
+                            $refFee = $PlatformPricing->customer_call_commission;
+                            $adminBalance = ($ProviderFeeAmount + $CustomerFeeAmount) - $refFee;
+                            $referral_payout_status = "pending";
+                        }
+                        else {
+                            $refFee = 0;
+                            $referral_payout_status = "NA";
+                        }
 
-                    $charge = Charge::create([
-                        'amount' => $customerDeduction * 100,
-                        'currency' => 'usd',
-                        'source' => $request->stripeToken,
-                        'description' => 'Payment for deals'
-                    ]);
-        
-                    Transection::create([
-                        'type' => 'dealPayment',
-                        'payer_id' => $payerId, 
-                        'payer_role' => $payerRole, 
-                        'customer_id' => $payerId, 
-                        'provider_id' => $providerId,
-                        'order_id' => $request->orderId, 
-                        'stripe_charge_id' => $charge->id,
-                        'amount' => $orderPrice,
-                        'currency' => 'usd',
-                        'admin_balance' => $adminBalance,
-                        'provider_deduction' => $providerDeduction,
-                        'provider_balance' => $providerBalance,
-                        'customer_deduction' => $customerDeduction,
-                        'customer_payment_status' => 'success',
-                        'provider_payment_status' => 'NA',
-                    ]);
-                    return response()->json([
-                        'message' => 'Payment Successful',
-                        'charge' => $charge
-                    ]);
+                        $charge = Charge::create([
+                            'amount' => $customerDeduction * 100,
+                            'currency' => 'usd',
+                            'source' => $request->stripeToken,
+                            'description' => 'Payment for deals'
+                        ]);
+            
+                        Transection::create([
+                            'type' => 'dealPayment',
+                            'payer_id' => $payerId, 
+                            'payer_role' => $payerRole, 
+                            'customer_id' => $payerId, 
+                            'provider_id' => $providerId,
+                            'referral_id' => $refId,
+                            'order_id' => $request->orderId, 
+                            'stripe_charge_id' => $charge->id,
+                            'amount' => $orderPrice,
+                            'currency' => 'usd',
+                            'admin_balance' => $adminBalance,
+                            'provider_deduction' => $providerDeduction,
+                            'provider_balance' => $providerBalance,
+                            'customer_deduction' => $customerDeduction,
+                            'referral_balance' => $refFee,
+                            'customer_payment_status' => 'success',
+                            'provider_payment_status' => 'NA',
+                            'referral_payout_status' => $referral_payout_status,
+                            
+                        ]);
+                        Order::where('id', $request->orderId)->update([
+                            'status' => 'paid'
+                        ]);
+                        return response()->json([
+                            'message' => 'Payment Successful',
+                            'charge' => $charge
+                        ]);
+                       
+                    }
+                    else {
+                        return response()->json(['error' => 'Already Paid,'], 400);
+                    }
+                }
+                else {
+                    // echo $payerId;
+                    // echo " ";
+                    // echo $loginId; die();
+                    return response()->json(['error' => 'Access Denied! Invalid customer,'], 403);
                 }
             }
             else {
@@ -303,6 +344,14 @@ class PayController extends Controller
             $amount = $providerPayout * 100;
             $payout_amount = $amount;
 
+            $referralPayout = $trans->referral_balance;
+            $referral_id = $trans->referral_id;
+            $refAmount = $referralPayout * 100;
+            $referral_amount = $refAmount;
+
+            $totalAmount =  $payout_amount + $referral_amount;
+
+            //-------------- Check if Provider is not Connected to stripe
             $actor = User::find($providerId);
             if (!$actor || !$actor->stripe_account_id) {
                 return response()->json(['error' => 'Provider not found or not connected to Stripe'], 400);
@@ -312,14 +361,56 @@ class PayController extends Controller
             if (!$account->charges_enabled) {
                 return response()->json(['error' => 'Provider has not completed Stripe onboarding'], 400);
             }
+
+            if($referral_id) {
+                //-------------- Check if refferal is not Connected to stripe
+                $refActor = User::find($referral_id);
+                if (!$refActor || !$refActor->stripe_account_id) {
+                    return response()->json(['error' => 'Referral not found or not connected to Stripe'], 400);
+                }
+                //-------------- Check if refferal is not Onboarded
+                $account = \Stripe\Account::retrieve($refActor->stripe_account_id);
+                if (!$account->charges_enabled) {
+                    return response()->json(['error' => 'Referral has not completed Stripe onboarding'], 400);
+                }
+            }
             //-------------- Check if S.Admin's balance is insufficient
             $balance = \Stripe\Balance::retrieve();
-            if ($balance->available[0]->amount < $payout_amount) {
+            if ($balance->available[0]->amount < $totalAmount) {
                 return response()->json(['error' => 'Insufficient balance for payout'], 400);
             }
 
             // ---------------if not already payout ----------
-            if($trans->provider_payout_status=="pending") {
+            if($trans->provider_payout_status == "pending" && $trans->referral_payout_status == "pending") {
+                // ------provider payout-------
+                $transfer = Transfer::create([
+                    'amount' => $payout_amount,
+                    'currency' => 'usd',
+                    'destination' => $actor->stripe_account_id,
+                    'transfer_group' => 'ORDER_' . $actor->id,
+                ]);
+                Transection::where('id', $transectionId)->update([
+                    'provider_payout_status' => 'success'
+                ]);
+
+                // ------referral payout-------
+                $Referraltransfer = Transfer::create([
+                    'amount' => $referral_amount,
+                    'currency' => 'usd',
+                    'destination' => $actor->stripe_account_id,
+                    'transfer_group' => 'ORDER_' . $referral_id,
+                ]);
+                Transection::where('id', $transectionId)->update([
+                    'referral_payout_status' => 'success'
+                ]);
+                return response()->json([
+                    'message' => 'Provider and Referral Payouts Successful',
+                    'Providertransfer' => $transfer,
+                    'Referraltransfer' => $Referraltransfer
+                ]);
+            }
+            elseif($trans->provider_payout_status == "pending") {
+                // ------provider payout-------
                 $transfer = Transfer::create([
                     'amount' => $payout_amount,
                     'currency' => 'usd',
@@ -330,7 +421,22 @@ class PayController extends Controller
                     'provider_payout_status' => 'success'
                 ]);
                 return response()->json([
-                    'message' => 'Payout Successful',
+                    'message' => 'Provider Payout Successful',
+                    'transfer' => $transfer
+                ]);
+            }
+            elseif($trans->referral_payout_status == "pending") {
+                $transfer = Transfer::create([
+                    'amount' => $referral_amount,
+                    'currency' => 'usd',
+                    'destination' => $actor->stripe_account_id,
+                    'transfer_group' => 'ORDER_' . $referral_id,
+                ]);
+                Transection::where('id', $transectionId)->update([
+                    'referral_payout_status' => 'success'
+                ]);
+                return response()->json([
+                    'message' => 'Referral Payout Successful',
                     'transfer' => $transfer
                 ]);
             }
