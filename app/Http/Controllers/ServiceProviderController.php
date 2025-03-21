@@ -746,7 +746,13 @@ class ServiceProviderController extends Controller
                     $photo_destination = public_path('uploads');
                     $photo1->move($photo_destination, $photo_name1);
                     $data['personal_image'] = $photo_name1;
+                    
+                }else{
+
+                    $data['personal_image'] = '';
+                    
                 }
+                
                 $user->update($data);
 
                 return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
