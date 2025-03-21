@@ -253,6 +253,7 @@ class PayController extends Controller
                         $userdata = User::find($payerId);
                         $refId = $userdata->sales_representative;
                         if($refId) {
+                            // **********------------change variable later------------
                             $refFee = $PlatformPricing->customer_call_commission;
                             $adminBalance = ($ProviderFeeAmount + $CustomerFeeAmount) - $refFee;
                             $referral_payout_status = "pending";
