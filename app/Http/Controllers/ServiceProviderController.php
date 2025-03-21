@@ -749,7 +749,7 @@ class ServiceProviderController extends Controller
                     
                 }else{
 
-                    $data['personal_image'] = '';
+                    $data['personal_image'] = null;
                     
                 }
                 
