@@ -1936,7 +1936,9 @@ class ServiceProviderController extends Controller
 
     public function GetSalesRep($role)
     {
-        $GetSalesRep = User::where('role', $role)->orderBy('id', 'desc')->get();
+        $userId = Auth::id();
+
+        $GetSalesRep = User::where('role', $role)->where('id',"<>", $userId)->orderBy('id', 'desc')->get();
         return response()->json(['sales_reps' => $GetSalesRep]);
     }
 
