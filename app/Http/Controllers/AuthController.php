@@ -31,7 +31,18 @@ class AuthController extends Controller
             ], 422);
         }
         $data = $request->all();
-       $data['terms'] =$request->term;  
+        if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
+            $data['phone'] = '+' . $data['phone'];
+        }
+   
+        $validator = Validator::make($data, [
+            'phone' => ['required', 'phone:AUTO'], 
+        ]);
+ 
+        if ($validator->fails()) {
+            return response()->json(['phone' => 'Invalid phone number'], 400);
+        }
+        $data['terms'] =$request->term;  
         $user = User::create($data);
         Auth::login($user);
         $token = $user->createToken('auth_token')->plainTextToken;

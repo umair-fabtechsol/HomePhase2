@@ -752,6 +752,17 @@ class ServiceProviderController extends Controller
                     $data['personal_image'] = null;
                     
                 }
+                if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
+                    $data['phone'] = '+' . $data['phone'];
+                }
+           
+                $validator = Validator::make($data, [
+                    'phone' => ['required', 'phone:AUTO'], 
+                ]);
+         
+                if ($validator->fails()) {
+                    return response()->json(['phone' => 'Invalid phone number'], 400);
+                }
                 
                 $user->update($data);
 
@@ -1211,7 +1222,25 @@ class ServiceProviderController extends Controller
             $data = $request->all();
             $conversation = BusinessProfile::where('user_id', $userId)->first();
             if ($conversation) {
+                if (!empty($data['conversation_call_number']) && !str_starts_with($data['conversation_call_number'], '+')) {
+                    $data['conversation_call_number'] = '+' . $data['conversation_call_number'];
+                }
 
+                if (!empty($data['conversation_text_number']) && !str_starts_with($data['conversation_text_number'], '+')) {
+                    $data['conversation_text_number'] = '+' . $data['conversation_text_number'];
+                }
+           
+                $validator = Validator::make($data, [
+                    'conversation_call_number' => ['nullable', 'phone:AUTO'], 
+                    'conversation_text_number' => ['nullable', 'phone:AUTO'], 
+                ], [
+                    'conversation_call_number.phone' => 'Invalid phone number',
+                    'conversation_text_number.phone' => 'Invalid phone number',
+                ]);
+         
+                if ($validator->fails()) {
+                    return response()->json(['error' => $validator->errors()], 400);
+                }
                 $conversation->update($data);
                 $notifications = [
                     'title' => 'Updated Conversation Details',
@@ -1225,6 +1254,25 @@ class ServiceProviderController extends Controller
                 return response()->json(['message' => 'Conversation Details updated successfully', 'conversation' => $conversation], 200);
             } else {
                 $data['user_id'] = $userId;
+                if (!empty($data['conversation_call_number']) && !str_starts_with($data['conversation_call_number'], '+')) {
+                    $data['conversation_call_number'] = '+' . $data['conversation_call_number'];
+                }
+
+                if (!empty($data['conversation_text_number']) && !str_starts_with($data['conversation_text_number'], '+')) {
+                    $data['conversation_text_number'] = '+' . $data['conversation_text_number'];
+                }
+           
+                $validator = Validator::make($data, [
+                    'conversation_call_number' => ['nullable', 'phone:AUTO'], 
+                    'conversation_text_number' => ['nullable', 'phone:AUTO'], 
+                ], [
+                    'conversation_call_number.phone' => 'Invalid phone number',
+                    'conversation_text_number.phone' => 'Invalid phone number',
+                ]);
+         
+                if ($validator->fails()) {
+                    return response()->json(['error' => $validator->errors()], 400);
+                }
                 $conversation = BusinessProfile::create($data);
                 $notifications = [
                     'title' => 'Created Conversation Details',
