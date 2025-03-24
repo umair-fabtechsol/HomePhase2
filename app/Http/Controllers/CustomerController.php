@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\SocialProfile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
@@ -40,6 +41,17 @@ class CustomerController extends Controller
                     $photo_destination = public_path('uploads');
                     $photo1->move($photo_destination, $photo_name1);
                     $data['personal_image'] = $photo_name1;
+                } else {
+                    $data['personal_image'] = null;
+                }
+                if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
+                    $data['phone'] = '+' . $data['phone'];
+                }
+                $validator = Validator::make($data, [
+                    'phone' => ['required', 'phone:AUTO'], 
+                ]);
+                if ($validator->fails()) {
+                    return response()->json(['phone' => 'Invalid phone number'], 400);
                 }
                 $user->update($data);
                 $notification = [
