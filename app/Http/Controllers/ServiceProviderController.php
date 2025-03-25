@@ -732,7 +732,7 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
 
-        if ($role == 2) {
+        if ($role == 2 || $role == 0) {
             $user = User::find($request->id);
             if ($user) {
                 $data = $request->all();
@@ -778,8 +778,11 @@ class ServiceProviderController extends Controller
     public function UpdatePassword(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 2) {
-            $user = User::find($request->id);
+        if ($role == 2 || $role == 0) {
+         
+                $user = User::find($request->id);
+            
+           
             if ($user) {
                 if (!Hash::check($request->current_password, $user->password)) {
                     return response()->json(['message' => 'Current password is incorrect'], 200);
@@ -800,11 +803,17 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2) {
-            $user = User::find($userId);
-            if ($user) {
-                $data = $request->all();
+        if ($role == 2 ||  $role == 0) {
+
+            if($role != 2){
+           
+                $businessProfile = BusinessProfile::where('user_id', $request->user_id)->first();
+            }else{            
                 $businessProfile = BusinessProfile::where('user_id', $userId)->first();
+            }
+        
+                $data = $request->all();
+               
                 if ($businessProfile) {
                     if ($request->hasFile('business_logo')) {
                         $imagePath = public_path('uploads/' . $businessProfile->business_logo);
@@ -816,7 +825,7 @@ class ServiceProviderController extends Controller
                         $photo_destination = public_path('uploads');
                         $photo1->move($photo_destination, $photo_name1);
                         $data['business_logo'] = $photo_name1;
-                        $user->update($data);
+                        $businessProfile->update($data);
                     }
                     $businessProfile->update($data);
                     $notifications = [
@@ -829,7 +838,7 @@ class ServiceProviderController extends Controller
                     ];
                     Notification::create($notifications);
 
-                    return response()->json(['message' => 'User Business Profile Updated successfully', 'user' => $user, 'BusinessProfile' => $businessProfile], 200);
+                    return response()->json(['message' => 'User Business Profile Updated successfully', 'BusinessProfile' => $businessProfile], 200);
                 } else {
                     if ($request->hasFile('business_logo')) {
                         $photo1 = $request->file('business_logo');
@@ -853,9 +862,7 @@ class ServiceProviderController extends Controller
                 }
 
                 return response()->json(['message' => 'User Business Profile created successfully', 'user' => $user, 'BusinessProfile' => $businessProfile], 200);
-            } else {
-                return response()->json(['message' => 'No user found'], 401);
-            }
+            
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
@@ -933,11 +940,16 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2) {
-            $user = User::find($userId);
-            if ($user) {
+        if ($role == 2 || $role == 0) {
+            
+            if($role != 2){
+            $businessProfile = BusinessProfile::where('user_id', $request->user_id)->first();
+            }else{
+            $businessProfile = BusinessProfile::where('user_id', $userId)->first();
+            }
+          
                 $data = $request->all();
-                $businessProfile = BusinessProfile::where('user_id', $userId)->first();
+                
                 if ($businessProfile) {
                     if ($request->hasFile('about_video')) {
                         $imagePath = public_path('uploads/' . $businessProfile->about_video);
@@ -949,7 +961,7 @@ class ServiceProviderController extends Controller
                         $photo_destination = public_path('uploads');
                         $photo1->move($photo_destination, $photo_name1);
                         $data['about_video'] = $photo_name1;
-                        $user->update($data);
+                       
                     }
                     if ($request->hasFile('technician_photo')) {
                         $imagePath = public_path('uploads/' . $businessProfile->technician_photo);
@@ -961,7 +973,7 @@ class ServiceProviderController extends Controller
                         $photo_destination = public_path('uploads');
                         $photo1->move($photo_destination, $photo_name1);
                         $data['technician_photo'] = $photo_name1;
-                        $user->update($data);
+                       
                     }
                     if ($request->hasFile('vehicle_photo')) {
                         $imagePath = public_path('uploads/' . $businessProfile->vehicle_photo);
@@ -973,7 +985,7 @@ class ServiceProviderController extends Controller
                         $photo_destination = public_path('uploads');
                         $photo1->move($photo_destination, $photo_name1);
                         $data['vehicle_photo'] = $photo_name1;
-                        $user->update($data);
+                       
                     }
                     if ($request->hasFile('facility_photo')) {
                         $imagePath = public_path('uploads/' . $businessProfile->facility_photo);
@@ -985,7 +997,7 @@ class ServiceProviderController extends Controller
                         $photo_destination = public_path('uploads');
                         $photo1->move($photo_destination, $photo_name1);
                         $data['facility_photo'] = $photo_name1;
-                        $user->update($data);
+                       
                     }
                     if ($request->hasFile('project_photo')) {
                         $imagePath = public_path('uploads/' . $businessProfile->project_photo);
@@ -997,7 +1009,7 @@ class ServiceProviderController extends Controller
                         $photo_destination = public_path('uploads');
                         $photo1->move($photo_destination, $photo_name1);
                         $data['project_photo'] = $photo_name1;
-                        $user->update($data);
+                
                     }
                     $businessProfile->update($data);
                     $notifications = [
@@ -1009,7 +1021,7 @@ class ServiceProviderController extends Controller
 
                     ];
                     Notification::create($notifications);
-                    return response()->json(['message' => 'User Business Additional Info Updated successfully', 'user' => $user, 'BusinessProfile' => $businessProfile], 200);
+                    return response()->json(['message' => 'User Business Additional Info Updated successfully','BusinessProfile' => $businessProfile], 200);
                 } else {
                     if ($request->hasFile('technician_photo')) {
                         $photo1 = $request->file('technician_photo');
@@ -1059,10 +1071,8 @@ class ServiceProviderController extends Controller
                     Notification::create($notifications);
                 }
 
-                return response()->json(['message' => 'User Business Additional Info created successfully', 'user' => $user, 'BusinessProfile' => $businessProfile], 200);
-            } else {
-                return response()->json(['message' => 'No user found'], 401);
-            }
+                return response()->json(['message' => 'User Business Additional Info created successfully','BusinessProfile' => $businessProfile], 200);
+           
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
@@ -1072,9 +1082,13 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2) {
+        if ($role == 2 || $role == 0) {
             $data = $request->all();
+            if($role != 2){
+            $updateCertificateHours = BusinessProfile::where('user_id', $request->user_id)->first();
+            }else{
             $updateCertificateHours = BusinessProfile::where('user_id', $userId)->first();
+            }
             if ($updateCertificateHours) {
 
                 if ($request->hasFile('insurance_certificate')) {
@@ -1216,11 +1230,15 @@ class ServiceProviderController extends Controller
     public function AddConversation(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 2) {
+        if ($role == 2 || $role == 0) {
             $userId = Auth::id();
 
             $data = $request->all();
+            if($role != 2){
+            $conversation = BusinessProfile::where('user_id', $request->user_id)->first();
+            }else{
             $conversation = BusinessProfile::where('user_id', $userId)->first();
+            }
             if ($conversation) {
                 if (!empty($data['conversation_call_number']) && !str_starts_with($data['conversation_call_number'], '+')) {
                     $data['conversation_call_number'] = '+' . $data['conversation_call_number'];
@@ -1293,10 +1311,17 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2) {
+        if ($role == 2 || $role == 0) {
+
+            if($role != 2){
+                $user = User::find($request->user_id);
+
+            $social = SocialProfile::where('user_id', $request->user_id)->first();
+            }else{
             $user = User::find($userId);
 
             $social = SocialProfile::where('user_id', $userId)->first();
+            }
             $data = $request->all();
 
             if ($social) {
@@ -1489,9 +1514,13 @@ class ServiceProviderController extends Controller
         $role = Auth::user()->role;
         $userId = Auth::id();
         $data = $request->all();
-        if ($role == 2) {
-            
-            $businesslocation = BusinessProfile::where('user_id', $userId)->first();
+        if ($role == 2 || $role == 0) {
+            if($role !=2){
+
+            $businesslocation = BusinessProfile::where('user_id', $request->user_id)->first();
+            }else{
+            $businesslocation = BusinessProfile::where('user_id', $userId)->first();   
+            }
             if ($businesslocation) {
                 
                 $data['business_location'] = json_encode($data['business_location']);
@@ -1599,8 +1628,8 @@ class ServiceProviderController extends Controller
     {
 
         $role = Auth::user()->role;
-        if ($role == 2) {
-            $setting = BusinessProfile::where('user_id', $id)->first();
+        if ($role == 2 || $role == 0) {
+                $setting = BusinessProfile::where('user_id', $id)->first();
             if ($setting) {
                 $setting->update(['publish' => 1]);
 
