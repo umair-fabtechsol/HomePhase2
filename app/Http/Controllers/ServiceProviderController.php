@@ -118,48 +118,43 @@ class ServiceProviderController extends Controller
 
     public function Deal($id)
     {
-        $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2) {
-            $deal = Deal::find($id);
+        $deal = Deal::find($id);
 
-            if ($deal) {
-                $favoriteUserIds = \DB::table('favorit_deals')
-                ->where('deal_id', $deal->id)
-                ->pluck('user_id') // Get only user IDs
-                ->toArray();
+        if ($deal) {
+            $favoriteUserIds = \DB::table('favorit_deals')
+            ->where('deal_id', $deal->id)
+            ->pluck('user_id') // Get only user IDs
+            ->toArray();
 
-                $deal->favorite_user_ids = $favoriteUserIds;
-                
-                $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
-                $getReviews = Review::where('deal_id', $id)->get();
-                if ($getReviews->isNotEmpty()) {
-                    $reviews = [];
-                    $reviews['average'] = floor($getReviews->avg('rating'));
-                    $reviews['total'] = $getReviews->count();
-                } else {
-                    $reviews = [];
-                    $reviews['average'] = 0;
-                    $reviews['total'] = 0;
-                }
-
-                $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
-                if ($viewedDeal) {
-                    $viewedDeal->update([
-                        'created_at' => now()
-                    ]);
-                } else {
-                    $recentDeal = RecentDealView::create([
-                        'user_id' => $userId,
-                        'deal_id' => $id,
-                    ]);
-                }
-                return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile, 'reviews' => $reviews], 200);
+            $deal->favorite_user_ids = $favoriteUserIds;
+            
+            $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
+            $getReviews = Review::where('deal_id', $id)->get();
+            if ($getReviews->isNotEmpty()) {
+                $reviews = [];
+                $reviews['average'] = floor($getReviews->avg('rating'));
+                $reviews['total'] = $getReviews->count();
             } else {
-                return response()->json(['message' => 'No deal found'], 401);
+                $reviews = [];
+                $reviews['average'] = 0;
+                $reviews['total'] = 0;
             }
+
+            $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
+            if ($viewedDeal) {
+                $viewedDeal->update([
+                    'created_at' => now()
+                ]);
+            } else {
+                $recentDeal = RecentDealView::create([
+                    'user_id' => $userId,
+                    'deal_id' => $id,
+                ]);
+            }
+            return response()->json(['deal' => $deal, 'businessProfile' => $businessProfile, 'reviews' => $reviews], 200);
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            return response()->json(['message' => 'No deal found'], 401);
         }
     }
 
@@ -167,87 +162,75 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2) {
+        $deal = Deal::find($deal_id);
+        if ($deal) {
+            $deal->update(['publish' => 1]);
             $deal = Deal::find($deal_id);
-            if ($deal) {
-                $deal->update(['publish' => 1]);
-                $deal = Deal::find($deal_id);
-                $notifications = [
-                    'title' => 'Deal Publish',
-                    'message' => '"' . $deal->service_title . '" Deal Publish successfully',
-                    'created_by' => $deal->user_id,
-                    'status' => 0,
-                    'clear' => 'no',
-
-                ];
-                Notification::create($notifications);
-                return response()->json(['message' => 'Deal Publish successfully', 'deal' => $deal], 200);
-            } else {
-                return response()->json(['message' => 'No deals found'], 401);
-            }
+            // $notifications = [
+            //     'title' => 'Deal Publish',
+            //     'message' => '"' . $deal->service_title . '" Deal Publish successfully',
+            //     'created_by' => $deal->user_id,
+            //     'status' => 0,
+            //     'clear' => 'no',
+            // ];
+            // Notification::create($notifications);
+            return response()->json(['message' => 'Deal Publish successfully', 'deal' => $deal], 200);
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            return response()->json(['message' => 'No deals found'], 401);
         }
     }
 
     public function BasicInfo(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 2) {
-            $userId = Auth::id();
-            $userRole = Auth::user()->role;
-            $validator = Validator::make($request->all(), [
-                'service_title' => 'required',
-                'service_category' => 'required',
-                'search_tags' => 'required',
-                'service_description' => 'required',
-                'commercial' => 'nullable',
-                'residential' => 'nullable',
-            ], [
-                'at_least_one.required' => 'At least one of commercial or residential is required.',
-            ]);
+        $userId = Auth::id();
+        $userRole = Auth::user()->role;
+        $validator = Validator::make($request->all(), [
+            'service_title' => 'required',
+            'service_category' => 'required',
+            'search_tags' => 'required',
+            'service_description' => 'required',
+            'commercial' => 'nullable',
+            'residential' => 'nullable',
+        ], [
+            'at_least_one.required' => 'At least one of commercial or residential is required.',
+        ]);
 
-            $validator->after(function ($validator) use ($request) {
-                if (empty($request->commercial) && empty($request->residential)) {
-                    $validator->errors()->add('at_least_one', 'At least one of commercial or residential is required.');
-                }
-            });
-
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+        $validator->after(function ($validator) use ($request) {
+            if (empty($request->commercial) && empty($request->residential)) {
+                $validator->errors()->add('at_least_one', 'At least one of commercial or residential is required.');
             }
-            $data = $request->all();
-            if ($userRole != 2) {
-                return response()->json(['message' => 'Access denied. Only providers can perform this action.'], 400);
-            }
-            if (!empty($request->id)) {
-                $deal = Deal::find($request->id);
-                if ($deal) {
-                    $data = $request->all();
-                    if ($request->has('commercial')) {
-                    } else {
-                        $data['commercial'] = null;
-                    }
-                    if ($request->has('residential')) {
-                    } else {
-                        $data['residential'] = null;
-                    }
-                    $deal->update($data);
+        });
 
-                    return response()->json(['message' => 'Deal updated successfully', 'deal' => $deal], 200);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        $data = $request->all();
+        if (!empty($request->id)) {
+            $deal = Deal::find($request->id);
+            if ($deal) {
+                $data = $request->all();
+                if ($request->has('commercial')) {
                 } else {
-                    return response()->json(['message' => 'No deals found'], 401);
+                    $data['commercial'] = null;
                 }
+                if ($request->has('residential')) {
+                } else {
+                    $data['residential'] = null;
+                }
+                $deal->update($data);
+
+                return response()->json(['message' => 'Deal updated successfully', 'deal' => $deal], 200);
             } else {
-
-                $data['user_id'] = $userId;
-                $data['publish'] = 0;
-                $deal = Deal::create($data);
-
-                return response()->json(['message' => 'Added new deal successfully', 'deal' => $deal], 200);
+                return response()->json(['message' => 'No deals found'], 401);
             }
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+
+            $data['user_id'] = $userId;
+            $data['publish'] = 0;
+            $deal = Deal::create($data);
+
+            return response()->json(['message' => 'Added new deal successfully', 'deal' => $deal], 200);
         }
     }
 
@@ -406,74 +389,58 @@ class ServiceProviderController extends Controller
 
     public function MediaUpload(Request $request)
     {
-        $role = Auth::user()->role;
-        if ($role == 2) {
-            $userId = Auth::id();
-            $userRole = Auth::user()->role;
-            // $validator = Validator::make($request->all(), [
+        
+        $userId = Auth::id();
+        $data = $request->all();
+        $DealImages = [];
+        $DealVideos = [];
 
-            //     'images' => 'required',
-
-            // ]);
-            // if ($validator->fails()) {
-            //     return response()->json(['errors' => $validator->errors()], 422);
-            // }
-            if ($userRole != 2) {
-                return response()->json(['message' => 'Access denied. Only providers can perform this action.'], 400);
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $photo) {
+                $photo_name = time() . '-' . $photo->getClientOriginalName();
+                $photo->move(public_path('uploads'), $photo_name);
+                $DealImages[] = $photo_name;
             }
-            $data = $request->all();
-            $DealImages = [];
-            $DealVideos = [];
+        }
 
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $photo) {
-                    $photo_name = time() . '-' . $photo->getClientOriginalName();
-                    $photo->move(public_path('uploads'), $photo_name);
-                    $DealImages[] = $photo_name;
-                }
+        if ($request->hasFile('videos')) {
+            foreach ($request->file('videos') as $video) {
+                $video_name = time() . '-' . $video->getClientOriginalName();
+                $video->move(public_path('uploads'), $video_name);
+                $DealVideos[] = $video_name;
             }
-
-            if ($request->hasFile('videos')) {
-                foreach ($request->file('videos') as $video) {
-                    $video_name = time() . '-' . $video->getClientOriginalName();
-                    $video->move(public_path('uploads'), $video_name);
-                    $DealVideos[] = $video_name;
-                }
-            }
+        }
 
 
-            $data['images'] = json_encode($DealImages);
-            $data['videos'] = json_encode($DealVideos);
-            $data['user_id'] = $userId;
-            $deal = Deal::find($request->deal_id);
-            if ($deal) {
+        $data['images'] = json_encode($DealImages);
+        $data['videos'] = json_encode($DealVideos);
+        
+        $deal = Deal::find($request->deal_id);
+        if ($deal) {
 
 
-                $existingImages = json_decode($deal->images, true) ?? [];
-                $uniqueImages = array_diff($existingImages, $request->images);
-                $existingVideos = json_decode($deal->videos, true) ?? [];
-                $deal->update([
-                    'images' => json_encode(array_merge($existingImages, $DealImages)),
-                    'videos' => json_encode(array_merge($existingVideos, $DealVideos))
-                ]);
+            $existingImages = json_decode($deal->images, true) ?? [];
+            $uniqueImages = array_diff($existingImages, $request->images);
+            $existingVideos = json_decode($deal->videos, true) ?? [];
+            $deal->update([
+                'images' => json_encode(array_merge($existingImages, $DealImages)),
+                'videos' => json_encode(array_merge($existingVideos, $DealVideos))
+            ]);
 
-                return response()->json([
-                    'message' => 'Deal Images updated successfully',
-                    'deal' => $deal,
-                    'images' => $request->images,
-                    'uniqueImages' => $uniqueImages,
-                ], 200);
-            } else {
-
-                $deal = Deal::create($data);
-                return response()->json([
-                    'message' => 'Added new deal with Images successfully',
-                    'deal' => $deal,
-                    'images' => $request->images,
-                ], 200);
-            }
+            return response()->json([
+                'message' => 'Deal Images updated successfully',
+                'deal' => $deal,
+                'images' => $request->images,
+                'uniqueImages' => $uniqueImages,
+            ], 200);
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            $data['user_id'] = $userId;
+            $deal = Deal::create($data);
+            return response()->json([
+                'message' => 'Added new deal with Images successfully',
+                'deal' => $deal,
+                'images' => $request->images,
+            ], 200);
         }
     }
 
@@ -592,74 +559,70 @@ class ServiceProviderController extends Controller
 
     public function UpdatePriceAndPackage(Request $request)
     {
-        $role = Auth::user()->role;
-        if ($role == 2) {
-            $deal = Deal::find($request->id);
-            if ($deal) {
-                $data = $request->all();
-                if ($data['pricing_model'] == 'Flat') {
-                    $data['hourly_rate'] = null;
-                    $data['discount'] = null;
-                    $data['hourly_final_list_price'] = null;
-                    $data['hourly_estimated_service_time'] = null;
-                    $data['title1'] = null;
-                    $data['deliverable1'] = null;
-                    $data['price1'] = null;
-                    $data['by_now_discount1'] = null;
-                    $data['final_list_price1'] = null;
-                    $data['estimated_service_timing1'] = null;
-                    $data['title2'] = null;
-                    $data['deliverable2'] = null;
-                    $data['price2'] = null;
-                    $data['by_now_discount2'] = null;
-                    $data['final_list_price2'] = null;
-                    $data['estimated_service_timing2'] = null;
-                    $data['title3'] = null;
-                    $data['deliverable3'] = null;
-                    $data['price3'] = null;
-                    $data['by_now_discount3'] = null;
-                    $data['final_list_price3'] = null;
-                    $data['estimated_service_timing3'] = null;
-                } elseif ($data['pricing_model'] == 'Hourly') {
-                    $data['flat_rate_price'] = null;
-                    $data['flat_by_now_discount'] = null;
-                    $data['flat_final_list_price'] = null;
-                    $data['flat_estimated_service_time'] = null;
-                    $data['title1'] = null;
-                    $data['deliverable1'] = null;
-                    $data['price1'] = null;
-                    $data['by_now_discount1'] = null;
-                    $data['final_list_price1'] = null;
-                    $data['estimated_service_timing1'] = null;
-                    $data['title2'] = null;
-                    $data['deliverable2'] = null;
-                    $data['price2'] = null;
-                    $data['by_now_discount2'] = null;
-                    $data['final_list_price2'] = null;
-                    $data['estimated_service_timing2'] = null;
-                    $data['title3'] = null;
-                    $data['deliverable3'] = null;
-                    $data['price3'] = null;
-                    $data['by_now_discount3'] = null;
-                    $data['final_list_price3'] = null;
-                    $data['estimated_service_timing3'] = null;
-                } else {
-                    $data['flat_rate_price'] = null;
-                    $data['flat_by_now_discount'] = null;
-                    $data['flat_final_list_price'] = null;
-                    $data['flat_estimated_service_time'] = null;
-                    $data['hourly_rate'] = null;
-                    $data['discount'] = null;
-                    $data['hourly_final_list_price'] = null;
-                    $data['hourly_estimated_service_time'] = null;
-                }
-                $deal->update($data);
-                return response()->json(['deal' => $deal], 200);
+        
+        $deal = Deal::find($request->id);
+        if ($deal) {
+            $data = $request->all();
+            if ($data['pricing_model'] == 'Flat') {
+                $data['hourly_rate'] = null;
+                $data['discount'] = null;
+                $data['hourly_final_list_price'] = null;
+                $data['hourly_estimated_service_time'] = null;
+                $data['title1'] = null;
+                $data['deliverable1'] = null;
+                $data['price1'] = null;
+                $data['by_now_discount1'] = null;
+                $data['final_list_price1'] = null;
+                $data['estimated_service_timing1'] = null;
+                $data['title2'] = null;
+                $data['deliverable2'] = null;
+                $data['price2'] = null;
+                $data['by_now_discount2'] = null;
+                $data['final_list_price2'] = null;
+                $data['estimated_service_timing2'] = null;
+                $data['title3'] = null;
+                $data['deliverable3'] = null;
+                $data['price3'] = null;
+                $data['by_now_discount3'] = null;
+                $data['final_list_price3'] = null;
+                $data['estimated_service_timing3'] = null;
+            } elseif ($data['pricing_model'] == 'Hourly') {
+                $data['flat_rate_price'] = null;
+                $data['flat_by_now_discount'] = null;
+                $data['flat_final_list_price'] = null;
+                $data['flat_estimated_service_time'] = null;
+                $data['title1'] = null;
+                $data['deliverable1'] = null;
+                $data['price1'] = null;
+                $data['by_now_discount1'] = null;
+                $data['final_list_price1'] = null;
+                $data['estimated_service_timing1'] = null;
+                $data['title2'] = null;
+                $data['deliverable2'] = null;
+                $data['price2'] = null;
+                $data['by_now_discount2'] = null;
+                $data['final_list_price2'] = null;
+                $data['estimated_service_timing2'] = null;
+                $data['title3'] = null;
+                $data['deliverable3'] = null;
+                $data['price3'] = null;
+                $data['by_now_discount3'] = null;
+                $data['final_list_price3'] = null;
+                $data['estimated_service_timing3'] = null;
             } else {
-                return response()->json(['message' => 'No deals found'], 401);
+                $data['flat_rate_price'] = null;
+                $data['flat_by_now_discount'] = null;
+                $data['flat_final_list_price'] = null;
+                $data['flat_estimated_service_time'] = null;
+                $data['hourly_rate'] = null;
+                $data['discount'] = null;
+                $data['hourly_final_list_price'] = null;
+                $data['hourly_estimated_service_time'] = null;
             }
+            $deal->update($data);
+            return response()->json(['deal' => $deal], 200);
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            return response()->json(['message' => 'No deals found'], 401);
         }
     }
 
@@ -694,37 +657,32 @@ class ServiceProviderController extends Controller
 
     public function DeleteDeal($id)
     {
-        $role = Auth::user()->role;
-        if ($role == 2) {
-            $deal = Deal::find($id);
-            $images = json_decode($deal->images, true);
-            $videos = json_decode($deal->videos, true);
+        $deal = Deal::find($id);
+        $images = json_decode($deal->images, true);
+        $videos = json_decode($deal->videos, true);
 
-            if ($deal) {
-                if (!empty($images)) {
-                    foreach ($images as $image) {
-                        $imagePath = public_path('uploads/' . $image);
-                        if (file_exists($imagePath)) {
-                            unlink($imagePath);
-                        }
+        if ($deal) {
+            if (!empty($images)) {
+                foreach ($images as $image) {
+                    $imagePath = public_path('uploads/' . $image);
+                    if (file_exists($imagePath)) {
+                        unlink($imagePath);
                     }
                 }
-                if (!empty($videos)) {
-                    foreach ($videos as $video) {
-                        $videoPath = public_path('uploads/' . $video);
-                        if (file_exists($videoPath)) {
-                            unlink($videoPath);
-                        }
-                    }
-                }
-                $deal->delete();
-
-                return response()->json(['message' => 'Deal deleted successfully', 'deal' => $deal], 200);
-            } else {
-                return response()->json(['message' => 'No deal found'], 401);
             }
+            if (!empty($videos)) {
+                foreach ($videos as $video) {
+                    $videoPath = public_path('uploads/' . $video);
+                    if (file_exists($videoPath)) {
+                        unlink($videoPath);
+                    }
+                }
+            }
+            $deal->delete();
+
+            return response()->json(['message' => 'Deal deleted successfully', 'deal' => $deal], 200);
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            return response()->json(['message' => 'No deal found'], 401);
         }
     }
 
@@ -746,7 +704,24 @@ class ServiceProviderController extends Controller
                     $photo_destination = public_path('uploads');
                     $photo1->move($photo_destination, $photo_name1);
                     $data['personal_image'] = $photo_name1;
+                    
+                }else{
+
+                    $data['personal_image'] = null;
+                    
                 }
+                if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
+                    $data['phone'] = '+' . $data['phone'];
+                }
+           
+                $validator = Validator::make($data, [
+                    'phone' => ['required', 'phone:AUTO'], 
+                ]);
+         
+                if ($validator->fails()) {
+                    return response()->json(['phone' => 'Invalid phone number'], 400);
+                }
+                
                 $user->update($data);
 
                 return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
@@ -1205,7 +1180,25 @@ class ServiceProviderController extends Controller
             $data = $request->all();
             $conversation = BusinessProfile::where('user_id', $userId)->first();
             if ($conversation) {
+                if (!empty($data['conversation_call_number']) && !str_starts_with($data['conversation_call_number'], '+')) {
+                    $data['conversation_call_number'] = '+' . $data['conversation_call_number'];
+                }
 
+                if (!empty($data['conversation_text_number']) && !str_starts_with($data['conversation_text_number'], '+')) {
+                    $data['conversation_text_number'] = '+' . $data['conversation_text_number'];
+                }
+           
+                $validator = Validator::make($data, [
+                    'conversation_call_number' => ['nullable', 'phone:AUTO'], 
+                    'conversation_text_number' => ['nullable', 'phone:AUTO'], 
+                ], [
+                    'conversation_call_number.phone' => 'Invalid phone number',
+                    'conversation_text_number.phone' => 'Invalid phone number',
+                ]);
+         
+                if ($validator->fails()) {
+                    return response()->json(['error' => $validator->errors()], 400);
+                }
                 $conversation->update($data);
                 $notifications = [
                     'title' => 'Updated Conversation Details',
@@ -1219,6 +1212,25 @@ class ServiceProviderController extends Controller
                 return response()->json(['message' => 'Conversation Details updated successfully', 'conversation' => $conversation], 200);
             } else {
                 $data['user_id'] = $userId;
+                if (!empty($data['conversation_call_number']) && !str_starts_with($data['conversation_call_number'], '+')) {
+                    $data['conversation_call_number'] = '+' . $data['conversation_call_number'];
+                }
+
+                if (!empty($data['conversation_text_number']) && !str_starts_with($data['conversation_text_number'], '+')) {
+                    $data['conversation_text_number'] = '+' . $data['conversation_text_number'];
+                }
+           
+                $validator = Validator::make($data, [
+                    'conversation_call_number' => ['nullable', 'phone:AUTO'], 
+                    'conversation_text_number' => ['nullable', 'phone:AUTO'], 
+                ], [
+                    'conversation_call_number.phone' => 'Invalid phone number',
+                    'conversation_text_number.phone' => 'Invalid phone number',
+                ]);
+         
+                if ($validator->fails()) {
+                    return response()->json(['error' => $validator->errors()], 400);
+                }
                 $conversation = BusinessProfile::create($data);
                 $notifications = [
                     'title' => 'Created Conversation Details',
@@ -1930,7 +1942,9 @@ class ServiceProviderController extends Controller
 
     public function GetSalesRep($role)
     {
-        $GetSalesRep = User::where('role', $role)->orderBy('id', 'desc')->get();
+        $userId = Auth::id();
+
+        $GetSalesRep = User::where('role', $role)->where('id',"<>", $userId)->orderBy('id', 'desc')->get();
         return response()->json(['sales_reps' => $GetSalesRep]);
     }
 
