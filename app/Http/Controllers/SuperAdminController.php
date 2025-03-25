@@ -827,4 +827,16 @@ class SuperAdminController extends Controller
 
         return response()->json(['message' => $message, 'user' => $user], 200);
     }
+
+    public function GetDateUser(Request $request)
+    {
+        $tillDate = $request->date;
+
+        $userCount = User::whereDate('created_at', '<=', $tillDate)->where('role','<>', 0)->where('status', 0)
+        ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+        ->groupBy('date')
+        ->orderBy('date', 'asc')
+        ->get();
+        return response()->json(['userCount' => $userCount]);
+    }
 }
