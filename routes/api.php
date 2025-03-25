@@ -216,6 +216,9 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('ServiceProviderReport', 'ServiceProviderReport')->name('ServiceProviderReport');
 
             Route::post('banProvider', 'banProvider')->name('banProvider');
+
+            Route::get('GetDateUser', 'GetDateUser')->name('GetDateUser');
+
         });
     });
 
