@@ -27,47 +27,44 @@ class CustomerController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 1) {
-            $user = User::find($request->id);
-            if ($user) {
-                $data = $request->all();
-                if ($request->hasFile('personal_image')) {
-                    $imagePath = public_path('uploads/' . $user->personal_image);
-                    if (!empty($user->personal_image) && file_exists($imagePath)) {
-                        unlink($imagePath);
-                    }
-                    $photo1 = $request->file('personal_image');
-                    $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo1->move($photo_destination, $photo_name1);
-                    $data['personal_image'] = $photo_name1;
-                } else {
-                    $data['personal_image'] = null;
+        
+        $user = User::find($request->id);
+        if ($user) {
+            $data = $request->all();
+            if ($request->hasFile('personal_image')) {
+                $imagePath = public_path('uploads/' . $user->personal_image);
+                if (!empty($user->personal_image) && file_exists($imagePath)) {
+                    unlink($imagePath);
                 }
-                if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
-                    $data['phone'] = '+' . $data['phone'];
-                }
-                $validator = Validator::make($data, [
-                    'phone' => ['required', 'phone:AUTO'], 
-                ]);
-                if ($validator->fails()) {
-                    return response()->json(['phone' => 'Invalid phone number'], 400);
-                }
-                $user->update($data);
-                $notification = [
-                    'title' => 'Profile Updated',
-                    'message' => 'Profile has been updated successfully',
-                    'created_by' => $userId,
-                    'status' => 0,
-                    'clear' => 'no',
-                ];
-                Notification::create($notification);
-                return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
+                $photo1 = $request->file('personal_image');
+                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+                $photo_destination = public_path('uploads');
+                $photo1->move($photo_destination, $photo_name1);
+                $data['personal_image'] = $photo_name1;
             } else {
-                return response()->json(['message' => 'No user found'], 401);
+                $data['personal_image'] = null;
             }
+            if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
+                $data['phone'] = '+' . $data['phone'];
+            }
+            $validator = Validator::make($data, [
+                'phone' => ['required', 'phone:AUTO'], 
+            ]);
+            if ($validator->fails()) {
+                return response()->json(['phone' => 'Invalid phone number'], 400);
+            }
+            $user->update($data);
+            // $notification = [
+            //     'title' => 'Profile Updated',
+            //     'message' => 'Profile has been updated successfully',
+            //     'created_by' => $userId,
+            //     'status' => 0,
+            //     'clear' => 'no',
+            // ];
+            Notification::create($notification);
+            return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -75,28 +72,24 @@ class CustomerController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 1) {
-            $user = User::find($request->id);
-            if ($user) {
-                if (!Hash::check($request->current_password, $user->password)) {
-                    return response()->json(['message' => 'Current password is incorrect'], 422);
-                }
-                $user->password = Hash::make($request->password);
-                $user->save();
-                $notification = [
-                    'title' => 'Password Updated',
-                    'message' => 'Password has been updated successfully',
-                    'created_by' => $userId,
-                    'status' => 0,
-                    'clear' => 'no',
-                ];
-                Notification::create($notification);
-                return response()->json(['message' => 'User Password Updated successfully', 'user' => $user], 200);
-            } else {
-                return response()->json(['message' => 'No user found'], 401);
+        $user = User::find($request->id);
+        if ($user) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json(['message' => 'Current password is incorrect'], 422);
             }
+            $user->password = Hash::make($request->password);
+            $user->save();
+            // $notification = [
+            //     'title' => 'Password Updated',
+            //     'message' => 'Password has been updated successfully',
+            //     'created_by' => $userId,
+            //     'status' => 0,
+            //     'clear' => 'no',
+            // ];
+            // Notification::create($notification);
+            return response()->json(['message' => 'User Password Updated successfully', 'user' => $user], 200);
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            return response()->json(['message' => 'No user found'], 401);
         }
     }
 
@@ -409,47 +402,44 @@ class CustomerController extends Controller
     public function DeleteSocial(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 1) {
 
-            $social = SocialProfile::where('user_id', $request->id)->first();
+        $social = SocialProfile::where('user_id', $request->id)->first();
 
-            if ($request['facebook'] == $social->facebook) {
+        if ($request['facebook'] == $social->facebook) {
 
-                $social->update(['facebook' => null]);
-            }
-            if ($request['twitter'] == $social->twitter) {
-
-                $social->update(['twitter' => null]);
-            }
-            if ($request['instagram'] == $social->instagram) {
-
-                $social->update(['instagram' => null]);
-            }
-            if ($request['linkedin'] == $social->linkedin) {
-
-                $social->update(['linkedin' => null]);
-            }
-            if ($request['youtube'] == $social->youtube) {
-
-                $social->update(['youtube' => null]);
-            }
-            if ($request['google_business'] == $social->google_business) {
-
-                $social->update(['google_business' => null]);
-            }
-
-            $notification = [
-                'title' => 'Delete Social Link',
-                'message' => 'Social link has been deleted successfully',
-                'created_by' => $social->user_id,
-                'status' => 0,
-                'clear' => 'no',
-            ];
-            Notification::create($notification);
-            return response()->json(['social' => $social], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            $social->update(['facebook' => null]);
         }
+        if ($request['twitter'] == $social->twitter) {
+
+            $social->update(['twitter' => null]);
+        }
+        if ($request['instagram'] == $social->instagram) {
+
+            $social->update(['instagram' => null]);
+        }
+        if ($request['linkedin'] == $social->linkedin) {
+
+            $social->update(['linkedin' => null]);
+        }
+        if ($request['youtube'] == $social->youtube) {
+
+            $social->update(['youtube' => null]);
+        }
+        if ($request['google_business'] == $social->google_business) {
+
+            $social->update(['google_business' => null]);
+        }
+
+        // $notification = [
+        //     'title' => 'Delete Social Link',
+        //     'message' => 'Social link has been deleted successfully',
+        //     'created_by' => $social->user_id,
+        //     'status' => 0,
+        //     'clear' => 'no',
+        // ];
+        // Notification::create($notification);
+        return response()->json(['social' => $social], 200);
+        
     }
 
     public function DealProvider($user_id)
@@ -553,35 +543,26 @@ class CustomerController extends Controller
     public function DetailUser($user_id)
     {
         $role = Auth::user()->role;
-        if ($role == 1) {
-            $userId = Auth::id();
-            $user = User::find($userId);
+        $user = User::find($user_id);
 
-            $paymentDetail = PaymentDetail::where('user_id', $userId)->first();
-            $SocialDetail = SocialProfile::where('user_id', $userId)->first();
-            if ($user) {
-                return response()->json(['user' => $user, 'paymentDetail' => $paymentDetail, 'SocialDetail' => $SocialDetail], 200);
-            } else {
-                return response()->json(['message' => 'User not found'], 401);
-            }
+        $paymentDetail = PaymentDetail::where('user_id', $user_id)->first();
+        $SocialDetail = SocialProfile::where('user_id', $user_id)->first();
+        if ($user) {
+            return response()->json(['user' => $user, 'paymentDetail' => $paymentDetail, 'SocialDetail' => $SocialDetail], 200);
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            return response()->json(['message' => 'User not found'], 401);
         }
     }
 
     public function CustomerSocial($user_id)
     {
         $role = Auth::user()->role;
-        if ($role == 1) {
 
-            $SocialDetail = SocialProfile::where('user_id', $user_id)->first();
-            if ($SocialDetail) {
-                return response()->json(['SocialDetail' => $SocialDetail], 200);
-            } else {
-                return response()->json(['message' => 'Social not available'], 401);
-            }
+        $SocialDetail = SocialProfile::where('user_id', $user_id)->first();
+        if ($SocialDetail) {
+            return response()->json(['SocialDetail' => $SocialDetail], 200);
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            return response()->json(['message' => 'Social not available'], 401);
         }
     }
 
