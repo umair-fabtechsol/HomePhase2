@@ -93,7 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('AddConversation', 'AddConversation')->name('AddConversation');
         Route::post('Social', 'Social')->name('Social');
-        Route::get('UserDetails', 'UserDetails')->name('UserDetails');
+        Route::get('UserDetails/{id?}', 'UserDetails')->name('UserDetails');
         Route::post('SocialDelete', 'SocialDelete')->name('SocialDelete');
         Route::post('AddBusinessLocation', 'AddBusinessLocation')->name('AddBusinessLocation');
         Route::post('UpdateBusinessLocation', 'UpdateBusinessLocation')->name('UpdateBusinessLocation');
