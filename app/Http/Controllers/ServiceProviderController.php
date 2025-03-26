@@ -1359,7 +1359,7 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2 || $role == 0) {
+    
             
             if($id != null){
                
@@ -1460,9 +1460,7 @@ class ServiceProviderController extends Controller
 
                 return response()->json(['user' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
             }
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
+        
     }
 
     public function SocialDelete(Request $request)
