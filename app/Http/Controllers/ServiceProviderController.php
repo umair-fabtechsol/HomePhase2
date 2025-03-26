@@ -1319,7 +1319,7 @@ class ServiceProviderController extends Controller
         $userId = Auth::id();
         if ($role == 2 || $role == 0) {
             
-            if($id !=null){
+            if($id != null){
                
                 $user = User::find($id);
             $businessProfile = BusinessProfile::where('user_id', $id)->get();
