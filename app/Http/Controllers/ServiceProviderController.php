@@ -1355,14 +1355,21 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function UserDetails()
+    public function UserDetails($id=null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2) {
+        if ($role == 2 || $role == 0) {
+            
+            if($id !=null){
+               
+                $user = User::find($id);
+            $businessProfile = BusinessProfile::where('user_id', $id)->get();
+            }else{
+           
             $user = User::find($userId);
             $businessProfile = BusinessProfile::where('user_id', $userId)->get();
-
+            }
             $getPayment = PaymentDetail::where('user_id', $userId)->get();
             $getDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
                 ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
