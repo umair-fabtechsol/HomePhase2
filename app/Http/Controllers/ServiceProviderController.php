@@ -1588,12 +1588,17 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-    public function SettingPublish($id)
+    public function SettingPublish($id = null)
     {
 
         $role = Auth::user()->role;
-      
-                $setting = BusinessProfile::where('user_id', $id)->first();
+        $userId = Auth::id();
+        if($id != null){
+            $setting = BusinessProfile::where('user_id', $id)->first();
+        }else{
+            $setting = BusinessProfile::where('user_id', $userId)->first();
+        }
+                
             if ($setting) {
                 $setting->update(['publish' => 1]);
 
