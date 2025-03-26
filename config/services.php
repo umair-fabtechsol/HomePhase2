@@ -51,4 +51,8 @@ return [
         'secret' => env('STRIPE_SECRET'),
     ],
 
+    'google_reviews' => [
+        'place_api' => env('GOOGLE_PLACES_API_KEY'),
+    ],
+
 ];

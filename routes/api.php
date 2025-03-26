@@ -33,6 +33,7 @@ Route::get('salesrep', [CommonController::class, 'salesrep'])->name('salesrep');
 Route::get('GetAllDeals', [CommonController::class, 'GetAllDeals'])->name('GetAllDeals');
 Route::get('GetDealDetail/{id}', [CommonController::class, 'GetDealDetail'])->name('GetDealDetail');
 Route::get('FilterHomeDeals', [ServiceProviderController::class, 'FilterHomeDeals'])->name('FilterHomeDeals');
+Route::post('GetGoogleReviews', [ServiceProviderController::class, 'GetGoogleReviews'])->name('GetGoogleReviews');
 // Route::get('DealProvider/{user_id}', 'DealProvider')->name('DealProvider');
 Route::get('DealProvider/{user_id}', [CustomerController::class, 'DealProvider'])->name('DealProvider');
 
