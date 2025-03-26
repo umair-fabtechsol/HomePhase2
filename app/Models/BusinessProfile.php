@@ -33,6 +33,7 @@ class BusinessProfile extends Model
         'service_location_type',
         'business_location',
         'service_location',
+        'primary_location',
         'restrict_location',
         'location_miles',
         'service_bulk',

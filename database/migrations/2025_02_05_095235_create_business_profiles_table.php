@@ -41,6 +41,7 @@ return new class extends Migration
             $table->string('service_location_type')->nullable();
             $table->text('business_location')->nullable();
             $table->text('service_location')->nullable();
+            $table->text('primary_location')->nullable();
             $table->text('restrict_location')->nullable();
             $table->text('location_miles')->nullable();
             $table->integer('service_bulk')->nullable();
