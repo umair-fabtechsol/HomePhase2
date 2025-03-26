@@ -73,11 +73,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('DealPublish/{deal_id}', 'DealPublish')->name('DealPublish');
 
 
-        Route::post('MyDetails', 'MyDetails')->name('MyDetails');
+        Route::post('MyDetails/{id?}', 'MyDetails')->name('MyDetails');
 
-        Route::post('UpdatePassword', 'UpdatePassword')->name('UpdatePassword');
+        Route::post('UpdatePassword/{id?}', 'UpdatePassword')->name('UpdatePassword');
 
-        Route::post('BusinessProfile', 'BusinessProfile')->name('BusinessProfile');
+        Route::post('BusinessProfile/{id?}', 'BusinessProfile')->name('BusinessProfile');
 
 
         Route::post('AddPaymentDetails', 'AddPaymentDetails')->name('AddPaymentDetails');
@@ -85,17 +85,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('DeletePaymentDetails/{id}', 'DeletePaymentDetails')->name('DeletePaymentDetails');
 
-        Route::post('AdditionalPhotos', 'AdditionalPhotos')->name('AdditionalPhotos');
+        Route::post('AdditionalPhotos/{id?}', 'AdditionalPhotos')->name('AdditionalPhotos');
 
-        Route::post('AddCertificateHours', 'AddCertificateHours')->name('AddCertificateHours');
+        Route::post('AddCertificateHours/{id?}', 'AddCertificateHours')->name('AddCertificateHours');
         Route::post('UpdateCertificateHours', 'UpdateCertificateHours')->name('UpdateCertificateHours');
 
 
-        Route::post('AddConversation', 'AddConversation')->name('AddConversation');
-        Route::post('Social', 'Social')->name('Social');
+        Route::post('AddConversation/{id?}', 'AddConversation')->name('AddConversation');
+        Route::post('Social/{id?}', 'Social')->name('Social');
         Route::get('UserDetails/{id?}', 'UserDetails')->name('UserDetails');
         Route::post('SocialDelete', 'SocialDelete')->name('SocialDelete');
-        Route::post('AddBusinessLocation', 'AddBusinessLocation')->name('AddBusinessLocation');
+        Route::post('AddBusinessLocation/{id?}', 'AddBusinessLocation')->name('AddBusinessLocation');
         Route::post('UpdateBusinessLocation', 'UpdateBusinessLocation')->name('UpdateBusinessLocation');
         Route::get('GetBusiness/{id}', 'GetBusiness')->name('GetBusiness');
 

@@ -728,12 +728,17 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function MyDetails(Request $request)
+    public function MyDetails(Request $request ,$id = null)
     {
         $role = Auth::user()->role;
-
-        if ($role == 2 || $role == 0) {
-            $user = User::find($request->id);
+        
+        if($id != null){
+            $user = User::find($id);
+        }else{
+            $user = User::find($request->id); 
+        }
+       
+            
             if ($user) {
                 $data = $request->all();
                 if ($request->hasFile('personal_image')) {
@@ -770,19 +775,20 @@ class ServiceProviderController extends Controller
             } else {
                 return response()->json(['message' => 'No user found'], 401);
             }
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
+       
     }
 
-    public function UpdatePassword(Request $request)
+    public function UpdatePassword(Request $request , $id = null)
     {
         $role = Auth::user()->role;
-        if ($role == 2 || $role == 0) {
-         
-                $user = User::find($request->id);
-            
-           
+        $userId = Auth::id();
+            if($id != null){
+
+                $user = User::find($id);
+                }else{
+                
+                $user = User::find($userId);    
+                }
             if ($user) {
                 if (!Hash::check($request->current_password, $user->password)) {
                     return response()->json(['message' => 'Current password is incorrect'], 200);
@@ -794,21 +800,21 @@ class ServiceProviderController extends Controller
             } else {
                 return response()->json(['message' => 'No user found'], 401);
             }
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
+       
     }
 
-    public function BusinessProfile(Request $request)
+    public function BusinessProfile(Request $request ,$id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2 ||  $role == 0) {
+      
 
-            if($role != 2){
-           
-                $businessProfile = BusinessProfile::where('user_id', $request->user_id)->first();
-            }else{            
+            if($id != null){
+         
+                $businessProfile = BusinessProfile::where('user_id', $id)->first();
+            }else{  
+                
+              
                 $businessProfile = BusinessProfile::where('user_id', $userId)->first();
             }
         
@@ -862,10 +868,7 @@ class ServiceProviderController extends Controller
                 }
 
                 return response()->json(['message' => 'User Business Profile created successfully', 'user' => $user, 'BusinessProfile' => $businessProfile], 200);
-            
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
+    
     }
     public function AddPaymentDetails(Request $request)
     {
@@ -936,14 +939,14 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function AdditionalPhotos(Request $request)
+    public function AdditionalPhotos(Request $request ,$id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2 || $role == 0) {
+       
             
-            if($role != 2){
-            $businessProfile = BusinessProfile::where('user_id', $request->user_id)->first();
+            if($id != null){
+            $businessProfile = BusinessProfile::where('user_id', $id)->first();
             }else{
             $businessProfile = BusinessProfile::where('user_id', $userId)->first();
             }
@@ -1073,20 +1076,21 @@ class ServiceProviderController extends Controller
 
                 return response()->json(['message' => 'User Business Additional Info created successfully','BusinessProfile' => $businessProfile], 200);
            
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
+
     }
 
-    public function AddCertificateHours(Request $request)
+    public function AddCertificateHours(Request $request ,$id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2 || $role == 0) {
+     
             $data = $request->all();
-            if($role != 2){
-            $updateCertificateHours = BusinessProfile::where('user_id', $request->user_id)->first();
+            if($id != null){
+
+          
+            $updateCertificateHours = BusinessProfile::where('user_id', $id)->first();
             }else{
+            
             $updateCertificateHours = BusinessProfile::where('user_id', $userId)->first();
             }
             if ($updateCertificateHours) {
@@ -1175,9 +1179,7 @@ class ServiceProviderController extends Controller
 
                 return response()->json(['message' => 'Business CertificateHour created successfully', 'certificate' => $certificate], 200);
             }
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
+       
     }
 
     public function UpdateCertificateHours(Request $request)
@@ -1227,16 +1229,19 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function AddConversation(Request $request)
+    public function AddConversation(Request $request , $id = null)
     {
         $role = Auth::user()->role;
-        if ($role == 2 || $role == 0) {
+    
             $userId = Auth::id();
 
             $data = $request->all();
-            if($role != 2){
-            $conversation = BusinessProfile::where('user_id', $request->user_id)->first();
+            if($id != null){
+
+                
+            $conversation = BusinessProfile::where('user_id', $id)->first();
             }else{
+               
             $conversation = BusinessProfile::where('user_id', $userId)->first();
             }
             if ($conversation) {
@@ -1303,21 +1308,20 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Conversation Details created successfully', 'conversation' => $conversation], 200);
             }
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
     }
-    public function Social(Request $request)
+    public function Social(Request $request , $id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($role == 2 || $role == 0) {
+    
 
-            if($role != 2){
-                $user = User::find($request->user_id);
+            if($id != null){
+               
+                $user = User::find($id);
 
-            $social = SocialProfile::where('user_id', $request->user_id)->first();
+            $social = SocialProfile::where('user_id', $id)->first();
             }else{
+            
             $user = User::find($userId);
 
             $social = SocialProfile::where('user_id', $userId)->first();
@@ -1350,9 +1354,7 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Social Link added successfully', 'user' => $user, 'Social' => $social], 200);
             }
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
+        
     }
 
     public function UserDetails($id=null)
@@ -1514,16 +1516,17 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-    public function AddBusinessLocation(Request $request)
+    public function AddBusinessLocation(Request $request ,$id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
         $data = $request->all();
-        if ($role == 2 || $role == 0) {
-            if($role !=2){
-
-            $businesslocation = BusinessProfile::where('user_id', $request->user_id)->first();
+       
+            if($id != null) {
+               
+            $businesslocation = BusinessProfile::where('user_id', $id)->first();
             }else{
+            
             $businesslocation = BusinessProfile::where('user_id', $userId)->first();   
             }
             if ($businesslocation) {
@@ -1559,9 +1562,7 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Service Area created successfully', 'servicelocation' => $servicelocation], 200);
             }
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
+        
     }
 
     public function UpdateBusinessLocation(Request $request)
@@ -1633,7 +1634,7 @@ class ServiceProviderController extends Controller
     {
 
         $role = Auth::user()->role;
-        if ($role == 2 || $role == 0) {
+      
                 $setting = BusinessProfile::where('user_id', $id)->first();
             if ($setting) {
                 $setting->update(['publish' => 1]);
@@ -1651,9 +1652,7 @@ class ServiceProviderController extends Controller
             } else {
                 return response()->json(['message' => 'No Setting found'], 401);
             }
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
+        
     }
 
     public function GetDealsByCategory(Request $request)
