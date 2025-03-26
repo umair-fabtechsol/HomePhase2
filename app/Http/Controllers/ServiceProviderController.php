@@ -23,6 +23,7 @@ use App\Models\SocialProfile;
 use App\Models\PaymentHistory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 class ServiceProviderController extends Controller
@@ -2290,5 +2291,53 @@ class ServiceProviderController extends Controller
         } else {
             return response()->json(['message' => 'You need to login'], 200);
         }
+    }
+    // fetch google reviews 
+    public function GetGoogleReviews(Request $request)
+    {
+        $businessLink = $request->business_link;
+
+        if (!$businessLink) {
+            return response()->json(['error' => 'Google Business Profile link is required'], 400);
+        }
+
+        $placeId = $this->extractPlaceId($businessLink);
+
+        if (!$placeId) {
+            return response()->json(['error' => 'Invalid Google Business Profile link'], 400);
+        }
+
+        $apiKey = config('services.google_reviews.place_api');
+
+        $reviewsUrl = "https://maps.googleapis.com/maps/api/place/details/json?place_id={$placeId}&fields=name,rating,reviews&key={$apiKey}";
+
+        $reviewsResponse = Http::get($reviewsUrl);
+        $reviewsData = $reviewsResponse->json();
+
+        if (!isset($reviewsData['result']['reviews'])) {
+            return response()->json(['error' => 'No reviews found'], 404);
+        }
+
+        return response()->json($reviewsData['result']['reviews']);
+    }
+
+    private function extractPlaceId($url)
+    {
+        if (preg_match('/place_id:([a-zA-Z0-9_-]+)/', $url, $matches)) {
+            return $matches[1];
+        }
+        return $this->resolveShortLink($url);
+    }
+
+    private function resolveShortLink($shortUrl)
+    {
+        $apiKey = config('services.google_reviews.place_api');
+        
+        $resolveUrl = "https://maps.googleapis.com/maps/api/place/details/json?key={$apiKey}&fields=place_id&place_id={$shortUrl}";
+
+        $response = Http::get($resolveUrl);
+        $data = $response->json();
+
+        return $data['result']['place_id'] ?? null;
     }
 }
