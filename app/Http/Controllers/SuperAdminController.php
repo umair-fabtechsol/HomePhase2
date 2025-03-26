@@ -195,9 +195,18 @@ class SuperAdminController extends Controller
                 ->where('provider_id', $user_id)
                 ->first();
 
-            // $reviewDetail = Review::leftjion('users', 'users.id', '=', 'reviews.user_id')->leftjion('deals', 'deals.id', '=', 'reviews.deal_id')->select('reviews.*', 'users.name as user_name', 'deals.title as deal_title')->where('reviews.provider_id', $user_id)->get();
+            $detailReviews = Review::leftJoin('users', 'users.id', '=', 'reviews.user_id')
+            ->leftJoin('deals', 'deals.id', '=', 'reviews.deal_id')
+            ->select(
+                'reviews.*',
+                'users.name as user_name',
+                'users.personal_image',
+                'deals.service_title'
+            )
+            ->where('reviews.provider_id', $user_id) // Filters by provider_id
+            ->get();
 
-            return response()->json(['message' => 'Provider Details', 'user' => $user, 'deals' => $deals, 'business' => $business, 'averageRating' => $averageRating, 'totalReview' => $totalReview, 'stars' => $stars], 200);
+            return response()->json(['message' => 'Provider Details', 'user' => $user, 'deals' => $deals, 'business' => $business, 'averageRating' => $averageRating, 'totalReview' => $totalReview, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
