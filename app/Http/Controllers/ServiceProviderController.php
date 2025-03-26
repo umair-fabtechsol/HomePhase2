@@ -689,11 +689,11 @@ class ServiceProviderController extends Controller
     public function MyDetails(Request $request ,$id = null)
     {
         $role = Auth::user()->role;
-        
+        $userId = Auth::id();
         if($id != null){
             $user = User::find($id);
         }else{
-            $user = User::find($request->id); 
+            $user = User::find($userId); 
         }
        
             
