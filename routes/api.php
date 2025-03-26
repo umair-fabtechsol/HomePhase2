@@ -100,7 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('GetBusiness/{id}', 'GetBusiness')->name('GetBusiness');
 
 
-        Route::get('SettingPublish/{id}', 'SettingPublish')->name('SettingPublish');
+        Route::get('SettingPublish/{id?}', 'SettingPublish')->name('SettingPublish');
         Route::post('GetDealsByCategory', 'GetDealsByCategory')->name('GetDealsByCategory');
 
         Route::post('OrderBeforeImages', 'OrderBeforeImages')->name('OrderBeforeImages');
