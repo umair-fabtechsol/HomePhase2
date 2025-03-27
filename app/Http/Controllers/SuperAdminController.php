@@ -722,7 +722,7 @@ class SuperAdminController extends Controller
             ]);
 
 
-            $signupUrl = url('/register?email=' . urlencode($request->email));
+            $signupUrl = url('https://homeprodeals.com/signup?email=' . urlencode($request->email));
 
 
             Mail::to($request->email)->send(new InviteSalesRepMail($signupUrl));
