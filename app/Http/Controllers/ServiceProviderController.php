@@ -1490,9 +1490,11 @@ class ServiceProviderController extends Controller
             }
             if ($businesslocation) {
                 
+                if(isset($data['business_location']) || isset($data['service_location']) || isset($data['restrict_location'])){
                 $data['business_location'] = json_encode($data['business_location']);
                 $data['service_location'] = json_encode($data['service_location']);
                 $data['restrict_location'] = json_encode($data['restrict_location']);
+                }
                 $updatedbusinesslocation = $businesslocation->update($data);
                 $notifications = [
                     'title' => 'Update Service Area',
