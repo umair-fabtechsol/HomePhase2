@@ -1490,10 +1490,16 @@ class ServiceProviderController extends Controller
             }
             if ($businesslocation) {
             
-                if(isset($data['business_location']) || isset($data['service_location']) || isset($data['restrict_location'])){
-                $data['business_location'] = json_encode($data['business_location']);
-                $data['service_location'] = json_encode($data['service_location']);
-                $data['restrict_location'] = json_encode($data['restrict_location']);
+                if (isset($data['business_location'])) {
+                    $data['business_location'] = json_encode($data['business_location']);
+                }
+                
+                if (isset($data['service_location'])) {
+                    $data['service_location'] = json_encode($data['service_location']);
+                }
+                
+                if (isset($data['restrict_location'])) {
+                    $data['restrict_location'] = json_encode($data['restrict_location']);
                 }
             
                 $updatedbusinesslocation = $businesslocation->update($data);
@@ -1508,9 +1514,17 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Service Area updated successfully', 'servicelocation' => $businesslocation], 200);
             } else {
-                $data['business_location'] = json_encode($data['business_location']);
-                $data['service_location'] = json_encode($data['service_location']);
-                $data['restrict_location'] = json_encode($data['restrict_location']);
+                if (isset($data['business_location'])) {
+                    $data['business_location'] = json_encode($data['business_location']);
+                }
+                
+                if (isset($data['service_location'])) {
+                    $data['service_location'] = json_encode($data['service_location']);
+                }
+                
+                if (isset($data['restrict_location'])) {
+                    $data['restrict_location'] = json_encode($data['restrict_location']);
+                }
                 $data['user_id'] = $userId;
                 $servicelocation = BusinessProfile::create($data);
                 $notifications = [
