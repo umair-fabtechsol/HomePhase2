@@ -1383,9 +1383,19 @@ class ServiceProviderController extends Controller
                 $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
                 return $deal;
             });
-            $getSocial = SocialProfile::where('user_id', $userId)->get();
+            if($id != null){
+                $getSocial = SocialProfile::where('user_id', $id)->get();
+            }
+            else {
+                $getSocial = SocialProfile::where('user_id', $userId)->get();
+            }
 
-            $getReviews = Review::where('provider_id', $userId)->get();
+            if($id != null){
+                $getReviews = Review::where('provider_id', $userId)->get();
+            }
+            else {
+                $getReviews = Review::where('provider_id', $userId)->get();
+            }
             if ($getReviews->isNotEmpty()) {
                 $provider_reviews = [];
                 $provider_reviews['average'] = floor($getReviews->avg('rating'));
