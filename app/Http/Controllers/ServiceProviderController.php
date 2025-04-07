@@ -766,17 +766,12 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-      
-
             if($id != null){
-         
                 $businessProfile = BusinessProfile::where('user_id', $id)->first();
             }else{  
-                
-              
                 $businessProfile = BusinessProfile::where('user_id', $userId)->first();
             }
-        
+            // return response()->json(['BusinessProfile' => $businessProfile], 200); die();
                 $data = $request->all();
                
                 if ($businessProfile) {
@@ -792,11 +787,11 @@ class ServiceProviderController extends Controller
                         $data['business_logo'] = $photo_name1;
                         $businessProfile->update($data);
                     }
-                    $businessProfile->update($data);
+                    $businessProfile = $businessProfile->update($data);
                     $notifications = [
                         'title' => 'Update User Business Profile',
                         'message' => 'User Business Profile Updated successfully',
-                        'created_by' => $businessProfile->user_id,
+                        'created_by' => $id,
                         'status' => 0,
                         'clear' => 'no',
 
@@ -805,28 +800,36 @@ class ServiceProviderController extends Controller
 
                     return response()->json(['message' => 'User Business Profile Updated successfully', 'BusinessProfile' => $businessProfile], 200);
                 } else {
-                    if ($request->hasFile('business_logo')) {
-                        $photo1 = $request->file('business_logo');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['business_logo'] = $photo_name1;
+                    $userExist = User::find($id);
+                    if($userExist) {
+                        if ($request->hasFile('business_logo')) {
+                            $photo1 = $request->file('business_logo');
+                            $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+                            $photo_destination = public_path('uploads');
+                            $photo1->move($photo_destination, $photo_name1);
+                            $data['business_logo'] = $photo_name1;
+                        }
+                        $data['user_id'] = $id;
+                        $businessProfile = BusinessProfile::create($data);
+
+                        $notifications = [
+                            'title' => 'Created User Business Profile',
+                            'message' => 'User Business Profile created successfully',
+                            'created_by' => $userId,
+                            'status' => 0,
+                            'clear' => 'no',
+
+                        ];
+                        Notification::create($notifications);
                     }
-                    $data['user_id'] = $userId;
-                    $businessProfile = BusinessProfile::create($data);
-
-                    $notifications = [
-                        'title' => 'Created User Business Profile',
-                        'message' => 'User Business Profile created successfully',
-                        'created_by' => $userId,
-                        'status' => 0,
-                        'clear' => 'no',
-
-                    ];
-                    Notification::create($notifications);
+                    else {
+                        return response()->json([
+                            'message' => 'Error: User does not exist. In order to create or update business profile, please add a valid user first.'
+                        ], 404);
+                    }
                 }
 
-                return response()->json(['message' => 'User Business Profile created successfully', 'user' => $user, 'BusinessProfile' => $businessProfile], 200);
+                return response()->json(['message' => 'User Business Profile created successfully', 'BusinessProfile' => $businessProfile], 200);
     
     }
     public function AddPaymentDetails(Request $request)
