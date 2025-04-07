@@ -750,7 +750,7 @@ class ServiceProviderController extends Controller
                 }
             if ($user) {
                 if (!Hash::check($request->current_password, $user->password)) {
-                    return response()->json(['message' => 'Current password is incorrect'], 200);
+                    return response()->json(['message' => 'Current password is incorrect'], 401);
                 }
                 $user->password = Hash::make($request->password);
                 $user->save();
