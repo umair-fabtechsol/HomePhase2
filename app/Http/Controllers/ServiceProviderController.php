@@ -773,7 +773,6 @@ class ServiceProviderController extends Controller
             }
             // return response()->json(['BusinessProfile' => $businessProfile], 200); die();
                 $data = $request->all();
-               
                 if ($businessProfile) {
                     if ($request->hasFile('business_logo')) {
                         $imagePath = public_path('uploads/' . $businessProfile->business_logo);
