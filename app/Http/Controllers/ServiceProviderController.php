@@ -784,13 +784,13 @@ class ServiceProviderController extends Controller
                         $photo_destination = public_path('uploads');
                         $photo1->move($photo_destination, $photo_name1);
                         $data['business_logo'] = $photo_name1;
-                        $businessProfile->update($data);
+                        $businessProfile = $businessProfile->update($data);
                     }
-                    $businessProfile = $businessProfile->update($data);
+                    // $businessProfile = $businessProfile->update($data);
                     $notifications = [
                         'title' => 'Update User Business Profile',
                         'message' => 'User Business Profile Updated successfully',
-                        'created_by' => $id,
+                        'created_by' => $userId,
                         'status' => 0,
                         'clear' => 'no',
 
@@ -810,7 +810,6 @@ class ServiceProviderController extends Controller
                         }
                         $data['user_id'] = $id;
                         $businessProfile = BusinessProfile::create($data);
-
                         $notifications = [
                             'title' => 'Created User Business Profile',
                             'message' => 'User Business Profile created successfully',
@@ -1383,9 +1382,19 @@ class ServiceProviderController extends Controller
                 $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
                 return $deal;
             });
-            $getSocial = SocialProfile::where('user_id', $userId)->get();
+            if($id != null){
+                $getSocial = SocialProfile::where('user_id', $id)->get();
+            }
+            else {
+                $getSocial = SocialProfile::where('user_id', $userId)->get();
+            }
 
-            $getReviews = Review::where('provider_id', $userId)->get();
+            if($id != null){
+                $getReviews = Review::where('provider_id', $userId)->get();
+            }
+            else {
+                $getReviews = Review::where('provider_id', $userId)->get();
+            }
             if ($getReviews->isNotEmpty()) {
                 $provider_reviews = [];
                 $provider_reviews['average'] = floor($getReviews->avg('rating'));
