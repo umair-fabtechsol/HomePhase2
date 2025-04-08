@@ -47,20 +47,20 @@ class CustomerController extends Controller
             if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
                 $data['phone'] = '+' . $data['phone'];
             }
-            $validator = Validator::make($data, [
-                'phone' => ['required', 'phone:AUTO'], 
-            ]);
-            if ($validator->fails()) {
-                return response()->json(['phone' => 'Invalid phone number'], 400);
-            }
+            // $validator = Validator::make($data, [
+            //     'phone' => ['required', 'phone:AUTO'], 
+            // ]);
+            // if ($validator->fails()) {
+            //     return response()->json(['phone' => 'Invalid phone number'], 400);
+            // }
             $user->update($data);
-            // $notification = [
-            //     'title' => 'Profile Updated',
-            //     'message' => 'Profile has been updated successfully',
-            //     'created_by' => $userId,
-            //     'status' => 0,
-            //     'clear' => 'no',
-            // ];
+            $notification = [
+                'title' => 'Profile Updated',
+                'message' => 'Profile has been updated successfully',
+                'created_by' => $userId,
+                'status' => 0,
+                'clear' => 'no',
+            ];
             Notification::create($notification);
             return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
         } else {
