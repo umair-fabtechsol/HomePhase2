@@ -83,7 +83,8 @@ class AuthController extends Controller
         }
         if ($user->status == 1) {
             return response()->json([
-                'message' => 'You account has been banned'
+                'ban' => 'Your account has been banned. Please contact the administrator.',
+                'status' => $user->status,
             ], 401);
         }
 
@@ -96,7 +97,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
         return [
             'user' => $user,
-            'token' => $token
+            'token' => $token,
         ];
     }
 
