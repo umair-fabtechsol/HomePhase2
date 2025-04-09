@@ -1435,55 +1435,73 @@ class ServiceProviderController extends Controller
         
     }
 
-    public function SocialDelete(Request $request)
+    public function SocialDelete(Request $request, $id = null)
     {
         $role = Auth::user()->role;
-        if ($role == 2) {
-            $social = SocialProfile::where('user_id', $request->id)->first();
+        $uid = Auth::user()->id;
 
-            if ($social->facebook != null && $request['facebook'] == $social->facebook) {
-
-                $social->update(['facebook' => null]);
-                $message = 'Social facebook has been removed successfully';
+        if ($role == 2 || $role == 0) {
+            if($role == 0 && $id == null) {
+                return response()->json(['error' => "Admin is not allowed to update his profile"], 401);
             }
-            if ($social->twitter != null && $request['twitter'] == $social->twitter) {
-
-                $social->update(['twitter' => null]);
-                $message = 'Social twitter has been removed successfully';
+            else {
+                if($id != null){
+                    $social = SocialProfile::where('user_id', $id)->first();
+                    // $socialExist = Social::where('user_id',$id);
+                }else {
+                    $social = SocialProfile::where('user_id', $uid)->first();
+                    // $socialExist = Social::where('user_id',$id);
+                }
+                if($social) {
+                    $message = 'Old link is incorrect or already null';
+                    if ($social->facebook != null && $request['facebook'] == $social->facebook) {
+                        $social->update(['facebook' => null]);
+                        $message = 'Social facebook has been removed successfully';
+                    }
+                    if ($social->twitter != null && $request['twitter'] == $social->twitter) {
+        
+                        $social->update(['twitter' => null]);
+                        $message = 'Social twitter has been removed successfully';
+                    }
+                    if ($social->instagram != null && $request['instagram'] == $social->instagram) {
+        
+                        $social->update(['instagram' => null]);
+                        $message = 'Social Instagram has been removed successfully';
+                    }
+                    if ($social->linkedin != null && $request['linkedin'] == $social->linkedin) {
+        
+                        $social->update(['linkedin' => null]);
+                        $message = 'Social Linkdin has been removed successfully';
+                    }
+                    if ($social->youtube != null && $request['youtube'] == $social->youtube) {
+        
+                        $social->update(['youtube' => null]);
+                        $message = 'Social Youtube has been removed successfully';
+                    }
+                    if ($social->google_business != null && $request['google_business'] == $social->google_business) {
+        
+                        $social->update(['google_business' => null]);
+                        $message = 'Social Google Business has been removed successfully';
+                    }
+        
+                    // $notifications = [
+                    //     'title' => 'Delete Social Link',
+                    //     'message' => 'Socials Link deleted successfully',
+                    //     'created_by' => $social->user_id,
+                    //     'status' => 0,
+                    //     'clear' => 'no',
+        
+                    // ];
+                    // Notification::create($notifications);
+                    
+                    return response()->json(['message' => $message, 'social' => $social], 200);
+                }
+                else {
+                    return response()->json(['error' => "Invalid Profile User"], 403);
+                }
             }
-            if ($social->instagram != null && $request['instagram'] == $social->instagram) {
-
-                $social->update(['instagram' => null]);
-                $message = 'Social Instagram has been removed successfully';
-            }
-            if ($social->linkedin != null && $request['linkedin'] == $social->linkedin) {
-
-                $social->update(['linkedin' => null]);
-                $message = 'Social Linkdin has been removed successfully';
-            }
-            if ($social->youtube != null && $request['youtube'] == $social->youtube) {
-
-                $social->update(['youtube' => null]);
-                $message = 'Social Youtube has been removed successfully';
-            }
-            if ($social->google_business != null && $request['google_business'] == $social->google_business) {
-
-                $social->update(['google_business' => null]);
-                $message = 'Social Google Business has been removed successfully';
-            }
-
-            $notifications = [
-                'title' => 'Delete Social Link',
-                'message' => 'Socials Link deleted successfully',
-                'created_by' => $social->user_id,
-                'status' => 0,
-                'clear' => 'no',
-
-            ];
-            Notification::create($notifications);
-            return response()->json(['message' => $message, 'social' => $social], 200);
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            return response()->json(['message' => 'You are not authorized, This api is only for provider and admin'], 401);
         }
     }
     public function AddBusinessLocation(Request $request ,$id = null)
