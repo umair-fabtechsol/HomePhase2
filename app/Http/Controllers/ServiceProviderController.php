@@ -388,14 +388,11 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function MediaUpload(Request $request)
-    {
-        
+    public function MediaUpload(Request $request) {    
         $userId = Auth::id();
         $data = $request->all();
         $DealImages = [];
         $DealVideos = [];
-
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
                 $photo_name = time() . '-' . $photo->getClientOriginalName();
@@ -403,7 +400,6 @@ class ServiceProviderController extends Controller
                 $DealImages[] = $photo_name;
             }
         }
-
         if ($request->hasFile('videos')) {
             foreach ($request->file('videos') as $video) {
                 $video_name = time() . '-' . $video->getClientOriginalName();
@@ -411,23 +407,26 @@ class ServiceProviderController extends Controller
                 $DealVideos[] = $video_name;
             }
         }
-
-
         $data['images'] = json_encode($DealImages);
         $data['videos'] = json_encode($DealVideos);
-        
         $deal = Deal::find($request->deal_id);
         if ($deal) {
-
-
             $existingImages = json_decode($deal->images, true) ?? [];
             $uniqueImages = array_diff($existingImages, $request->images);
             $existingVideos = json_decode($deal->videos, true) ?? [];
-            $deal->update([
-                'images' => json_encode(array_merge($existingImages, $DealImages)),
-                'videos' => json_encode(array_merge($existingVideos, $DealVideos))
-            ]);
 
+            $newImages = $request->images ?? [];
+            $uniqueNewImages = array_values(array_diff($newImages, $existingImages));
+            $finalImages = array_merge($existingImages, $uniqueNewImages);
+
+            $newVideos = $request->videos ?? [];
+            $uniqueNewVideos = array_values(array_diff($newVideos, $existingVideos));
+            $finalVideos = array_merge($existingVideos, $uniqueNewVideos);
+
+            $deal->update([
+                'images' => json_encode($finalImages),
+                'videos' => json_encode($finalVideos)
+            ]);
             return response()->json([
                 'message' => 'Deal Images updated successfully',
                 'deal' => $deal,
@@ -1435,55 +1434,73 @@ class ServiceProviderController extends Controller
         
     }
 
-    public function SocialDelete(Request $request)
+    public function SocialDelete(Request $request, $id = null)
     {
         $role = Auth::user()->role;
-        if ($role == 2) {
-            $social = SocialProfile::where('user_id', $request->id)->first();
+        $uid = Auth::user()->id;
 
-            if ($social->facebook != null && $request['facebook'] == $social->facebook) {
-
-                $social->update(['facebook' => null]);
-                $message = 'Social facebook has been removed successfully';
+        if ($role == 2 || $role == 0) {
+            if($role == 0 && $id == null) {
+                return response()->json(['error' => "Admin is not allowed to update his profile"], 401);
             }
-            if ($social->twitter != null && $request['twitter'] == $social->twitter) {
-
-                $social->update(['twitter' => null]);
-                $message = 'Social twitter has been removed successfully';
+            else {
+                if($id != null){
+                    $social = SocialProfile::where('user_id', $id)->first();
+                    // $socialExist = Social::where('user_id',$id);
+                }else {
+                    $social = SocialProfile::where('user_id', $uid)->first();
+                    // $socialExist = Social::where('user_id',$id);
+                }
+                if($social) {
+                    $message = 'Old link is incorrect or already null';
+                    if ($social->facebook != null && $request['facebook'] == $social->facebook) {
+                        $social->update(['facebook' => null]);
+                        $message = 'Social facebook has been removed successfully';
+                    }
+                    if ($social->twitter != null && $request['twitter'] == $social->twitter) {
+        
+                        $social->update(['twitter' => null]);
+                        $message = 'Social twitter has been removed successfully';
+                    }
+                    if ($social->instagram != null && $request['instagram'] == $social->instagram) {
+        
+                        $social->update(['instagram' => null]);
+                        $message = 'Social Instagram has been removed successfully';
+                    }
+                    if ($social->linkedin != null && $request['linkedin'] == $social->linkedin) {
+        
+                        $social->update(['linkedin' => null]);
+                        $message = 'Social Linkdin has been removed successfully';
+                    }
+                    if ($social->youtube != null && $request['youtube'] == $social->youtube) {
+        
+                        $social->update(['youtube' => null]);
+                        $message = 'Social Youtube has been removed successfully';
+                    }
+                    if ($social->google_business != null && $request['google_business'] == $social->google_business) {
+        
+                        $social->update(['google_business' => null]);
+                        $message = 'Social Google Business has been removed successfully';
+                    }
+        
+                    // $notifications = [
+                    //     'title' => 'Delete Social Link',
+                    //     'message' => 'Socials Link deleted successfully',
+                    //     'created_by' => $social->user_id,
+                    //     'status' => 0,
+                    //     'clear' => 'no',
+        
+                    // ];
+                    // Notification::create($notifications);
+                    
+                    return response()->json(['message' => $message, 'social' => $social], 200);
+                }
+                else {
+                    return response()->json(['error' => "Invalid Profile User"], 403);
+                }
             }
-            if ($social->instagram != null && $request['instagram'] == $social->instagram) {
-
-                $social->update(['instagram' => null]);
-                $message = 'Social Instagram has been removed successfully';
-            }
-            if ($social->linkedin != null && $request['linkedin'] == $social->linkedin) {
-
-                $social->update(['linkedin' => null]);
-                $message = 'Social Linkdin has been removed successfully';
-            }
-            if ($social->youtube != null && $request['youtube'] == $social->youtube) {
-
-                $social->update(['youtube' => null]);
-                $message = 'Social Youtube has been removed successfully';
-            }
-            if ($social->google_business != null && $request['google_business'] == $social->google_business) {
-
-                $social->update(['google_business' => null]);
-                $message = 'Social Google Business has been removed successfully';
-            }
-
-            $notifications = [
-                'title' => 'Delete Social Link',
-                'message' => 'Socials Link deleted successfully',
-                'created_by' => $social->user_id,
-                'status' => 0,
-                'clear' => 'no',
-
-            ];
-            Notification::create($notifications);
-            return response()->json(['message' => $message, 'social' => $social], 200);
         } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            return response()->json(['message' => 'You are not authorized, This api is only for provider and admin'], 401);
         }
     }
     public function AddBusinessLocation(Request $request ,$id = null)
