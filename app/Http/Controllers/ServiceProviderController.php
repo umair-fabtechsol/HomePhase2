@@ -388,14 +388,11 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function MediaUpload(Request $request)
-    {
-        
+    public function MediaUpload(Request $request) {    
         $userId = Auth::id();
         $data = $request->all();
         $DealImages = [];
         $DealVideos = [];
-
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
                 $photo_name = time() . '-' . $photo->getClientOriginalName();
@@ -403,7 +400,6 @@ class ServiceProviderController extends Controller
                 $DealImages[] = $photo_name;
             }
         }
-
         if ($request->hasFile('videos')) {
             foreach ($request->file('videos') as $video) {
                 $video_name = time() . '-' . $video->getClientOriginalName();
@@ -411,23 +407,26 @@ class ServiceProviderController extends Controller
                 $DealVideos[] = $video_name;
             }
         }
-
-
         $data['images'] = json_encode($DealImages);
         $data['videos'] = json_encode($DealVideos);
-        
         $deal = Deal::find($request->deal_id);
         if ($deal) {
-
-
             $existingImages = json_decode($deal->images, true) ?? [];
             $uniqueImages = array_diff($existingImages, $request->images);
             $existingVideos = json_decode($deal->videos, true) ?? [];
-            $deal->update([
-                'images' => json_encode(array_merge($existingImages, $DealImages)),
-                'videos' => json_encode(array_merge($existingVideos, $DealVideos))
-            ]);
 
+            $newImages = $request->images ?? [];
+            $uniqueNewImages = array_values(array_diff($newImages, $existingImages));
+            $finalImages = array_merge($existingImages, $uniqueNewImages);
+
+            $newVideos = $request->videos ?? [];
+            $uniqueNewVideos = array_values(array_diff($newVideos, $existingVideos));
+            $finalVideos = array_merge($existingVideos, $uniqueNewVideos);
+
+            $deal->update([
+                'images' => json_encode($finalImages),
+                'videos' => json_encode($finalVideos)
+            ]);
             return response()->json([
                 'message' => 'Deal Images updated successfully',
                 'deal' => $deal,
