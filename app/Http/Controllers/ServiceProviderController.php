@@ -387,12 +387,14 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
-    public function MediaUpload(Request $request) {    
+    //left: admin can update any but provider can only his
+    public function MediaUpload(Request $request)
+    {
         $userId = Auth::id();
-        $data = $request->all();
         $DealImages = [];
         $DealVideos = [];
+    
+        // Upload Images
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
                 $photo_name = time() . '-' . $photo->getClientOriginalName();
@@ -400,6 +402,8 @@ class ServiceProviderController extends Controller
                 $DealImages[] = $photo_name;
             }
         }
+    
+        // Upload Videos
         if ($request->hasFile('videos')) {
             foreach ($request->file('videos') as $video) {
                 $video_name = time() . '-' . $video->getClientOriginalName();
@@ -407,42 +411,46 @@ class ServiceProviderController extends Controller
                 $DealVideos[] = $video_name;
             }
         }
-        $data['images'] = json_encode($DealImages);
-        $data['videos'] = json_encode($DealVideos);
+    
+        // Check for existing deal
         $deal = Deal::find($request->deal_id);
         if ($deal) {
             $existingImages = json_decode($deal->images, true) ?? [];
-            $uniqueImages = array_diff($existingImages, $request->images);
             $existingVideos = json_decode($deal->videos, true) ?? [];
-
-            $newImages = $request->images ?? [];
-            $uniqueNewImages = array_values(array_diff($newImages, $existingImages));
-            $finalImages = array_merge($existingImages, $uniqueNewImages);
-
-            $newVideos = $request->videos ?? [];
-            $uniqueNewVideos = array_values(array_diff($newVideos, $existingVideos));
-            $finalVideos = array_merge($existingVideos, $uniqueNewVideos);
-
+    
+            // Just merge new media into existing
+            $updatedImages = array_merge($existingImages, $DealImages);
+            $updatedVideos = array_merge($existingVideos, $DealVideos);
+    
             $deal->update([
-                'images' => json_encode($finalImages),
-                'videos' => json_encode($finalVideos)
+                'images' => json_encode($updatedImages),
+                'videos' => json_encode($updatedVideos),
             ]);
+    
             return response()->json([
-                'message' => 'Deal Images updated successfully',
+                'message' => 'Deal media updated successfully.',
                 'deal' => $deal,
-                'images' => $request->images,
-                'uniqueImages' => $uniqueImages,
+                'uploaded_images' => $DealImages,
+                'uploaded_videos' => $DealVideos,
             ], 200);
         } else {
+            // Create new deal with uploaded media
+            $data = $request->all();
             $data['user_id'] = $userId;
+            $data['images'] = json_encode($DealImages);
+            $data['videos'] = json_encode($DealVideos);
+    
             $deal = Deal::create($data);
+    
             return response()->json([
-                'message' => 'Added new deal with Images successfully',
+                'message' => 'New deal created with media successfully.',
                 'deal' => $deal,
-                'images' => $request->images,
+                'uploaded_images' => $DealImages,
+                'uploaded_videos' => $DealVideos,
             ], 200);
         }
     }
+    
 
     public function DeleteMediaUpload(Request $request){
 
