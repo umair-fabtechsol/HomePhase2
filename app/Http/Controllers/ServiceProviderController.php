@@ -655,37 +655,82 @@ class ServiceProviderController extends Controller
         }
     }
 
+    // public function DeleteDeal($id)
+    // {
+    //     $deal = Deal::find($id);
+    //     $images = json_decode($deal->images, true);
+    //     $videos = json_decode($deal->videos, true);
+
+    //     if ($deal) {
+    //         if (!empty($images)) {
+    //             foreach ($images as $image) {
+    //                 $imagePath = public_path('uploads/' . $image);
+    //                 if (file_exists($imagePath)) {
+    //                     unlink($imagePath);
+    //                 }
+    //             }
+    //         }
+    //         if (!empty($videos)) {
+    //             foreach ($videos as $video) {
+    //                 $videoPath = public_path('uploads/' . $video);
+    //                 if (file_exists($videoPath)) {
+    //                     unlink($videoPath);
+    //                 }
+    //             }
+    //         }
+    //         $deal->delete();
+
+    //         return response()->json(['message' => 'Deal deleted successfully', 'deal' => $deal], 200);
+    //     } else {
+    //         return response()->json(['message' => 'No deal found'], 401);
+    //     }
+    // }
     public function DeleteDeal($id)
     {
+        $role = Auth::user()->role;
+        $userId = Auth::id();
+
         $deal = Deal::find($id);
-        $images = json_decode($deal->images, true);
-        $videos = json_decode($deal->videos, true);
-
-        if ($deal) {
-            if (!empty($images)) {
-                foreach ($images as $image) {
-                    $imagePath = public_path('uploads/' . $image);
-                    if (file_exists($imagePath)) {
-                        unlink($imagePath);
-                    }
-                }
-            }
-            if (!empty($videos)) {
-                foreach ($videos as $video) {
-                    $videoPath = public_path('uploads/' . $video);
-                    if (file_exists($videoPath)) {
-                        unlink($videoPath);
-                    }
-                }
-            }
-            $deal->delete();
-
-            return response()->json(['message' => 'Deal deleted successfully', 'deal' => $deal], 200);
-        } else {
-            return response()->json(['message' => 'No deal found'], 401);
+        if (!$deal) {
+            return response()->json(['message' => 'No deal found'], 404);
         }
-    }
 
+        // Check permissions
+        if ($role == 2 && $deal->user_id != $userId) {
+            return response()->json(['message' => 'You are not authorized to delete this deal'], 403);
+        }
+
+        $images = is_array(json_decode($deal->images, true)) ? json_decode($deal->images, true) : [];
+        $videos = is_array(json_decode($deal->videos, true)) ? json_decode($deal->videos, true) : [];
+
+        // Delete images
+        foreach ($images as $image) {
+            if (is_string($image)) { // Ensure $image is a string
+                $imagePath = public_path('uploads/' . $image);
+                if (file_exists($imagePath)) {
+                    unlink($imagePath);
+                }
+            }
+        }
+
+        // Delete videos
+        foreach ($videos as $video) {
+            if (is_string($video)) { // Ensure $video is a string
+                $videoPath = public_path('uploads/' . $video);
+                if (file_exists($videoPath)) {
+                    unlink($videoPath);
+                }
+            }
+        }
+
+        // Delete the deal from favorites
+        FavoritDeal::where('deal_id', $id)->delete();
+
+        // Delete the deal
+        $deal->delete();
+
+        return response()->json(['message' => 'Deal and associated favorites deleted successfully'], 200);
+    }
     public function MyDetails(Request $request ,$id = null)
     {
         $role = Auth::user()->role;

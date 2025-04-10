@@ -69,7 +69,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('Deals', 'Deals')->name('Deals');
         Route::get('Deal/{id}', 'Deal')->name('Deal');
-        Route::get('DeleteDeal/{id}', 'DeleteDeal')->name('DeleteDeal');
+        // Route::get('DeleteDeal/{id}', 'DeleteDeal')->name('DeleteDeal');
+        Route::delete('DeleteDeal/{id}', 'DeleteDeal')->name('DeleteDeal');
 
         Route::get('DealPublish/{deal_id}', 'DealPublish')->name('DealPublish');
 
