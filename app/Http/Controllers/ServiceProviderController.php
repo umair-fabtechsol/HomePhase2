@@ -765,10 +765,15 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
+            if($id != null && $role != 0){
+                return response()->json(['message' => 'Only admin can pass id parameter'], 401);
+            }
             if($id != null){
                 $businessProfile = BusinessProfile::where('user_id', $id)->first();
+                $userExist = User::find($id);
             }else{  
                 $businessProfile = BusinessProfile::where('user_id', $userId)->first();
+                $userExist = User::where('id',$userId);
             }
             // return response()->json(['BusinessProfile' => $businessProfile], 200); die();
                 $data = $request->all();
@@ -783,8 +788,8 @@ class ServiceProviderController extends Controller
                         $photo_destination = public_path('uploads');
                         $photo1->move($photo_destination, $photo_name1);
                         $data['business_logo'] = $photo_name1;
-                        $businessProfile = $businessProfile->update($data);
                     }
+                    $businessProfileup = $businessProfile->update($data);
                     // $businessProfile = $businessProfile->update($data);
                     $notifications = [
                         'title' => 'Update User Business Profile',
@@ -796,9 +801,8 @@ class ServiceProviderController extends Controller
                     ];
                     Notification::create($notifications);
 
-                    return response()->json(['message' => 'User Business Profile Updated successfully', 'BusinessProfile' => $businessProfile], 200);
+                    return response()->json(['message' => 'Business Profile Updated successfully', 'BusinessProfile' => $businessProfile], 200);
                 } else {
-                    $userExist = User::find($id);
                     if($userExist) {
                         if ($request->hasFile('business_logo')) {
                             $photo1 = $request->file('business_logo');
@@ -807,7 +811,11 @@ class ServiceProviderController extends Controller
                             $photo1->move($photo_destination, $photo_name1);
                             $data['business_logo'] = $photo_name1;
                         }
-                        $data['user_id'] = $id;
+                        if($id != null){
+                            $data['user_id'] = $id;
+                        } else{
+                            $data['user_id'] = $userId;
+                        }
                         $businessProfile = BusinessProfile::create($data);
                         $notifications = [
                             'title' => 'Created User Business Profile',
