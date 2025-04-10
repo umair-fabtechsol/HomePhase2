@@ -655,37 +655,82 @@ class ServiceProviderController extends Controller
         }
     }
 
+    // public function DeleteDeal($id)
+    // {
+    //     $deal = Deal::find($id);
+    //     $images = json_decode($deal->images, true);
+    //     $videos = json_decode($deal->videos, true);
+
+    //     if ($deal) {
+    //         if (!empty($images)) {
+    //             foreach ($images as $image) {
+    //                 $imagePath = public_path('uploads/' . $image);
+    //                 if (file_exists($imagePath)) {
+    //                     unlink($imagePath);
+    //                 }
+    //             }
+    //         }
+    //         if (!empty($videos)) {
+    //             foreach ($videos as $video) {
+    //                 $videoPath = public_path('uploads/' . $video);
+    //                 if (file_exists($videoPath)) {
+    //                     unlink($videoPath);
+    //                 }
+    //             }
+    //         }
+    //         $deal->delete();
+
+    //         return response()->json(['message' => 'Deal deleted successfully', 'deal' => $deal], 200);
+    //     } else {
+    //         return response()->json(['message' => 'No deal found'], 401);
+    //     }
+    // }
     public function DeleteDeal($id)
     {
+        $role = Auth::user()->role;
+        $userId = Auth::id();
+
         $deal = Deal::find($id);
-        $images = json_decode($deal->images, true);
-        $videos = json_decode($deal->videos, true);
-
-        if ($deal) {
-            if (!empty($images)) {
-                foreach ($images as $image) {
-                    $imagePath = public_path('uploads/' . $image);
-                    if (file_exists($imagePath)) {
-                        unlink($imagePath);
-                    }
-                }
-            }
-            if (!empty($videos)) {
-                foreach ($videos as $video) {
-                    $videoPath = public_path('uploads/' . $video);
-                    if (file_exists($videoPath)) {
-                        unlink($videoPath);
-                    }
-                }
-            }
-            $deal->delete();
-
-            return response()->json(['message' => 'Deal deleted successfully', 'deal' => $deal], 200);
-        } else {
-            return response()->json(['message' => 'No deal found'], 401);
+        if (!$deal) {
+            return response()->json(['message' => 'No deal found'], 404);
         }
-    }
 
+        // Check permissions
+        if ($role == 2 && $deal->user_id != $userId) {
+            return response()->json(['message' => 'You are not authorized to delete this deal'], 403);
+        }
+
+        $images = is_array(json_decode($deal->images, true)) ? json_decode($deal->images, true) : [];
+        $videos = is_array(json_decode($deal->videos, true)) ? json_decode($deal->videos, true) : [];
+
+        // Delete images
+        foreach ($images as $image) {
+            if (is_string($image)) { // Ensure $image is a string
+                $imagePath = public_path('uploads/' . $image);
+                if (file_exists($imagePath)) {
+                    unlink($imagePath);
+                }
+            }
+        }
+
+        // Delete videos
+        foreach ($videos as $video) {
+            if (is_string($video)) { // Ensure $video is a string
+                $videoPath = public_path('uploads/' . $video);
+                if (file_exists($videoPath)) {
+                    unlink($videoPath);
+                }
+            }
+        }
+
+        // Delete the deal from favorites
+        FavoritDeal::where('deal_id', $id)->delete();
+
+        // Delete the deal
+        $deal->delete();
+
+        return response()->json(['message' => 'Deal and associated favorites deleted successfully'], 200);
+    }
     public function MyDetails(Request $request ,$id = null)
     {
         $role = Auth::user()->role;
@@ -765,10 +810,15 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
+            if($id != null && $role != 0){
+                return response()->json(['message' => 'Only admin can pass id parameter'], 401);
+            }
             if($id != null){
                 $businessProfile = BusinessProfile::where('user_id', $id)->first();
+                $userExist = User::find($id);
             }else{  
                 $businessProfile = BusinessProfile::where('user_id', $userId)->first();
+                $userExist = User::where('id',$userId);
             }
             // return response()->json(['BusinessProfile' => $businessProfile], 200); die();
                 $data = $request->all();
@@ -783,8 +833,8 @@ class ServiceProviderController extends Controller
                         $photo_destination = public_path('uploads');
                         $photo1->move($photo_destination, $photo_name1);
                         $data['business_logo'] = $photo_name1;
-                        $businessProfile = $businessProfile->update($data);
                     }
+                    $businessProfileup = $businessProfile->update($data);
                     // $businessProfile = $businessProfile->update($data);
                     $notifications = [
                         'title' => 'Update User Business Profile',
@@ -796,9 +846,8 @@ class ServiceProviderController extends Controller
                     ];
                     Notification::create($notifications);
 
-                    return response()->json(['message' => 'User Business Profile Updated successfully', 'BusinessProfile' => $businessProfile], 200);
+                    return response()->json(['message' => 'Business Profile Updated successfully', 'BusinessProfile' => $businessProfile], 200);
                 } else {
-                    $userExist = User::find($id);
                     if($userExist) {
                         if ($request->hasFile('business_logo')) {
                             $photo1 = $request->file('business_logo');
@@ -807,7 +856,11 @@ class ServiceProviderController extends Controller
                             $photo1->move($photo_destination, $photo_name1);
                             $data['business_logo'] = $photo_name1;
                         }
-                        $data['user_id'] = $id;
+                        if($id != null){
+                            $data['user_id'] = $id;
+                        } else{
+                            $data['user_id'] = $userId;
+                        }
                         $businessProfile = BusinessProfile::create($data);
                         $notifications = [
                             'title' => 'Created User Business Profile',
