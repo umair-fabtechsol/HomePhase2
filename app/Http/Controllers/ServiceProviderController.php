@@ -393,8 +393,7 @@ class ServiceProviderController extends Controller
         $userId = Auth::id();
         $DealImages = [];
         $DealVideos = [];
-    
-        // Upload Images
+        $role = Auth::user()->role;
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
                 $photo_name = time() . '-' . $photo->getClientOriginalName();
@@ -402,8 +401,6 @@ class ServiceProviderController extends Controller
                 $DealImages[] = $photo_name;
             }
         }
-    
-        // Upload Videos
         if ($request->hasFile('videos')) {
             foreach ($request->file('videos') as $video) {
                 $video_name = time() . '-' . $video->getClientOriginalName();
@@ -411,14 +408,15 @@ class ServiceProviderController extends Controller
                 $DealVideos[] = $video_name;
             }
         }
-    
-        // Check for existing deal
         $deal = Deal::find($request->deal_id);
         if ($deal) {
+            if ($role == 2) {
+                if ($deal->user_id != $userId) {
+                    return response()->json(['message' => 'You are not authorized to update this deal.'], 401);
+                }
+            }
             $existingImages = json_decode($deal->images, true) ?? [];
             $existingVideos = json_decode($deal->videos, true) ?? [];
-    
-            // Just merge new media into existing
             $updatedImages = array_merge($existingImages, $DealImages);
             $updatedVideos = array_merge($existingVideos, $DealVideos);
     
@@ -426,7 +424,6 @@ class ServiceProviderController extends Controller
                 'images' => json_encode($updatedImages),
                 'videos' => json_encode($updatedVideos),
             ]);
-    
             return response()->json([
                 'message' => 'Deal media updated successfully.',
                 'deal' => $deal,
@@ -434,14 +431,14 @@ class ServiceProviderController extends Controller
                 'uploaded_videos' => $DealVideos,
             ], 200);
         } else {
-            // Create new deal with uploaded media
+            if ($role == 0) {
+               return response()->json(['message' => 'Admin is not authorized to create a new deal.'], 401);
+            }
             $data = $request->all();
             $data['user_id'] = $userId;
             $data['images'] = json_encode($DealImages);
             $data['videos'] = json_encode($DealVideos);
-    
             $deal = Deal::create($data);
-    
             return response()->json([
                 'message' => 'New deal created with media successfully.',
                 'deal' => $deal,
