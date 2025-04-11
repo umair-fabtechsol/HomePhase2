@@ -848,4 +848,31 @@ class SuperAdminController extends Controller
         ->get();
         return response()->json(['userCount' => $userCount]);
     }
+    public function DeleteProvider($id){
+        $role = Auth::user()->role;
+        if ($role == 0) {
+            $provider = User::find($id);
+            if (!$provider) {
+                return response()->json(['message' => 'Provider not found'], 404);
+            }
+
+            if ($provider->role != 2) {
+                return response()->json(['message' => 'Invalid User'], 403);
+            }
+
+            $imagePath = public_path('uploads/' . $provider->personal_image);
+            if (!empty($provider->personal_image) && file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+            $provider->delete();
+            Deal::where('user_id', $id)->delete();
+            BusinessProfile::where('user_id', $id)->delete();
+            Review::where('provider_id', $id)->delete();
+            Order::where('provider_id', $id)->delete();
+            PaymentHistory::where('user_id', $id)->delete();
+            return response()->json(['message' => 'Provider and its associated records deleted successfully', 'provider' => $provider], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized. Only admin can delete a provider'], 401);
+        }
+    }
 }
