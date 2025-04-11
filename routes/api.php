@@ -220,6 +220,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('banProvider', 'banProvider')->name('banProvider');
 
             Route::get('GetDateUser', 'GetDateUser')->name('GetDateUser');
+            Route::delete('DeleteProvider/{id}', 'DeleteProvider')->name('DeleteProvider');
 
         });
     });
