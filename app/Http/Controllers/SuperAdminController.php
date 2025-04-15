@@ -732,6 +732,55 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+    // public function sendInvite(Request $request)
+    // {
+    //     $role = Auth::user()->role;
+    //     if ($role == 0) {
+    //         $request->validate([
+    //             'name'  => 'required|string',
+    //             'email' => 'required|email',
+    //         ]);
+
+    //         // Generate a unique token
+    //         $token = bin2hex(random_bytes(16));
+    //         $expiryTime = Carbon::now()->addMinutes(10);
+
+    //         // Store the token and expiry time in the database
+    //         DB::table('invitation_tokens')->insert([
+    //             'email' => $request->email,
+    //             'token' => $token,
+    //             'expires_at' => $expiryTime,
+    //         ]);
+
+    //         $signupUrl = url('https://homeprodeals.com/signup/' . urlencode($request->email) . '?token=' . $token);
+
+    //         Mail::to($request->email)->send(new InviteSalesRepMail($signupUrl));
+
+    //         return response()->json(['message' => 'Invitation sent successfully!']);
+    //     } else {
+    //         return response()->json(['message' => 'You are not authorized'], 401);
+    //     }
+    // }
+
+    // public function validateInvite(Request $request)
+    // {
+    //     $email = $request->query('email');
+    //     $token = $request->query('token');
+
+    //     // Check if the token exists and is valid
+    //     $invitation = DB::table('invitation_tokens')
+    //         ->where('email', $email)
+    //         ->where('token', $token)
+    //         ->where('expires_at', '>', Carbon::now())
+    //         ->first();
+
+    //     if (!$invitation) {
+    //         return response()->json(['message' => 'Invalid or expired invitation link'], 400);
+    //     }
+
+    //     // Proceed with the signup process
+    //     return response()->json(['message' => 'Invitation link is valid'], 200);
+    // }
     public function contact()
     {
         $getcontact = contact_pro::get()->all();

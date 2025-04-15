@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
+use phpDocumentor\Reflection\Types\Null_;
 
 class ServiceProviderController extends Controller
 {
@@ -1096,109 +1097,212 @@ class ServiceProviderController extends Controller
 
     }
 
-    public function AddCertificateHours(Request $request ,$id = null)
+    // public function AddCertificateHours(Request $request ,$id = null)
+    // {
+    //     $role = Auth::user()->role;
+    //     $userId = Auth::id();
+     
+    //         $data = $request->all();
+    //         if($id != null){
+
+          
+    //         $updateCertificateHours = BusinessProfile::where('user_id', $id)->first();
+    //         }else{
+            
+    //         $updateCertificateHours = BusinessProfile::where('user_id', $userId)->first();
+    //         }
+    //         if ($updateCertificateHours) {
+
+    //             if ($request->hasFile('insurance_certificate')) {
+    //                 $imagePath = public_path('uploads/' . $updateCertificateHours->insurance_certificate);
+    //                 if (!empty($updateCertificateHours->insurance_certificate) && file_exists($imagePath)) {
+    //                     unlink($imagePath);
+    //                 }
+    //                 $photo1 = $request->file('insurance_certificate');
+    //                 $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+    //                 $photo_destination = public_path('uploads');
+    //                 $photo1->move($photo_destination, $photo_name1);
+    //                 $data['insurance_certificate'] = $photo_name1;
+    //             }
+    //             if ($request->hasFile('license_certificate')) {
+    //                 $imagePath = public_path('uploads/' . $updateCertificateHours->license_certificate);
+    //                 if (!empty($updateCertificateHours->license_certificate) && file_exists($imagePath)) {
+    //                     unlink($imagePath);
+    //                 }
+    //                 $photo2 = $request->file('license_certificate');
+    //                 $photo_name2 = time() . '-' . $photo2->getClientOriginalName();
+    //                 $photo_destination = public_path('uploads');
+    //                 $photo2->move($photo_destination, $photo_name2);
+    //                 $data['license_certificate'] = $photo_name2;
+    //             }
+    //             if ($request->hasFile('award_certificate')) {
+    //                 $imagePath = public_path('uploads/' . $updateCertificateHours->award_certificate);
+    //                 if (!empty($updateCertificateHours->award_certificate) && file_exists($imagePath)) {
+    //                     unlink($imagePath);
+    //                 }
+    //                 $photo3 = $request->file('award_certificate');
+    //                 $photo_name3 = time() . '-' . $photo3->getClientOriginalName();
+    //                 $photo_destination = public_path('uploads');
+    //                 $photo3->move($photo_destination, $photo_name3);
+    //                 $data['award_certificate'] = $photo_name3;
+    //             }
+    //             $updateCertificateHours->update($data);
+
+    //             $notifications = [
+    //                 'title' => 'Update Business CertificateHour',
+    //                 'message' => 'Business CertificateHour updated successfully',
+    //                 'created_by' => $updateCertificateHours->user_id,
+    //                 'status' => 0,
+    //                 'clear' => 'no',
+
+    //             ];
+    //             Notification::create($notifications);
+    //             return response()->json(['message' => 'Business CertificateHour updated successfully', 'updateCertificateHours' => $updateCertificateHours], 200);
+    //         } else {
+
+
+    //             if ($request->hasFile('insurance_certificate')) {
+    //                 $photo1 = $request->file('insurance_certificate');
+    //                 $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+    //                 $photo_destination = public_path('uploads');
+    //                 $photo1->move($photo_destination, $photo_name1);
+    //                 $data['insurance_certificate'] = $photo_name1;
+    //             }
+    //             if ($request->hasFile('license_certificate')) {
+    //                 $photo2 = $request->file('license_certificate');
+    //                 $photo_name2 = time() . '-' . $photo2->getClientOriginalName();
+    //                 $photo_destination = public_path('uploads');
+    //                 $photo2->move($photo_destination, $photo_name2);
+    //                 $data['license_certificate'] = $photo_name2;
+    //             }
+    //             if ($request->hasFile('award_certificate')) {
+    //                 $photo3 = $request->file('award_certificate');
+    //                 $photo_name3 = time() . '-' . $photo3->getClientOriginalName();
+    //                 $photo_destination = public_path('uploads');
+    //                 $photo3->move($photo_destination, $photo_name3);
+    //                 $data['award_certificate'] = $photo_name3;
+    //             }
+
+    //             $data['user_id'] = $userId;
+    //             $certificate = BusinessProfile::create($data);
+    //             $notifications = [
+    //                 'title' => 'Business CertificateHour ',
+    //                 'message' => 'Business CertificateHour created successfully',
+    //                 'created_by' => $userId,
+    //                 'status' => 0,
+    //                 'clear' => 'no',
+
+    //             ];
+    //             Notification::create($notifications);
+
+    //             return response()->json(['message' => 'Business CertificateHour created successfully', 'certificate' => $certificate], 200);
+    //         }
+       
+    // }
+    public function AddCertificateHours(Request $request, $id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-     
-            $data = $request->all();
-            if($id != null){
+        $data = $request->except(['insurance_certificate', 'license_certificate', 'award_certificate']); // Exclude files
+    
+        // Get business profile by user ID
+        // $targetUserId = $id ?? $userId;
+        // $updateCertificateHours = BusinessProfile::where('user_id', $targetUserId)->first();
 
-          
+        if($id != null){
             $updateCertificateHours = BusinessProfile::where('user_id', $id)->first();
-            }else{
-            
+            $userExist = User::find($id);
+        }else{
             $updateCertificateHours = BusinessProfile::where('user_id', $userId)->first();
+            $userExist = User::find($userId);
+        }
+        if($role != 0 && $id !=Null) {
+            return response()->json(['message' => 'Unauthorized! Only admin can provide id parameter'], 403);
+        }
+        if($role == 0 && $id == Null) {
+            return response()->json(['message' => 'Unauthorized! Incorrect token. Please use provider token'], 403);
+        }
+        // Function to handle multiple image uploads
+        $uploadMultiple = function ($fieldName, $existingPaths = []) use ($request) {
+            $newFiles = [];
+            if ($request->hasFile($fieldName)) {
+                // Delete old files
+                foreach ((array) $existingPaths as $oldFile) {
+                    $oldPath = public_path('uploads/' . $oldFile);
+                    if (!empty($oldFile) && file_exists($oldPath)) {
+                        unlink($oldPath);
+                    }
+                }
+    
+                // Upload new files
+                foreach ($request->file($fieldName) as $file) {
+                    $filename = time() . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('uploads'), $filename);
+                    $newFiles[] = $filename;
+                }
             }
+            return $newFiles;
+        };
+    
+        if($userExist) {
             if ($updateCertificateHours) {
-
-                if ($request->hasFile('insurance_certificate')) {
-                    $imagePath = public_path('uploads/' . $updateCertificateHours->insurance_certificate);
-                    if (!empty($updateCertificateHours->insurance_certificate) && file_exists($imagePath)) {
-                        unlink($imagePath);
-                    }
-                    $photo1 = $request->file('insurance_certificate');
-                    $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo1->move($photo_destination, $photo_name1);
-                    $data['insurance_certificate'] = $photo_name1;
+                if($id != Null) {
+                    $data['user_id'] = $id;
                 }
-                if ($request->hasFile('license_certificate')) {
-                    $imagePath = public_path('uploads/' . $updateCertificateHours->license_certificate);
-                    if (!empty($updateCertificateHours->license_certificate) && file_exists($imagePath)) {
-                        unlink($imagePath);
-                    }
-                    $photo2 = $request->file('license_certificate');
-                    $photo_name2 = time() . '-' . $photo2->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo2->move($photo_destination, $photo_name2);
-                    $data['license_certificate'] = $photo_name2;
+                else {
+                    $data['user_id'] = $userId;
                 }
-                if ($request->hasFile('award_certificate')) {
-                    $imagePath = public_path('uploads/' . $updateCertificateHours->award_certificate);
-                    if (!empty($updateCertificateHours->award_certificate) && file_exists($imagePath)) {
-                        unlink($imagePath);
-                    }
-                    $photo3 = $request->file('award_certificate');
-                    $photo_name3 = time() . '-' . $photo3->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo3->move($photo_destination, $photo_name3);
-                    $data['award_certificate'] = $photo_name3;
-                }
+                $data['insurance_certificate'] = json_encode($uploadMultiple('insurance_certificate', json_decode($updateCertificateHours->insurance_certificate, true)));
+                $data['license_certificate'] = json_encode($uploadMultiple('license_certificate', json_decode($updateCertificateHours->license_certificate, true)));
+                $data['award_certificate'] = json_encode($uploadMultiple('award_certificate', json_decode($updateCertificateHours->award_certificate, true)));
+        
                 $updateCertificateHours->update($data);
-
-                $notifications = [
+        
+                Notification::create([
                     'title' => 'Update Business CertificateHour',
                     'message' => 'Business CertificateHour updated successfully',
                     'created_by' => $updateCertificateHours->user_id,
                     'status' => 0,
                     'clear' => 'no',
-
-                ];
-                Notification::create($notifications);
-                return response()->json(['message' => 'Business CertificateHour updated successfully', 'updateCertificateHours' => $updateCertificateHours], 200);
+                ]);
+        
+                return response()->json([
+                    'message' => 'Business CertificateHour updated successfully',
+                    'updateCertificateHours' => $updateCertificateHours
+                ], 200);
             } else {
-
-
-                if ($request->hasFile('insurance_certificate')) {
-                    $photo1 = $request->file('insurance_certificate');
-                    $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo1->move($photo_destination, $photo_name1);
-                    $data['insurance_certificate'] = $photo_name1;
+                // Create new entry
+                $data['insurance_certificate'] = json_encode($uploadMultiple('insurance_certificate'));
+                $data['license_certificate'] = json_encode($uploadMultiple('license_certificate'));
+                $data['award_certificate'] = json_encode($uploadMultiple('award_certificate'));
+                if($id !=Null) {
+                    $data['user_id'] = $id;
                 }
-                if ($request->hasFile('license_certificate')) {
-                    $photo2 = $request->file('license_certificate');
-                    $photo_name2 = time() . '-' . $photo2->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo2->move($photo_destination, $photo_name2);
-                    $data['license_certificate'] = $photo_name2;
+                else {
+                    $data['user_id'] = $userId;
                 }
-                if ($request->hasFile('award_certificate')) {
-                    $photo3 = $request->file('award_certificate');
-                    $photo_name3 = time() . '-' . $photo3->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo3->move($photo_destination, $photo_name3);
-                    $data['award_certificate'] = $photo_name3;
-                }
-
-                $data['user_id'] = $userId;
+        
                 $certificate = BusinessProfile::create($data);
-                $notifications = [
-                    'title' => 'Business CertificateHour ',
+        
+                Notification::create([
+                    'title' => 'Business CertificateHour',
                     'message' => 'Business CertificateHour created successfully',
                     'created_by' => $userId,
                     'status' => 0,
                     'clear' => 'no',
-
-                ];
-                Notification::create($notifications);
-
-                return response()->json(['message' => 'Business CertificateHour created successfully', 'certificate' => $certificate], 200);
+                ]);
+        
+                return response()->json([
+                    'message' => 'Business CertificateHour created successfully',
+                    'certificate' => $certificate
+                ], 200);
             }
-       
+        }
+        else {
+            return response()->json(['message' => 'Invalid User'], 403);
+        }
     }
-
+    
     public function UpdateCertificateHours(Request $request)
     {
         $role = Auth::user()->role;
