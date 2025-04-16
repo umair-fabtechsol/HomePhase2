@@ -842,14 +842,14 @@ class CustomerController extends Controller
                 if ($getFavorit) {
                     FavoritDeal::where('user_id', $request->user_id)->where('deal_id', $request->deal_id)->delete();
                     $notification = [
-                        'title' => 'Remove Favorit Service',
+                        'title' => 'Removed from favorite list',
                         'message' => 'favorit Service has been remove successfully',
                         'created_by' => $user->id,
                         'status' => 0,
                         'clear' => 'no',
                     ];
                     Notification::create($notification);
-                    return response()->json(['message' => 'Remove Favorit Service', 'favoritService' => $getFavorit], 200);
+                    return response()->json(['message' => 'Removed from favorite list', 'favoritService' => $getFavorit], 200);
                 } else {
                     $data = $request->all();
                     $favoritService = FavoritDeal::create($data);
@@ -861,7 +861,7 @@ class CustomerController extends Controller
                         'clear' => 'no',
                     ];
                     Notification::create($notification);
-                    return response()->json(['message' => 'Added Favorit Service', 'favoritService' => $favoritService], 200);
+                    return response()->json(['message' => 'Added to favorite list', 'favoritService' => $favoritService], 200);
                 }
             } else {
                 return response()->json(['message' => 'No user found'], 401);
