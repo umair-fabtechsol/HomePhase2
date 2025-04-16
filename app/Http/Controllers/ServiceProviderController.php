@@ -1434,21 +1434,14 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-    
-
             if($id != null){
-               
                 $user = User::find($id);
-
-            $social = SocialProfile::where('user_id', $id)->first();
+                $social = SocialProfile::where('user_id', $id)->first();
             }else{
-            
-            $user = User::find($userId);
-
-            $social = SocialProfile::where('user_id', $userId)->first();
+                $user = User::find($userId);
+                $social = SocialProfile::where('user_id', $userId)->first();
             }
             $data = $request->all();
-
             if ($social) {
                 $social->update($data);
                 $notifications = [
@@ -1462,7 +1455,12 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Social Link updated successfully', 'user' => $user, 'Social' => $social], 200);
             } else {
-                $data['user_id'] = $userId;
+                
+                if($id != null){
+                    $data['user_id'] = $id;
+                }else{
+                    $data['user_id'] = $userId;
+                }
                 $social = SocialProfile::create($data);
                 $notifications = [
                     'title' => 'Added Social Link',
@@ -1623,6 +1621,11 @@ class ServiceProviderController extends Controller
         
                         $social->update(['twitter' => null]);
                         $message = 'Social twitter has been removed successfully';
+                    }
+                    if ($social->tiktok != null && $request['tiktok'] == $social->tiktok) {
+        
+                        $social->update(['tiktok' => null]);
+                        $message = 'Social tiktok has been removed successfully';
                     }
                     if ($social->instagram != null && $request['instagram'] == $social->instagram) {
         
@@ -2042,14 +2045,14 @@ class ServiceProviderController extends Controller
                 if ($getFavorit) {
                     FavoritDeal::where('user_id', $request->user_id)->where('deal_id', $request->deal_id)->delete();
                     $notification = [
-                        'title' => 'Remove Favorit Service',
+                        'title' => 'Removed from favorite list',
                         'message' => 'favorit Service has been remove successfully',
                         'created_by' => $user->id,
                         'status' => 0,
                         'clear' => 'no',
                     ];
                     Notification::create($notification);
-                    return response()->json(['message' => 'Remove Favorit Service', 'favoritService' => $getFavorit], 200);
+                    return response()->json(['message' => 'Removed from favorite list', 'favoritService' => $getFavorit], 200);
                 } else {
                     $data = $request->all();
                     $favoritService = FavoritDeal::create($data);
@@ -2061,7 +2064,7 @@ class ServiceProviderController extends Controller
                         'clear' => 'no',
                     ];
                     Notification::create($notification);
-                    return response()->json(['message' => 'Added Favorit Service', 'favoritService' => $favoritService], 200);
+                    return response()->json(['message' => 'Added to favorite list', 'favoritService' => $favoritService], 200);
                 }
             } else {
                 return response()->json(['message' => 'No user found'], 401);

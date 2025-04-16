@@ -30,6 +30,7 @@ class BusinessProfile extends Model
         'conversation_chat',
         'conversation_email',
         'conversation_address',
+        'conversation_website',
         'service_location_type',
         'business_location',
         'service_location',
