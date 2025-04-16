@@ -1624,6 +1624,11 @@ class ServiceProviderController extends Controller
                         $social->update(['twitter' => null]);
                         $message = 'Social twitter has been removed successfully';
                     }
+                    if ($social->tiktok != null && $request['tiktok'] == $social->tiktok) {
+        
+                        $social->update(['tiktok' => null]);
+                        $message = 'Social tiktok has been removed successfully';
+                    }
                     if ($social->instagram != null && $request['instagram'] == $social->instagram) {
         
                         $social->update(['instagram' => null]);

@@ -429,7 +429,10 @@ class CustomerController extends Controller
 
             $social->update(['google_business' => null]);
         }
+        if ($request['tiktok'] == $social->tiktok) {
 
+            $social->update(['tiktok' => null]);
+        }
         // $notification = [
         //     'title' => 'Delete Social Link',
         //     'message' => 'Social link has been deleted successfully',
