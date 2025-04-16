@@ -1434,21 +1434,14 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-    
-
             if($id != null){
-               
                 $user = User::find($id);
-
-            $social = SocialProfile::where('user_id', $id)->first();
+                $social = SocialProfile::where('user_id', $id)->first();
             }else{
-            
-            $user = User::find($userId);
-
-            $social = SocialProfile::where('user_id', $userId)->first();
+                $user = User::find($userId);
+                $social = SocialProfile::where('user_id', $userId)->first();
             }
             $data = $request->all();
-
             if ($social) {
                 $social->update($data);
                 $notifications = [
@@ -1462,7 +1455,12 @@ class ServiceProviderController extends Controller
                 Notification::create($notifications);
                 return response()->json(['message' => 'Social Link updated successfully', 'user' => $user, 'Social' => $social], 200);
             } else {
-                $data['user_id'] = $userId;
+                
+                if($id != null){
+                    $data['user_id'] = $id;
+                }else{
+                    $data['user_id'] = $userId;
+                }
                 $social = SocialProfile::create($data);
                 $notifications = [
                     'title' => 'Added Social Link',

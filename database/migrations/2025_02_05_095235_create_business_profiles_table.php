@@ -38,6 +38,7 @@ return new class extends Migration
             $table->boolean('conversation_chat')->default(false);
             $table->text('conversation_email')->nullable();
             $table->text('conversation_address')->nullable();
+            $table->text('conversation_website')->nullable();
             $table->string('service_location_type')->nullable();
             $table->text('business_location')->nullable();
             $table->text('service_location')->nullable();
