@@ -13,6 +13,7 @@ class SocialProfile extends Model
         'instagram',
         'linkedin',
         'youtube',
+        'tiktok',
         'google_business',
     ];
 }
