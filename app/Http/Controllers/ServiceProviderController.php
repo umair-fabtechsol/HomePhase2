@@ -39,6 +39,7 @@ class ServiceProviderController extends Controller
         if ($role == 2) {
             $userId = Auth::id();
             $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
                 ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
                 ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
                 ->orderBy('deals.id', 'desc')
@@ -57,7 +58,7 @@ class ServiceProviderController extends Controller
                     'deals.hourly_estimated_service_time',
                     'deals.estimated_service_timing1',
                     'deals.user_id',
-                    'users.name as user_name',
+                    'business_profiles.business_name as user_name',
                     'users.personal_image',
                     \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
                     \DB::raw('COUNT(reviews.id) as total_reviews'),
@@ -78,7 +79,7 @@ class ServiceProviderController extends Controller
                     'deals.hourly_estimated_service_time',
                     'deals.estimated_service_timing1',
                     'deals.user_id',
-                    'users.name',
+                    'business_profiles.business_name',
                     'users.personal_image'
                 )->where('deals.user_id', $userId);
                 
