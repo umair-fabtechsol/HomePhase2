@@ -40,7 +40,9 @@ class AuthController extends Controller
         ]);
  
         if ($validator->fails()) {
-            return response()->json(['phone' => 'Invalid phone number'], 400);
+            return response()->json([
+                'errors' => ['phone' => ['Invalid phone number']]
+            ], 422);
         }
         $data['terms'] =$request->term;  
         $user = User::create($data);
