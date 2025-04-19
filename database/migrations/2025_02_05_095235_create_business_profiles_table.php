@@ -54,6 +54,13 @@ return new class extends Migration
             $table->string('longitude')->nullable();
             $table->string('latitude')->nullable();
             $table->string('place')->nullable();
+
+            $table->integer('unread_sms_count')->nullable();
+            $table->integer('unread_email_count')->nullable();
+            $table->integer('unread_call_count')->nullable();
+            $table->integer('unread_chat_count')->nullable();
+            $table->integer('unread_direction_count')->nullable();
+            $table->integer('unread_website_count')->nullable();
             $table->timestamps();
         });
     }
