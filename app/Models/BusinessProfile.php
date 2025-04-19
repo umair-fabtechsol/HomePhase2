@@ -44,5 +44,11 @@ class BusinessProfile extends Model
         'longitude',
         'latitude',
         'place',
+        'unread_sms_count',
+        'unread_email_count',
+        'unread_call_count',
+        'unread_chat_count',
+        'unread_direction_count',
+        'unread_website_count ',
     ];
 }
