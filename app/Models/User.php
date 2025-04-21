@@ -47,6 +47,7 @@ class User extends Authenticatable
         'stripe_account_id',
         '',
         'token',
+        'firsttimeLogin'
         
     ];
 

@@ -77,6 +77,8 @@ class AuthController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
+        // firsttimeLogin
+        
         $user = User::where('email', $request->email)->first();
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
@@ -96,7 +98,19 @@ class AuthController extends Controller
             ], 403);
         }
 
+
+        if ($user = User::where('email', $request->email)->first()) {
+            if($user->role==2){
+                if ($user->firsttimeLogin == 1) {
+                    $user->update(['firsttimeLogin' => 0]);
+                    $user['firsttimeLogin'] = 1;
+                } else {
+                    $user->update(['firsttimeLogin' => 0]);
+                }
+            }
+        }
         $token = $user->createToken('auth_token')->plainTextToken;
+       
         return [
             'user' => $user,
             'token' => $token,
