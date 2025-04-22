@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('linkedin')->nullable();
             $table->text('youtube')->nullable();
             $table->text('tiktok')->nullable();
+            $table->text('affirm')->nullable();
             $table->text('google_business')->nullable();
             $table->timestamps();
         });
