@@ -1648,6 +1648,11 @@ class ServiceProviderController extends Controller
                         $social->update(['google_business' => null]);
                         $message = 'Social Google Business has been removed successfully';
                     }
+                    if ($social->affirm != null && $request['affirm'] == $social->affirm) {
+        
+                        $social->update(['affirm' => null]);
+                        $message = 'Social Affirm has been removed successfully';
+                    }
         
                     // $notifications = [
                     //     'title' => 'Delete Social Link',
