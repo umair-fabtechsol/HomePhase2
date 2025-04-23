@@ -197,11 +197,14 @@ class SuperAdminController extends Controller
 
             $detailReviews = Review::leftJoin('users', 'users.id', '=', 'reviews.user_id')
             ->leftJoin('deals', 'deals.id', '=', 'reviews.deal_id')
+            ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
             ->select(
                 'reviews.*',
                 'users.name as user_name',
                 'users.personal_image',
-                'deals.service_title'
+                'deals.service_title',
+                'business_profiles.business_name',
+                'business_profiles.business_logo',
             )
             ->where('reviews.provider_id', $user_id) // Filters by provider_id
             ->get();

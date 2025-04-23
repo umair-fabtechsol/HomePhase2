@@ -53,7 +53,8 @@ class CommonController extends Controller
                 'deals.estimated_service_timing1',
                 'deals.user_id',
                 'business_profiles.business_name as user_name',
-                'users.personal_image',
+                'business_profiles.business_logo',
+                // 'users.personal_image',
                 \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
                 \DB::raw('COUNT(reviews.id) as total_reviews'),
                 \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
@@ -74,8 +75,8 @@ class CommonController extends Controller
                 'deals.estimated_service_timing1',
                 'deals.user_id',
                 'business_profiles.business_name',
-                'users.personal_image'
-            )->where('publish', 1);
+                'business_profiles.business_logo',
+            )->where('deals.publish', 1);
 
         // Apply Filters
         if ($service) {
