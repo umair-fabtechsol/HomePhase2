@@ -232,6 +232,9 @@ class SaleRapController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 3) {
+            if(auth()->user()->assign_permission_1 != 1){
+                return response()->json(['message' => 'You are not allowed to access this api'], 403);
+            }
             $allProviders = DB::table('users')
                 ->leftJoin(DB::raw('(SELECT user_id, COUNT(id) as total_deals FROM deals GROUP BY user_id) as deals'), 'users.id', '=', 'deals.user_id')
                 ->leftJoin('reviews', 'users.id', '=', 'reviews.provider_id')
