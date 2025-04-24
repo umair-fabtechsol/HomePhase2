@@ -221,7 +221,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
             Route::get('GetDateUser', 'GetDateUser')->name('GetDateUser');
             Route::delete('DeleteProvider/{id}', 'DeleteProvider')->name('DeleteProvider');
-
+            Route::post('AssignSaleRep', 'AssignSaleRep')->name('AssignSaleRep');
+            Route::post('SetSalesPermission', 'SetSalesPermission')->name('SetSalesPermission');
         });
     });
 

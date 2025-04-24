@@ -33,9 +33,9 @@ return new class extends Migration
             $table->integer('client_permission_1')->nullable();
             $table->integer('client_permission_2')->nullable();
             $table->integer('client_permission_3')->nullable();
-            $table->integer('assign_permission_1')->nullable();
-            $table->integer('assign_permission_2')->nullable();
-            $table->integer('assign_permission_3')->nullable();
+            $table->integer('assign_permission_1')->default(0);
+            $table->integer('assign_permission_2')->default(0);
+            $table->integer('assign_permission_3')->default(0);
 
             $table->integer('general_notification')->nullable();
             $table->integer('provider_notification')->nullable();

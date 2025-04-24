@@ -433,6 +433,14 @@ class SuperAdminController extends Controller
 
             $total_sales_rap = $GetSaleRep->total();
 
+            // Fetch providers associated with each sales rep
+            $GetSaleRep->getCollection()->transform(function ($salesRep) {
+                $providers = User::where('assign_sales_rep', $salesRep->id)
+                    ->select('id', 'name', 'email', 'phone', 'status')
+                    ->get();
+                $salesRep->providers = $providers;
+                return $salesRep;
+            });
 
             return response()->json(['total_sales_rap' => $total_sales_rap, 'GetSaleRep' => $GetSaleRep], 200);
         } else {
@@ -926,5 +934,67 @@ class SuperAdminController extends Controller
         } else {
             return response()->json(['message' => 'You are not authorized. Only admin can delete a provider'], 401);
         }
+    }
+    public function AssignSaleRep(Request $request) {
+        $role = Auth::user()->role;
+        if ($role == 0) {
+            $request->validate([
+            'provider_id' => 'required',
+            'salesrep_id' => 'required',
+            ]);
+            $salesRep = User::find($request->salesrep_id);
+            if (!$salesRep) {
+            return response()->json(['message' => 'Invalid Sales Rep ID'], 403);
+            }
+            if ($salesRep->role != 3) {
+            return response()->json(['message' => 'Invalid Sales Rep ID'], 403);
+            }
+            $provider = User::find($request->provider_id);
+            if (!$provider) {
+            return response()->json(['message' => 'Invalid Provider ID'], 403);
+            }
+            if ($provider->role != 2) {
+            return response()->json(['message' => 'Invalid Provider ID'], 403);
+            }
+            $provider->update(['assign_sales_rep' => $request->salesrep_id]);
+
+            return response()->json(['provider' => $provider], 200);
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
+    public function SetSalesPermission(Request $request) {
+        $role = Auth::user()->role;
+        if ($role == 0) {
+        try {
+            $request->validate([
+                'salesrep_id' => 'required',
+                'permission_name' => 'required',
+                'permission_toggle' => 'required|in:0,1',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        }
+
+        $salesRep = User::find($request->salesrep_id);
+        if (!$salesRep) {
+            return response()->json(['message' => 'Sales Rep not found'], 404);
+        }
+        if ($salesRep->role != 3) {
+        return response()->json(['message' => 'Invalid Sales Rep ID'], 403);
+        }
+
+        // Check if the permission name is valid
+        $validPermissions = ['assign_permission_1', 'assign_permission_2', 'assign_permission_3'];
+        if (!in_array($request->permission_name, $validPermissions)) {
+            return response()->json(['message' => 'Invalid permission name'], 400);
+        }
+
+        $salesRep->update([$request->permission_name => $request->permission_toggle]);
+
+        return response()->json(['message' => 'Permission updated successfully', 'salesRep' => $salesRep], 200);
+    } else {
+        return response()->json(['message' => 'You are not authorized'], 401);
+    }
     }
 }
