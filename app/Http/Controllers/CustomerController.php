@@ -1028,6 +1028,7 @@ class CustomerController extends Controller
             $userId = Auth::id();
             $favoritService = FavoritDeal::where('user_id', $userId)->pluck('deal_id')->toArray();
             $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+                ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
                 ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
                 ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
                 ->orderBy('deals.id', 'desc')
@@ -1046,8 +1047,8 @@ class CustomerController extends Controller
                     'deals.hourly_estimated_service_time',
                     'deals.estimated_service_timing1',
                     'deals.user_id',
-                    'users.name as user_name',
-                    'users.personal_image',
+                    'business_profiles.business_name as user_name',
+                    'business_profiles.business_logo',
                     \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
                     \DB::raw('COUNT(reviews.id) as total_reviews'),
                     \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
@@ -1067,8 +1068,8 @@ class CustomerController extends Controller
                     'deals.hourly_estimated_service_time',
                     'deals.estimated_service_timing1',
                     'deals.user_id',
-                    'users.name',
-                    'users.personal_image'
+                    'business_profiles.business_name',
+                    'business_profiles.business_logo',
                 )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
 
                 $totalDeals = $deals->total();
