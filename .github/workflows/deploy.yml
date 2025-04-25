@@ -3,7 +3,7 @@ name: SSH to Azure VM
 on:
   push:
     branches:
-      - stagging
+      - main
 
 jobs:
   ssh:
