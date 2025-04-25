@@ -21,13 +21,7 @@ jobs:
       - name: SSH into Azure VM and restart app
         run: |
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@50.112.216.238 << EOF
-      
-            echo "PM2 location:"
-            sudo which pm2
-            echo "PATH is:"
-            echo \$PATH
-      
             cd /home/ubuntu/HomePhase2
             git pull
-            pm2 restart 1
+            /home/ubuntu/.nvm/versions/node/v22.14.0/bin/pm2 restart 1
           EOF
