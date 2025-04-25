@@ -3,7 +3,7 @@ name: SSH to Azure VM
 on:
   push:
     branches:
-      - main
+      - stagging
 
 jobs:
   ssh:
@@ -18,11 +18,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: SSH into Azure VM
+      - name: SSH into Azure VM and restart app
         run: |
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@50.112.216.238 << EOF
-            echo "Hello, Azure VM!"
-            ls -la
-            cd /home/ubuntu/pipeline
-            ./homephase.sh
+            set -e  # Fail fast if any command fails
+            source ~/.bashrc || true  # Load environment variables if available
+            cd /home/ubuntu/HomePhase2
+            git pull
+            pm2 restart 1
           EOF
