@@ -21,8 +21,16 @@ jobs:
       - name: SSH into Azure VM and restart app
         run: |
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@50.112.216.238 << EOF
-            set -e  # Fail fast if any command fails
-            source ~/.bashrc || true  # Load environment variables if available
+            set -e
+            if [ -f /etc/profile ]; then source /etc/profile; fi
+            if [ -f ~/.bash_profile ]; then source ~/.bash_profile; fi
+            if [ -f ~/.bashrc ]; then source ~/.bashrc; fi
+      
+            echo "PM2 location:"
+            which pm2
+            echo "PATH is:"
+            echo \$PATH
+      
             cd /home/ubuntu/HomePhase2
             git pull
             pm2 restart 1
