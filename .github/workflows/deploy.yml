@@ -21,7 +21,11 @@ jobs:
       - name: SSH into Azure VM and restart app
         run: |
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@50.112.216.238 << EOF
+          set -e
+          export NVM_DIR="\$HOME/.nvm"
+          [ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"
+          export PATH="\$HOME/.nvm/versions/node/v22.14.0/bin:\$PATH"
             cd /home/ubuntu/HomePhase2
             git pull
-            /home/ubuntu/.nvm/versions/node/v22.14.0/bin/pm2 restart 1
+            pm2 restart 1
           EOF
