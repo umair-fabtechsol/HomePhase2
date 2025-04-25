@@ -27,7 +27,7 @@ jobs:
             if [ -f ~/.bashrc ]; then source ~/.bashrc; fi
       
             echo "PM2 location:"
-            which pm2
+            sudo which pm2
             echo "PATH is:"
             echo \$PATH
       
