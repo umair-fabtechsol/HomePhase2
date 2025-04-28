@@ -351,7 +351,9 @@ class SaleRapController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 3) {
-
+            if(Auth::user()->assign_permission_3 != 1) {
+                return response()->json(['message' => 'You are not allowed to access this api'], 403);
+            }
             $data = $request->all();
 
             $getProvider = User::find($request->id);
@@ -583,6 +585,9 @@ class SaleRapController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 3) {
+            if(Auth::user()->assign_permission_2 != 1) {
+                return response()->json(['message' => 'You are not allowed to access this api'], 403);
+            }
             $data = $request->all();
 
             $GetSaleRep = User::find($request->id);
