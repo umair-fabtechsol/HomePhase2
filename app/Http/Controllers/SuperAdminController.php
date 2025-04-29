@@ -145,6 +145,7 @@ class SuperAdminController extends Controller
                     'users.email',
                     'users.phone',
                     'users.status',
+                    'users.assign_sales_rep',
                     DB::raw('COALESCE(deals.total_deals, 0) as total_deals'),
                     DB::raw('AVG(reviews.rating) as rating')
                 )
