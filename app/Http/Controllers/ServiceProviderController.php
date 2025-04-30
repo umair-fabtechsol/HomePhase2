@@ -397,6 +397,7 @@ class ServiceProviderController extends Controller
         $DealImages = [];
         $DealVideos = [];
         $role = Auth::user()->role;
+
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
                 $photo_name = time() . '-' . $photo->getClientOriginalName();
@@ -404,6 +405,7 @@ class ServiceProviderController extends Controller
                 $DealImages[] = $photo_name;
             }
         }
+
         if ($request->hasFile('videos')) {
             foreach ($request->file('videos') as $video) {
                 $video_name = time() . '-' . $video->getClientOriginalName();
@@ -411,6 +413,7 @@ class ServiceProviderController extends Controller
                 $DealVideos[] = $video_name;
             }
         }
+
         $deal = Deal::find($request->deal_id);
         if ($deal) {
             if ($role == 2) {
@@ -418,15 +421,31 @@ class ServiceProviderController extends Controller
                     return response()->json(['message' => 'You are not authorized to update this deal.'], 401);
                 }
             }
-            $existingImages = json_decode($deal->images, true) ?? [];
-            $existingVideos = json_decode($deal->videos, true) ?? [];
-            $updatedImages = array_merge($existingImages, $DealImages);
-            $updatedVideos = array_merge($existingVideos, $DealVideos);
-    
+
+            // Delete old images
+            // $existingImages = json_decode($deal->images, true) ?? [];
+            // foreach ($existingImages as $image) {
+            //     $imagePath = public_path('uploads/' . $image);
+            //     if (file_exists($imagePath)) {
+            //         unlink($imagePath);
+            //     }
+            // }
+
+            // // Delete old videos
+            // $existingVideos = json_decode($deal->videos, true) ?? [];
+            // foreach ($existingVideos as $video) {
+            //     $videoPath = public_path('uploads/' . $video);
+            //     if (file_exists($videoPath)) {
+            //         unlink($videoPath);
+            //     }
+            // }
+
+            // Update deal with new media
             $deal->update([
-                'images' => json_encode($updatedImages),
-                'videos' => json_encode($updatedVideos),
+                'images' => json_encode($DealImages),
+                'videos' => json_encode($DealVideos),
             ]);
+
             return response()->json([
                 'message' => 'Deal media updated successfully.',
                 'deal' => $deal,
@@ -435,13 +454,15 @@ class ServiceProviderController extends Controller
             ], 200);
         } else {
             if ($role == 0) {
-               return response()->json(['message' => 'Admin is not authorized to create a new deal.'], 401);
+                return response()->json(['message' => 'Admin is not authorized to create a new deal.'], 401);
             }
+
             $data = $request->all();
             $data['user_id'] = $userId;
             $data['images'] = json_encode($DealImages);
             $data['videos'] = json_encode($DealVideos);
             $deal = Deal::create($data);
+
             return response()->json([
                 'message' => 'New deal created with media successfully.',
                 'deal' => $deal,
@@ -450,7 +471,6 @@ class ServiceProviderController extends Controller
             ], 200);
         }
     }
-    
 
     public function DeleteMediaUpload(Request $request){
 
@@ -1045,7 +1065,8 @@ class ServiceProviderController extends Controller
                     ];
                     Notification::create($notifications);
                     return response()->json(['message' => 'User Business Additional Info Updated successfully','BusinessProfile' => $businessProfile], 200);
-                } else {
+                } 
+                else {
                     if ($request->hasFile('technician_photo')) {
                         $photo1 = $request->file('technician_photo');
                         $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
