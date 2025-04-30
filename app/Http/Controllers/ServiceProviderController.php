@@ -994,78 +994,48 @@ class ServiceProviderController extends Controller
                 $data = $request->all();
                 
                 if ($businessProfile) {
-                    if ($request->hasFile('about_video')) {
-                        $imagePath = public_path('uploads/' . $businessProfile->about_video);
-                        if (!empty($businessProfile->about_video) && file_exists($imagePath)) {
-                            unlink($imagePath);
-                        }
-                        $photo1 = $request->file('about_video');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['about_video'] = $photo_name1;
-                       
-                    }
-                    if ($request->hasFile('technician_photo')) {
-                        $imagePath = public_path('uploads/' . $businessProfile->technician_photo);
-                        if (!empty($businessProfile->technician_photo) && file_exists($imagePath)) {
-                            unlink($imagePath);
-                        }
-                        $photo1 = $request->file('technician_photo');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['technician_photo'] = $photo_name1;
-                       
-                    }
-                    if ($request->hasFile('vehicle_photo')) {
-                        $imagePath = public_path('uploads/' . $businessProfile->vehicle_photo);
-                        if (!empty($businessProfile->vehicle_photo) && file_exists($imagePath)) {
-                            unlink($imagePath);
-                        }
-                        $photo1 = $request->file('vehicle_photo');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['vehicle_photo'] = $photo_name1;
-                       
-                    }
-                    if ($request->hasFile('facility_photo')) {
-                        $imagePath = public_path('uploads/' . $businessProfile->facility_photo);
-                        if (!empty($businessProfile->facility_photo) && file_exists($imagePath)) {
-                            unlink($imagePath);
-                        }
-                        $photo1 = $request->file('facility_photo');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['facility_photo'] = $photo_name1;
-                       
-                    }
-                    if ($request->hasFile('project_photo')) {
-                        $imagePath = public_path('uploads/' . $businessProfile->project_photo);
-                        if (!empty($businessProfile->project_photo) && file_exists($imagePath)) {
-                            unlink($imagePath);
-                        }
-                        $photo1 = $request->file('project_photo');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['project_photo'] = $photo_name1;
+                    $fields = ['about_video', 'technician_photo', 'vehicle_photo', 'facility_photo', 'project_photo'];
                 
+                    foreach ($fields as $field) {
+                        if ($request->hasFile($field)) {
+                            // 1. Delete old files
+                            $existingFiles = json_decode($businessProfile->$field, true) ?? [];
+                            foreach ($existingFiles as $oldFile) {
+                                $oldFilePath = public_path('uploads/' . $oldFile);
+                                if (file_exists($oldFilePath)) {
+                                    unlink($oldFilePath);
+                                }
+                            }
+                
+                            // 2. Upload new files
+                            $uploadedFiles = [];
+                            foreach ($request->file($field) as $file) {
+                                $fileName = time() . '-' . $file->getClientOriginalName();
+                                $file->move(public_path('uploads'), $fileName);
+                                $uploadedFiles[] = $fileName;
+                            }
+                
+                            // 3. Save new files to DB
+                            $data[$field] = json_encode($uploadedFiles);
+                        }
                     }
+                
                     $businessProfile->update($data);
-                    $notifications = [
+                
+                    Notification::create([
                         'title' => 'Update User Business Additional Info',
                         'message' => 'User Business Additional Info Updated successfully',
                         'created_by' => $businessProfile->user_id,
                         'status' => 0,
                         'clear' => 'no',
-
-                    ];
-                    Notification::create($notifications);
-                    return response()->json(['message' => 'User Business Additional Info Updated successfully','BusinessProfile' => $businessProfile], 200);
-                } 
+                    ]);
+                
+                    return response()->json([
+                        'message' => 'User Business Additional Info Updated successfully',
+                        'BusinessProfile' => $businessProfile
+                    ], 200);
+                }
+                
                 else {
                     if ($request->hasFile('technician_photo')) {
                         $photo1 = $request->file('technician_photo');
