@@ -1532,7 +1532,7 @@ class ServiceProviderController extends Controller
                     'deals.user_id',
                     'business_profiles.business_name',
                     'business_profiles.business_logo',
-                )->where('publish', 1)->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
+                )->where('deals.publish', 1)->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
             $getDeal->transform(function ($deal) {
                 $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
                 return $deal;
