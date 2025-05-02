@@ -397,23 +397,30 @@ class ServiceProviderController extends Controller
         $DealImages = [];
         $DealVideos = [];
         $role = Auth::user()->role;
-
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
-                $photo_name = time() . '-' . $photo->getClientOriginalName();
-                $photo->move(public_path('uploads'), $photo_name);
-                $DealImages[] = $photo_name;
+            $photo_name = time() . '-' . $photo->getClientOriginalName();
+            $photo->move(public_path('uploads'), $photo_name);
+            $DealImages[] = $photo_name;
             }
         }
-
+        if ($request->has('images') && is_array($request->input('images'))) {
+            foreach ($request->input('images') as $image) {
+            $DealImages[] = $image; // Add string-based images
+            }
+        }
         if ($request->hasFile('videos')) {
             foreach ($request->file('videos') as $video) {
-                $video_name = time() . '-' . $video->getClientOriginalName();
-                $video->move(public_path('uploads'), $video_name);
-                $DealVideos[] = $video_name;
+            $video_name = time() . '-' . $video->getClientOriginalName();
+            $video->move(public_path('uploads'), $video_name);
+            $DealVideos[] = $video_name;
             }
         }
-
+        if ($request->has('videos') && is_array($request->input('videos'))) {
+            foreach ($request->input('videos') as $video) {
+            $DealVideos[] = $video; // Add string-based videos
+            }
+        }
         $deal = Deal::find($request->deal_id);
         if ($deal) {
             if ($role == 2) {
@@ -421,31 +428,11 @@ class ServiceProviderController extends Controller
                     return response()->json(['message' => 'You are not authorized to update this deal.'], 401);
                 }
             }
-
-            // Delete old images
-            // $existingImages = json_decode($deal->images, true) ?? [];
-            // foreach ($existingImages as $image) {
-            //     $imagePath = public_path('uploads/' . $image);
-            //     if (file_exists($imagePath)) {
-            //         unlink($imagePath);
-            //     }
-            // }
-
-            // // Delete old videos
-            // $existingVideos = json_decode($deal->videos, true) ?? [];
-            // foreach ($existingVideos as $video) {
-            //     $videoPath = public_path('uploads/' . $video);
-            //     if (file_exists($videoPath)) {
-            //         unlink($videoPath);
-            //     }
-            // }
-
             // Update deal with new media
             $deal->update([
                 'images' => json_encode($DealImages),
                 'videos' => json_encode($DealVideos),
             ]);
-
             return response()->json([
                 'message' => 'Deal media updated successfully.',
                 'deal' => $deal,
@@ -997,29 +984,27 @@ class ServiceProviderController extends Controller
                     $fields = ['about_video', 'technician_photo', 'vehicle_photo', 'facility_photo', 'project_photo'];
                 
                     foreach ($fields as $field) {
+                        $uploadedFiles = [];
+
+                        // Handle file uploads
                         if ($request->hasFile($field)) {
-                            // 1. Delete old files
-                            $existingFiles = json_decode($businessProfile->$field, true) ?? [];
-                            foreach ($existingFiles as $oldFile) {
-                                $oldFilePath = public_path('uploads/' . $oldFile);
-                                if (file_exists($oldFilePath)) {
-                                    unlink($oldFilePath);
-                                }
-                            }
-                
-                            // 2. Upload new files
-                            $uploadedFiles = [];
                             foreach ($request->file($field) as $file) {
                                 $fileName = time() . '-' . $file->getClientOriginalName();
                                 $file->move(public_path('uploads'), $fileName);
                                 $uploadedFiles[] = $fileName;
                             }
-                
-                            // 3. Save new files to DB
+                        }
+
+                        // Handle string-based input
+                        if ($request->has($field) && is_array($request->input($field))) {
+                            $uploadedFiles = array_merge($uploadedFiles, $request->input($field));
+                        }
+
+                        // Save combined data to DB
+                        if (!empty($uploadedFiles)) {
                             $data[$field] = json_encode($uploadedFiles);
                         }
                     }
-                
                     $businessProfile->update($data);
                 
                     Notification::create([
@@ -1222,16 +1207,20 @@ class ServiceProviderController extends Controller
                 // Delete old files
                 foreach ((array) $existingPaths as $oldFile) {
                     $oldPath = public_path('uploads/' . $oldFile);
-                    if (!empty($oldFile) && file_exists($oldPath)) {
-                        unlink($oldPath);
-                    }
+                    // if (!empty($oldFile) && file_exists($oldPath)) {
+                    //     unlink($oldPath);
+                    // }
                 }
     
                 // Upload new files
                 foreach ($request->file($fieldName) as $file) {
-                    $filename = time() . '-' . uniqid() . '.' . $file->getClientOriginalExtension();
+                    $filename = time() . '-' . $file->getClientOriginalName();
                     $file->move(public_path('uploads'), $filename);
                     $newFiles[] = $filename;
+                }
+
+                if ($request->has($fieldName) && is_array($request->input($fieldName))) {
+                    $newFiles = array_merge($newFiles, $request->input($fieldName)); // Merge string-based files
                 }
             }
             return $newFiles;
