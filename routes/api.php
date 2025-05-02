@@ -50,6 +50,7 @@ Route::controller(AuthController::class)->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('getNotification', [CommonController::class, 'getNotification'])->name('getNotification');
     Route::delete('deleteMyAccount', [CommonController::class, 'deleteMyAccount'])->name('deleteMyAccount');
+    Route::get('googleReview/{id}', [CommonController::class, 'googleReview'])->name('googleReview');
 
     Route::controller(ServiceProviderController::class)->group(function () {
         Route::post('BasicInfo', 'BasicInfo')->name('BasicInfo');
