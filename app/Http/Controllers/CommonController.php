@@ -191,4 +191,21 @@ class CommonController extends Controller
             return response()->json(['message' => 'No deal found'], 401);
         }
     }
+    public function deleteMyAccount()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        if($user->role == 0){
+            return response()->json(['error' => 'SuperAdmin cannot delete their account'], 404);
+        }
+        
+        if ($user) {
+            $user->delete();
+            return response()->json(['message' => 'Account deleted successfully'], 200);
+        } else {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+    }
 }
