@@ -399,27 +399,29 @@ class ServiceProviderController extends Controller
         $role = Auth::user()->role;
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $photo) {
-            $photo_name = time() . '-' . $photo->getClientOriginalName();
-            $photo->move(public_path('uploads'), $photo_name);
-            $DealImages[] = $photo_name;
+                $photo_name = time() . '-' . $photo->getClientOriginalName();
+                $photo->move(public_path('uploads'), $photo_name);
+                $DealImages[] = $photo_name;
             }
         }
+        
+        // Handle existing image strings (already uploaded)
         if ($request->has('images') && is_array($request->input('images'))) {
-            foreach ($request->input('images') as $image) {
-            $DealImages[] = $image; // Add string-based images
-            }
+            $DealImages = array_merge($DealImages, $request->input('images'));
         }
+        
+        // Handle uploaded videos
         if ($request->hasFile('videos')) {
             foreach ($request->file('videos') as $video) {
-            $video_name = time() . '-' . $video->getClientOriginalName();
-            $video->move(public_path('uploads'), $video_name);
-            $DealVideos[] = $video_name;
+                $video_name = time() . '-' . $video->getClientOriginalName();
+                $video->move(public_path('uploads'), $video_name);
+                $DealVideos[] = $video_name;
             }
         }
+        
+        // Handle existing video strings (already uploaded)
         if ($request->has('videos') && is_array($request->input('videos'))) {
-            foreach ($request->input('videos') as $video) {
-            $DealVideos[] = $video; // Add string-based videos
-            }
+            $DealVideos = array_merge($DealVideos, $request->input('videos'));
         }
         $deal = Deal::find($request->deal_id);
         if ($deal) {
@@ -1203,7 +1205,6 @@ class ServiceProviderController extends Controller
         // Function to handle multiple image uploads
         $uploadMultiple = function ($fieldName, $existingPaths = []) use ($request) {
             $newFiles = [];
-            if ($request->hasFile($fieldName)) {
                 // Delete old files
                 foreach ((array) $existingPaths as $oldFile) {
                     $oldPath = public_path('uploads/' . $oldFile);
@@ -1213,16 +1214,18 @@ class ServiceProviderController extends Controller
                 }
     
                 // Upload new files
-                foreach ($request->file($fieldName) as $file) {
-                    $filename = time() . '-' . $file->getClientOriginalName();
-                    $file->move(public_path('uploads'), $filename);
-                    $newFiles[] = $filename;
+                if ($request->hasFile($fieldName)) {
+                    foreach ($request->file($fieldName) as $file) {
+                        $filename = time() . '-' . $file->getClientOriginalName();
+                        $file->move(public_path('uploads'), $filename);
+                        $newFiles[] = $filename;
+                    }
                 }
-
+                
+                // If existing files are submitted (e.g. string names from hidden inputs)
                 if ($request->has($fieldName) && is_array($request->input($fieldName))) {
-                    $newFiles = array_merge($newFiles, $request->input($fieldName)); // Merge string-based files
+                    $newFiles = array_merge($newFiles, $request->input($fieldName));
                 }
-            }
             return $newFiles;
         };
     
@@ -1632,10 +1635,10 @@ class ServiceProviderController extends Controller
                         $social->update(['google_business' => null]);
                         $message = 'Social Google Business has been removed successfully';
                     }
-                    if ($social->affirm != null && $request['affirm'] == $social->affirm) {
+                    if ($social->alignable != null && $request['alignable'] == $social->alignable) {
         
-                        $social->update(['affirm' => null]);
-                        $message = 'Social Affirm has been removed successfully';
+                        $social->update(['alignable' => null]);
+                        $message = 'Social alignable has been removed successfully';
                     }
         
                     // $notifications = [
