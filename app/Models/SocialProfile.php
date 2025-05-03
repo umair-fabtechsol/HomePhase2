@@ -14,7 +14,7 @@ class SocialProfile extends Model
         'linkedin',
         'youtube',
         'tiktok',
-        'affirm',
+        'alignable',
         'google_business',
     ];
 }
