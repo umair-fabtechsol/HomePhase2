@@ -984,7 +984,7 @@ class ServiceProviderController extends Controller
                 
                 if ($businessProfile) {
                     $fields = ['about_video', 'technician_photo', 'vehicle_photo', 'facility_photo', 'project_photo'];
-                
+                    // echo "dddddd"; die();
                     foreach ($fields as $field) {
                         $uploadedFiles = [];
 
@@ -1005,6 +1005,9 @@ class ServiceProviderController extends Controller
                         // Save combined data to DB
                         if (!empty($uploadedFiles)) {
                             $data[$field] = json_encode($uploadedFiles);
+                        }
+                        else{
+                            $data[$field] = [];
                         }
                     }
                     $businessProfile->update($data);
