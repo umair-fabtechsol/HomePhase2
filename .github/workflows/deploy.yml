@@ -21,6 +21,6 @@ jobs:
       - name: SSH into Azure VM
         run: |
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@50.112.216.238 << EOF
-            echo "Hello, Azure VM!"
-            ls -la
+            cd /home/ubuntu/pipeline/staging
+            ./homephase.sh
           EOF
