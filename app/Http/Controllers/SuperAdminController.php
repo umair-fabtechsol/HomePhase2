@@ -220,7 +220,7 @@ class SuperAdminController extends Controller
     public function UpdateProvider(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 0) {
+        if ($role == 0 || $role == 3) {
 
             $data = $request->all();
 
@@ -374,7 +374,7 @@ class SuperAdminController extends Controller
     public function UpdateCustomer(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 0) {
+        if ($role == 0 || $role == 3) {
             $data = $request->all();
 
             $getCustomer = User::find($request->id);
