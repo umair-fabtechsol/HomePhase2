@@ -635,30 +635,43 @@ class SaleRapController extends Controller
     public function UpdateSaleCustomer(Request $request)
     {
         $role = Auth::user()->role;
+    
         if ($role == 3) {
-            if(Auth::user()->assign_permission_2 != 1) {
+            if (Auth::user()->assign_permission_2 != 1) {
                 return response()->json(['message' => 'You are not allowed to access this api'], 403);
             }
+    
             $data = $request->all();
-
             $GetSaleRep = User::find($request->id);
-            if ($request->hasFile('personal_image')) {
-                $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
-                if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-                $photo1 = $request->file('personal_image');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['personal_image'] = $photo_name1;
+    
+            if (!$GetSaleRep) {
+                return response()->json(['message' => 'Customer not found'], 404);
             }
+    
+            $imageUrl = null;
+    
+            if ($request->hasFile('personal_image')) {
+                if (!empty($GetSaleRep->personal_image) && Storage::disk('s3')->exists($GetSaleRep->personal_image)) {
+                    Storage::disk('s3')->delete($GetSaleRep->personal_image);
+                }
+                $photo = $request->file('personal_image');
+                $photoPath = $photo->store('personal_images', 's3');
+                Storage::disk('s3')->setVisibility($photoPath, 'public');
+    
+                $data['personal_image'] = $photoPath;
+                $imageUrl = Storage::disk('s3')->url($photoPath);
+            }
+    
             $GetSaleRep->update($data);
-
-            return response()->json(['message' => 'Customer updated successfully', 'GetSaleRep' => $GetSaleRep], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+    
+            return response()->json([
+                'message' => 'Customer updated successfully',
+                'GetSaleRep' => $GetSaleRep,
+                'image_url' => $imageUrl ?? ($GetSaleRep->personal_image ? Storage::disk('s3')->url($GetSaleRep->personal_image) : null),
+            ], 200);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
 
     public function GetServiceRevenue()
