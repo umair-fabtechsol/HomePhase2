@@ -1,0 +1,30 @@
+name: SSH to Azure VM
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  ssh:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.5.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: SSH into Azure VM and restart app
+        run: |
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@50.112.216.238 << EOF
+          set -e
+          export NVM_DIR="\$HOME/.nvm"
+          [ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"
+          export PATH="\$HOME/.nvm/versions/node/v22.14.0/bin:\$PATH"
+            cd /home/ubuntu/HomePhase2
+            git pull
+            pm2 restart 1
+          EOF
