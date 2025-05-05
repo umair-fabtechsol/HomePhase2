@@ -74,15 +74,12 @@ class SaleRapController extends Controller
                 ->keyBy('month')
                 ->toArray();
 
-            // Initialize an array with all months set to 0
             $allMonths = array_fill(1, 12, 0);
 
-            // Update the array with actual revenue data
             foreach ($monthlyRevenue as $month => $data) {
                 $allMonths[$month] = $data['revenue'];
             }
 
-            // Format the data for the response
             $formattedMonthlyRevenue = [];
             foreach ($allMonths as $month => $revenue) {
                 $formattedMonthlyRevenue[] = [
@@ -102,15 +99,12 @@ class SaleRapController extends Controller
                 ->keyBy('day')
                 ->toArray();
 
-            // Initialize an array with all days of the week set to 0
             $allDays = array_fill(1, 7, 0);
 
-            // Update the array with actual revenue data
             foreach ($weeklyRevenue as $day => $data) {
                 $allDays[$day] = $data['revenue'];
             }
 
-            // Format the data for the response
             $formattedWeeklyRevenue = [];
             foreach ($allDays as $day => $revenue) {
                 $formattedWeeklyRevenue[] = [
@@ -131,16 +125,13 @@ class SaleRapController extends Controller
                 ->keyBy('day')
                 ->toArray();
 
-            // Initialize an array with all days of the month set to 0
             $daysInMonth = Carbon::now()->daysInMonth;
             $allDays = array_fill(1, $daysInMonth, 0);
 
-            // Update the array with actual revenue data
             foreach ($dailyRevenue as $day => $data) {
                 $allDays[$day] = $data['revenue'];
             }
 
-            // Format the data for the response
             $formattedDailyRevenue = [];
             foreach ($allDays as $day => $revenue) {
                 $formattedDailyRevenue[] = [
@@ -280,8 +271,6 @@ class SaleRapController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 3) {
-
-            // Assiged
 
             $assignProviders = DB::table('users')
                 ->leftJoin(DB::raw('(SELECT user_id, COUNT(id) as total_deals FROM deals GROUP BY user_id) as deals'), 'users.id', '=', 'deals.user_id')
@@ -700,10 +689,10 @@ class SaleRapController extends Controller
     public function quarterlyReport()
     {
         $quarters = [
-            'Q1' => [1, 3],  // January - March
-            'Q2' => [4, 6],  // April - June
-            'Q3' => [7, 9],  // July - September
-            'Q4' => [10, 12] // October - December
+            'Q1' => [1, 3],  
+            'Q2' => [4, 6],  
+            'Q3' => [7, 9],  
+            'Q4' => [10, 12] 
         ];
 
         $quarterlyData = [];
