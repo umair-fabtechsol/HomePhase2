@@ -50,5 +50,6 @@ class BusinessProfile extends Model
         'unread_chat_count',
         'unread_direction_count',
         'unread_website_count',
+        'placeId'
     ];
 }

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Validator;
 
 use App\Models\BusinessProfile;
 use App\Models\Deal;
@@ -145,11 +146,12 @@ class SuperAdminController extends Controller
                     'users.email',
                     'users.phone',
                     'users.status',
+                    'users.assign_sales_rep',
                     DB::raw('COALESCE(deals.total_deals, 0) as total_deals'),
                     DB::raw('AVG(reviews.rating) as rating')
                 )
                 ->where('users.role', 2)
-                ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email', 'users.status', 'users.phone', 'deals.total_deals', 'reviews.provider_id');
+                ->groupBy('users.id', 'users.personal_image', 'users.name', 'users.email','users.assign_sales_rep', 'users.status', 'users.phone', 'deals.total_deals', 'reviews.provider_id');
 
             if ($request->has('search')) {
                 $search = $request->search;
@@ -218,7 +220,7 @@ class SuperAdminController extends Controller
     public function UpdateProvider(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 0) {
+        if ($role == 0 || $role == 3) {
 
             $data = $request->all();
 
@@ -372,7 +374,7 @@ class SuperAdminController extends Controller
     public function UpdateCustomer(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 0) {
+        if ($role == 0 || $role == 3) {
             $data = $request->all();
 
             $getCustomer = User::find($request->id);
@@ -938,10 +940,21 @@ class SuperAdminController extends Controller
     public function AssignSaleRep(Request $request) {
         $role = Auth::user()->role;
         if ($role == 0) {
-            $request->validate([
-            'provider_id' => 'required',
-            'salesrep_id' => 'required',
+            $validator = Validator::make($request->all(), [
+                'provider_id' => 'required',
+                'salesrep_id' => 'required',
+                'unassign' => 'required',
             ]);
+
+            if ($validator->fails()) {
+                if ($request->wantsJson() || $request->is('api/*')) {
+                    return response()->json([
+                        'errors' => $validator->errors()
+                    ], 400);
+                }
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+
             $salesRep = User::find($request->salesrep_id);
             if (!$salesRep) {
             return response()->json(['message' => 'Invalid Sales Rep ID'], 403);
@@ -956,8 +969,27 @@ class SuperAdminController extends Controller
             if ($provider->role != 2) {
             return response()->json(['message' => 'Invalid Provider ID'], 403);
             }
-            $provider->update(['assign_sales_rep' => $request->salesrep_id]);
+            
+            if ($request->unassign == "false") {
+                // if (!is_null($provider->assign_sales_rep)) {
+                //     return response()->json(['message' => 'Providers Sale Rep updated successfully'], 202);
+                // }
+                $provider->update(['assign_sales_rep' => $request->salesrep_id]);
+                return response()->json(['message' => 'Provider assigned to Sales Rep successfully', 'provider' => $provider], 200);
 
+            } 
+            elseif ($request->unassign == "true") {
+                if (is_null($provider->assign_sales_rep)) {
+                    return response()->json(['message' => 'Provider is not assigned to any Sales Rep'], 403);
+                }
+                elseif ($provider->assign_sales_rep == $request->salesrep_id) {
+                    $provider->update(['assign_sales_rep' => null]);
+                    return response()->json(['message' => 'Provider unassigned from Sales Rep successfully', 'provider' => $provider], 200);return response()->json(['message' => 'Provider assigned to Sales Rep successfully', 'provider' => $provider], 200);
+                }
+                else {
+                    return response()->json(['message' => 'Invalid SaleRep ID'], 403);
+                }
+            }
             return response()->json(['provider' => $provider], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);

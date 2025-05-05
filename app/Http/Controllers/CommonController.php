@@ -191,4 +191,63 @@ class CommonController extends Controller
             return response()->json(['message' => 'No deal found'], 401);
         }
     }
+    public function deleteMyAccount()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        if($user->role == 0){
+            return response()->json(['error' => 'SuperAdmin cannot delete their account'], 404);
+        }
+        
+        if ($user) {
+            $user->delete();
+            return response()->json(['message' => 'Account deleted successfully'], 200);
+        } else {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+    }
+ 
+    public function googleReview($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+        $businessProfile = BusinessProfile::where('user_id', $id)->first();
+        if (!$businessProfile) {
+            return response()->json(['message' => 'Business profile not found'], 404);
+        }
+
+        $placeId = $businessProfile->placeId;
+        if (!$placeId) {
+            return response()->json(['message' => 'Place ID not found'], 404);
+        }
+        // echo $placeId;die();
+
+        $apiKey = env('GOOGLE_API_KEY');
+        $apiKey = 'AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0';
+        // $url = "https://maps.googleapis.com/maps/api/place/details/json?place_id={$placeId}&key={$apiKey}";
+        $url = "https://maps.googleapis.com/maps/api/place/details/json?place_id={$placeId}&fields=name,rating,user_ratings_total,reviews&key={$apiKey}";
+        $response = file_get_contents($url);
+        $data = json_decode($response, true);
+        if (isset($data['result']['reviews'])) {
+            $googleReview = $data['result']['reviews'];
+        } else {
+            return response()->json(['message' => 'No reviews found'], 404);
+        }
+        $reviews = [];
+        foreach ($googleReview as $review) {
+            $reviews[] = [
+                'author_name' => $review['author_name'],
+                'rating' => $review['rating'],
+                'text' => $review['text'],
+                'time' => date('Y-m-d H:i:s', $review['time']),
+                'profile_photo_url' => $review['profile_photo_url'],
+            ];
+        }
+        return response()->json(['reviews' => $reviews], 200);
+    }
+   
 }

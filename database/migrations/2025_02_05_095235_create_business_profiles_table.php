@@ -61,6 +61,7 @@ return new class extends Migration
             $table->integer('unread_chat_count')->nullable();
             $table->integer('unread_direction_count')->nullable();
             $table->integer('unread_website_count')->nullable();
+            $table->string('placeId')->nullable();
             $table->timestamps();
         });
     }
