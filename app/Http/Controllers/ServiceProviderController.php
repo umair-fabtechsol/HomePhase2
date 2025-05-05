@@ -192,7 +192,7 @@ class ServiceProviderController extends Controller
         $validator = Validator::make($request->all(), [
             'service_title' => 'required',
             'service_category' => 'required',
-            'search_tags' => 'required',
+            // 'search_tags' => 'required',
             'service_description' => 'required',
             'commercial' => 'nullable',
             'residential' => 'nullable',
@@ -248,7 +248,7 @@ class ServiceProviderController extends Controller
             $validator = Validator::make($request->all(), [
                 'service_title' => 'required',
                 'service_category' => 'required',
-                'search_tags' => 'required',
+                // 'search_tags' => 'required',
                 'service_description' => 'required',
                 'commercial' => 'nullable',
                 'residential' => 'nullable',

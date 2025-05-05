@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class SaleRapController extends Controller
 {
@@ -350,61 +351,81 @@ class SaleRapController extends Controller
     public function UpdateSaleProvider(Request $request)
     {
         $role = Auth::user()->role;
+    
         if ($role == 3) {
-            if(Auth::user()->assign_permission_3 != 1) {
+            if (Auth::user()->assign_permission_3 != 1) {
                 return response()->json(['message' => 'You are not allowed to access this api'], 403);
             }
+    
             $data = $request->all();
-
             $getProvider = User::find($request->id);
-            if ($getProvider->role != 2) {
+    
+            if (!$getProvider || $getProvider->role != 2) {
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
+    
+            $imageUrl = null;
+    
             if ($request->hasFile('personal_image')) {
-                $imagePath = public_path('uploads/' . $getProvider->personal_image);
-                if (!empty($getProvider->personal_image) && file_exists($imagePath)) {
-                    unlink($imagePath);
+                if (!empty($getProvider->personal_image) && Storage::disk('s3')->exists($getProvider->personal_image)) {
+                    Storage::disk('s3')->delete($getProvider->personal_image);
                 }
-                $photo1 = $request->file('personal_image');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['personal_image'] = $photo_name1;
+                $photo = $request->file('personal_image');
+                $photoPath = $photo->store('personal_images', 's3');
+                Storage::disk('s3')->setVisibility($photoPath, 'public');
+    
+                $data['personal_image'] = $photoPath;
+                $imageUrl = Storage::disk('s3')->url($photoPath);
             }
+    
             $getProvider->update($data);
-
-            return response()->json(['message' => 'Provider updated successfully', 'getProvider' => $getProvider], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+    
+            return response()->json([
+                'message' => 'Provider updated successfully',
+                'getProvider' => $getProvider,
+                'personal_image_url' => $imageUrl ?? Storage::disk('s3')->url($getProvider->personal_image)
+            ], 200);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
 
     public function SalesPersonal(Request $request)
     {
         $role = Auth::user()->role;
+    
         if ($role == 3) {
             $user = User::find($request->id);
+    
             if ($user) {
                 $data = $request->all();
+                $imageUrl = null;
+    
                 if ($request->hasFile('personal_image')) {
-                    $imagePath = public_path('uploads/' . $user->personal_image);
-                    if (!empty($user->personal_image) && file_exists($imagePath)) {
-                        unlink($imagePath);
+                    if (!empty($user->personal_image) && Storage::disk('s3')->exists($user->personal_image)) {
+                        Storage::disk('s3')->delete($user->personal_image);
                     }
-                    $photo1 = $request->file('personal_image');
-                    $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo1->move($photo_destination, $photo_name1);
-                    $data['personal_image'] = $photo_name1;
+                    $photo = $request->file('personal_image');
+                    $photoPath = $photo->store('personal_images', 's3');
+                    Storage::disk('s3')->setVisibility($photoPath, 'public');
+    
+                    $data['personal_image'] = $photoPath;
+                    $imageUrl = Storage::disk('s3')->url($photoPath);
                 }
+    
                 $user->update($data);
-                return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
+    
+                return response()->json([
+                    'message' => 'User personal details updated successfully',
+                    'user' => $user,
+                    'personal_image_url' => $imageUrl ?? ($user->personal_image ? Storage::disk('s3')->url($user->personal_image) : null),
+                ], 200);
             } else {
                 return response()->json(['message' => 'No user found'], 401);
             }
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
 
     public function SalesSecurity(Request $request)
@@ -431,22 +452,31 @@ class SaleRapController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
+    
         if ($role == 3) {
-
             $data = $request->all();
+            $fileUrl = null;
+    
             if ($request->hasFile('files')) {
-                $photo1 = $request->file('files');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['files'] = $photo_name1;
+                $file = $request->file('files');
+                $filePath = $file->store('task_files', 's3');
+                Storage::disk('s3')->setVisibility($filePath, 'public');
+    
+                $data['files'] = $filePath;
+                $fileUrl = Storage::disk('s3')->url($filePath);
             }
+    
             $data['created_by'] = $userId;
             $task = Task::create($data);
-            return response()->json(['message' => 'Task created successfully', 'task' => $task], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+    
+            return response()->json([
+                'message' => 'Task created successfully',
+                'task' => $task,
+                'file_url' => $fileUrl ?? null
+            ], 200);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
 
     public function FetchAllTask()
@@ -478,44 +508,65 @@ class SaleRapController extends Controller
     public function UpdateTask(Request $request)
     {
         $role = Auth::user()->role;
+    
         if ($role == 3) {
             $task = Task::find($request->id);
-            $data = $request->all();
-
-            if ($request->hasFile('files')) {
-                $imagePath = public_path('uploads/' . $task->files);
-                if (!empty($task->files) && file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-                $photo1 = $request->file('files');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['files'] = $photo_name1;
+    
+            if (!$task) {
+                return response()->json(['message' => 'Task not found'], 404);
             }
-
+    
+            $data = $request->all();
+            $fileUrl = null;
+    
+            if ($request->hasFile('files')) {
+                if (!empty($task->files) && Storage::disk('s3')->exists($task->files)) {
+                    Storage::disk('s3')->delete($task->files);
+                }
+                $file = $request->file('files');
+                $filePath = $file->store('task_files', 's3');
+                Storage::disk('s3')->setVisibility($filePath, 'public');
+    
+                $data['files'] = $filePath;
+                $fileUrl = Storage::disk('s3')->url($filePath);
+            }
+    
             $task->update($data);
-            return response()->json(['message' => 'Task updated successfully', 'task' => $task], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+    
+            return response()->json([
+                'message' => 'Task updated successfully',
+                'task' => $task,
+                'file_url' => $fileUrl ?? ($task->files ? Storage::disk('s3')->url($task->files) : null),
+            ], 200);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
 
     public function DeleteTask($id)
     {
-
         $role = Auth::user()->role;
+    
         if ($role == 3) {
             $task = Task::find($id);
-            $imagePath = public_path('uploads/' . $task->files);
-            if (!empty($task->files) && file_exists($imagePath)) {
-                unlink($imagePath);
+    
+            if (!$task) {
+                return response()->json(['message' => 'Task not found'], 404);
             }
+    
+            if (!empty($task->files) && Storage::disk('s3')->exists($task->files)) {
+                Storage::disk('s3')->delete($task->files);
+            }
+    
             $task->delete();
-            return response()->json(['message' => 'Task deleted successfully', 'task' => $task], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+    
+            return response()->json([
+                'message' => 'Task deleted successfully',
+                'task' => $task
+            ], 200);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
 
     public function GetSettingSale($id)
@@ -584,30 +635,43 @@ class SaleRapController extends Controller
     public function UpdateSaleCustomer(Request $request)
     {
         $role = Auth::user()->role;
+    
         if ($role == 3) {
-            if(Auth::user()->assign_permission_2 != 1) {
+            if (Auth::user()->assign_permission_2 != 1) {
                 return response()->json(['message' => 'You are not allowed to access this api'], 403);
             }
+    
             $data = $request->all();
-
             $GetSaleRep = User::find($request->id);
-            if ($request->hasFile('personal_image')) {
-                $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
-                if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-                $photo1 = $request->file('personal_image');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['personal_image'] = $photo_name1;
+    
+            if (!$GetSaleRep) {
+                return response()->json(['message' => 'Customer not found'], 404);
             }
+    
+            $imageUrl = null;
+    
+            if ($request->hasFile('personal_image')) {
+                if (!empty($GetSaleRep->personal_image) && Storage::disk('s3')->exists($GetSaleRep->personal_image)) {
+                    Storage::disk('s3')->delete($GetSaleRep->personal_image);
+                }
+                $photo = $request->file('personal_image');
+                $photoPath = $photo->store('personal_images', 's3');
+                Storage::disk('s3')->setVisibility($photoPath, 'public');
+    
+                $data['personal_image'] = $photoPath;
+                $imageUrl = Storage::disk('s3')->url($photoPath);
+            }
+    
             $GetSaleRep->update($data);
-
-            return response()->json(['message' => 'Customer updated successfully', 'GetSaleRep' => $GetSaleRep], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+    
+            return response()->json([
+                'message' => 'Customer updated successfully',
+                'GetSaleRep' => $GetSaleRep,
+                'image_url' => $imageUrl ?? ($GetSaleRep->personal_image ? Storage::disk('s3')->url($GetSaleRep->personal_image) : null),
+            ], 200);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
 
     public function GetServiceRevenue()
