@@ -452,22 +452,31 @@ class SaleRapController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
+    
         if ($role == 3) {
-
             $data = $request->all();
+            $fileUrl = null;
+    
             if ($request->hasFile('files')) {
-                $photo1 = $request->file('files');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['files'] = $photo_name1;
+                $file = $request->file('files');
+                $filePath = $file->store('task_files', 's3');
+                Storage::disk('s3')->setVisibility($filePath, 'public');
+    
+                $data['files'] = $filePath;
+                $fileUrl = Storage::disk('s3')->url($filePath);
             }
+    
             $data['created_by'] = $userId;
             $task = Task::create($data);
-            return response()->json(['message' => 'Task created successfully', 'task' => $task], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+    
+            return response()->json([
+                'message' => 'Task created successfully',
+                'task' => $task,
+                'file_url' => $fileUrl ?? null
+            ], 200);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
 
     public function FetchAllTask()
@@ -499,44 +508,65 @@ class SaleRapController extends Controller
     public function UpdateTask(Request $request)
     {
         $role = Auth::user()->role;
+    
         if ($role == 3) {
             $task = Task::find($request->id);
-            $data = $request->all();
-
-            if ($request->hasFile('files')) {
-                $imagePath = public_path('uploads/' . $task->files);
-                if (!empty($task->files) && file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-                $photo1 = $request->file('files');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['files'] = $photo_name1;
+    
+            if (!$task) {
+                return response()->json(['message' => 'Task not found'], 404);
             }
-
+    
+            $data = $request->all();
+            $fileUrl = null;
+    
+            if ($request->hasFile('files')) {
+                if (!empty($task->files) && Storage::disk('s3')->exists($task->files)) {
+                    Storage::disk('s3')->delete($task->files);
+                }
+                $file = $request->file('files');
+                $filePath = $file->store('task_files', 's3');
+                Storage::disk('s3')->setVisibility($filePath, 'public');
+    
+                $data['files'] = $filePath;
+                $fileUrl = Storage::disk('s3')->url($filePath);
+            }
+    
             $task->update($data);
-            return response()->json(['message' => 'Task updated successfully', 'task' => $task], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+    
+            return response()->json([
+                'message' => 'Task updated successfully',
+                'task' => $task,
+                'file_url' => $fileUrl ?? ($task->files ? Storage::disk('s3')->url($task->files) : null),
+            ], 200);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
 
     public function DeleteTask($id)
     {
-
         $role = Auth::user()->role;
+    
         if ($role == 3) {
             $task = Task::find($id);
-            $imagePath = public_path('uploads/' . $task->files);
-            if (!empty($task->files) && file_exists($imagePath)) {
-                unlink($imagePath);
+    
+            if (!$task) {
+                return response()->json(['message' => 'Task not found'], 404);
             }
+    
+            if (!empty($task->files) && Storage::disk('s3')->exists($task->files)) {
+                Storage::disk('s3')->delete($task->files);
+            }
+    
             $task->delete();
-            return response()->json(['message' => 'Task deleted successfully', 'task' => $task], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+    
+            return response()->json([
+                'message' => 'Task deleted successfully',
+                'task' => $task
+            ], 200);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
 
     public function GetSettingSale($id)
