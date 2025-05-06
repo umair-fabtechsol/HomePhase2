@@ -504,19 +504,28 @@ class SuperAdminController extends Controller
             $user = User::find($request->id);
             if ($user) {
                 $data = $request->all();
+    
                 if ($request->hasFile('personal_image')) {
-                    $imagePath = public_path('uploads/' . $user->personal_image);
-                    if (!empty($user->personal_image) && file_exists($imagePath)) {
-                        unlink($imagePath);
+                    // Delete existing image from S3
+                    if (!empty($user->personal_image) && Storage::disk('s3')->exists($user->personal_image)) {
+                        Storage::disk('s3')->delete($user->personal_image);
                     }
-                    $photo1 = $request->file('personal_image');
-                    $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo1->move($photo_destination, $photo_name1);
-                    $data['personal_image'] = $photo_name1;
+    
+                    // Upload new image to S3
+                    $file = $request->file('personal_image');
+                    $path = $file->store('personal_images', 's3'); // Stores under `personal_images/filename.ext`
+    
+                    // Optionally make it public (if needed)
+                    Storage::disk('s3')->setVisibility($path, 'public');
+    
+                    $data['personal_image'] = $path;
                 }
+    
                 $user->update($data);
-                return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
+                return response()->json([
+                    'message' => 'User personal details updated successfully',
+                    'user' => $user
+                ], 200);
             } else {
                 return response()->json(['message' => 'No user found'], 401);
             }
