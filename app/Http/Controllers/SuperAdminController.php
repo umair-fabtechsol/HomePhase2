@@ -341,34 +341,44 @@ class SuperAdminController extends Controller
         }
     }
 
+
     public function UpdateSalesReps(Request $request)
     {
         $role = Auth::user()->role;
         if ($role == 0) {
             $data = $request->all();
-
+    
             $GetSaleRep = User::find($request->id);
-            if ($GetSaleRep->role != 3) {
+            if (!$GetSaleRep || $GetSaleRep->role != 3) {
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
+    
             if ($request->hasFile('personal_image')) {
-                $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
-                if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
-                    unlink($imagePath);
+                if (!empty($GetSaleRep->personal_image) && Storage::disk('s3')->exists($GetSaleRep->personal_image)) {
+                    Storage::disk('s3')->delete($GetSaleRep->personal_image);
                 }
-                $photo1 = $request->file('personal_image');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['personal_image'] = $photo_name1;
+    
+                $photo = $request->file('personal_image');
+                $photoPath = $photo->store('personal_images', 's3');
+                Storage::disk('s3')->setVisibility($photoPath, 'public');
+                $data['personal_image'] = $photoPath;
             }
+    
             $GetSaleRep->update($data);
-
-            return response()->json(['message' => 'Sales Reps updated successfully', 'GetSaleRep' => $GetSaleRep], 200);
+    
+            $GetSaleRep->image_url = $GetSaleRep->personal_image
+                ? Storage::disk('s3')->url($GetSaleRep->personal_image)
+                : null;
+    
+            return response()->json([
+                'message' => 'Sales Reps updated successfully',
+                'GetSaleRep' => $GetSaleRep
+            ], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+    
 
     public function DeleteSalesReps($id)
     {
