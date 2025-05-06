@@ -199,7 +199,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('Customers', 'Customers')->name('Customers');
             Route::get('Customer/{id}', 'Customer')->name('Customer');
             Route::post('UpdateCustomer', 'UpdateCustomer')->name('UpdateCustomer');
-            Route::get('DeleteCustomer/{id}', 'DeleteCustomer')->name('DeleteCustomer');
+            Route::delete('DeleteCustomer/{id}', 'DeleteCustomer')->name('DeleteCustomer');
 
             Route::get('GetAllSaleRep', 'GetAllSaleRep')->name('GetAllSaleRep');
             Route::post('AddSalesReps', 'AddSalesReps')->name('AddSalesReps');

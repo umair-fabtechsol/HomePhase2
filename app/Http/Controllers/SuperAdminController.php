@@ -441,18 +441,28 @@ class SuperAdminController extends Controller
     public function DeleteCustomer($id)
     {
         $role = Auth::user()->role;
+    
         if ($role == 0) {
-            $GetSaleRep = User::find($id);
-            $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
-            if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
-                unlink($imagePath);
+            $getCustomer = User::find($id);
+    
+            if (!$getCustomer || $getCustomer->role != 1) {
+                return response()->json(['message' => 'Invalid User Id'], 401);
             }
-
-            $GetSaleRep->delete();
-            return response()->json(['message' => 'Customer deleted successfully', 'GetSaleRep' => $GetSaleRep], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+    
+            // Delete image from S3 if it exists
+            if (!empty($getCustomer->personal_image) && Storage::disk('s3')->exists($getCustomer->personal_image)) {
+                Storage::disk('s3')->delete($getCustomer->personal_image);
+            }
+    
+            $getCustomer->delete();
+    
+            return response()->json([
+                'message' => 'Customer deleted successfully',
+                'getCustomer' => $getCustomer
+            ], 200);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
 
     public function GetAllSaleRep(Request $request)
