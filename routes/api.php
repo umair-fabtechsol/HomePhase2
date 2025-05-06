@@ -205,7 +205,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('AddSalesReps', 'AddSalesReps')->name('AddSalesReps');
             Route::get('ViewSalesReps/{id}', 'ViewSalesReps')->name('ViewSalesReps');
             Route::post('UpdateSalesReps', 'UpdateSalesReps')->name('UpdateSalesReps');
-            Route::get('DeleteSalesReps/{id}', 'DeleteSalesReps')->name('DeleteSalesReps');
+            Route::delete('DeleteSalesReps/{id}', 'DeleteSalesReps')->name('DeleteSalesReps');
 
             Route::post('UpdatePersonal', 'UpdatePersonal')->name('UpdatePersonal');
             Route::post('Security', 'Security')->name('Security');
