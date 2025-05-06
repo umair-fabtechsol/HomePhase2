@@ -253,7 +253,7 @@ class CommonController extends Controller
     public function searchBusiness(Request $request)
     {
         $request->validate([
-            'search_address' => 'required|string|max:255',
+            'search_address' => 'required|json',
         ]);
 
         $searchAddress = $request->input('search_address');
@@ -283,22 +283,22 @@ class CommonController extends Controller
                 }
             }
 
-            $query = Business::query();
+            $query = BusinessProfile::query();
 
             if ($country) {
-                $query->where('address', 'LIKE', '%' . $country . '%');
+                $query->where('business_location', 'LIKE', '%' . $country . '%');
             }
 
             if ($province) {
-                $query->where('address', 'LIKE', '%' . $province . '%');
+                $query->where('business_location', 'LIKE', '%' . $province . '%');
             }
 
             if ($city) {
-                $query->where('address', 'LIKE', '%' . $city . '%');
+                $query->where('business_location', 'LIKE', '%' . $city . '%');
             }
 
             if ($zip) {
-                $query->where('address', 'LIKE', '%' . $zip . '%');
+                $query->where('business_location', 'LIKE', '%' . $zip . '%');
             }
 
             $businesses = $query->get();
