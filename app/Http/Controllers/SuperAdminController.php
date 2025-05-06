@@ -306,16 +306,23 @@ class SuperAdminController extends Controller
 
             if ($request->hasFile('personal_image')) {
                 $photo1 = $request->file('personal_image');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['personal_image'] = $photo_name1;
+                $photoPath = $photo1->store('personal_images', 's3');
+                Storage::disk('s3')->setVisibility($photoPath, 'public');
+                $data['personal_image'] = $photoPath;
             }
+
             $data['terms'] = 1;
             $Salesreps = User::create($data);
 
+            // Attach public image URL
+            $Salesreps->image_url = $Salesreps->personal_image
+                ? Storage::disk('s3')->url($Salesreps->personal_image)
+                : null;
 
-            return response()->json(['message' => 'Sales Reps created successfully', 'Salesreps' => $Salesreps], 200);
+            return response()->json([
+                'message' => 'Sales Reps created successfully',
+                'Salesreps' => $Salesreps
+            ], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
