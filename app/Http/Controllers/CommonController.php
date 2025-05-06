@@ -23,6 +23,7 @@ class CommonController extends Controller
     }
     public function getNotification() {}
 
+
     public function GetAllDeals(Request $request)
     {
         $service = $request->service;
@@ -248,6 +249,68 @@ class CommonController extends Controller
             ];
         }
         return response()->json(['reviews' => $reviews], 200);
+    }
+    public function searchBusiness(Request $request)
+    {
+        $request->validate([
+            'search_address' => 'required|string|max:255',
+        ]);
+
+        $searchAddress = $request->input('search_address');
+
+        $geocode = file_get_contents("https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($searchAddress) . "&key=AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0");
+        $geocode = json_decode($geocode);
+
+        if (isset($geocode->results[0])) {
+            $addressComponents = $geocode->results[0]->address_components;
+            $country = null;
+            $province = null;
+            $city = null;
+            $zip = null;
+
+            foreach ($addressComponents as $component) {
+                if (in_array('country', $component->types)) {
+                    $country = $component->long_name;
+                }
+                if (in_array('administrative_area_level_1', $component->types)) {
+                    $province = $component->long_name;
+                }
+                if (in_array('locality', $component->types)) {
+                    $city = $component->long_name;
+                }
+                if (in_array('postal_code', $component->types)) {
+                    $zip = $component->long_name;
+                }
+            }
+
+            $query = Business::query();
+
+            if ($country) {
+                $query->where('address', 'LIKE', '%' . $country . '%');
+            }
+
+            if ($province) {
+                $query->where('address', 'LIKE', '%' . $province . '%');
+            }
+
+            if ($city) {
+                $query->where('address', 'LIKE', '%' . $city . '%');
+            }
+
+            if ($zip) {
+                $query->where('address', 'LIKE', '%' . $zip . '%');
+            }
+
+            $businesses = $query->get();
+
+            return response()->json([
+                'businesses' => $businesses,
+            ]);
+        } else {
+            return response()->json([
+                'no data found'
+            ]);
+        }
     }
    
 }
