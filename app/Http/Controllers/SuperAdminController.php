@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Mail\InviteSalesRepMail;
 use App\Models\contact_pro;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class SuperAdminController extends Controller
 {
@@ -217,35 +218,43 @@ class SuperAdminController extends Controller
         }
     }
 
+
     public function UpdateProvider(Request $request)
     {
         $role = Auth::user()->role;
+    
         if ($role == 0 || $role == 3) {
-
             $data = $request->all();
-
+    
             $getProvider = User::find($request->id);
-            if ($getProvider->role != 2) {
+            if (!$getProvider || $getProvider->role != 2) {
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
             if ($request->hasFile('personal_image')) {
-                $imagePath = public_path('uploads/' . $getProvider->personal_image);
-                if (!empty($getProvider->personal_image) && file_exists($imagePath)) {
-                    unlink($imagePath);
+                if (!empty($getProvider->personal_image) && Storage::disk('s3')->exists($getProvider->personal_image)) {
+                    Storage::disk('s3')->delete($getProvider->personal_image);
                 }
-                $photo1 = $request->file('personal_image');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['personal_image'] = $photo_name1;
+    
+                $photo = $request->file('personal_image');
+                $photoPath = $photo->store('personal_images', 's3');
+                Storage::disk('s3')->setVisibility($photoPath, 'public');
+    
+                $data['personal_image'] = $photoPath;
             }
             $getProvider->update($data);
-
-            return response()->json(['message' => 'Provider updated successfully', 'getProvider' => $getProvider], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
+            $getProvider->image_url = $getProvider->personal_image
+                ? Storage::disk('s3')->url($getProvider->personal_image)
+                : null;
+    
+            return response()->json([
+                'message' => 'Provider updated successfully',
+                'getProvider' => $getProvider
+            ], 200);
         }
+    
+        return response()->json(['message' => 'You are not authorized'], 401);
     }
+    
 
     public function Customers(Request $request)
     {
