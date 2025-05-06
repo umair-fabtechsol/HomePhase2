@@ -36,6 +36,7 @@ Route::get('FilterHomeDeals', [ServiceProviderController::class, 'FilterHomeDeal
 Route::post('GetGoogleReviews', [ServiceProviderController::class, 'GetGoogleReviews'])->name('GetGoogleReviews');
 // Route::get('DealProvider/{user_id}', 'DealProvider')->name('DealProvider');
 Route::get('DealProvider/{user_id}', [CustomerController::class, 'DealProvider'])->name('DealProvider');
+Route::get('searchBusiness', [CustomerController::class, 'searchBusiness'])->name('searchBusiness');
 
 
 Route::controller(AuthController::class)->group(function () {
