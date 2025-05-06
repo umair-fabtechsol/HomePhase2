@@ -385,13 +385,22 @@ class SuperAdminController extends Controller
         $role = Auth::user()->role;
         if ($role == 0) {
             $GetSaleRep = User::find($id);
-            $imagePath = public_path('uploads/' . $GetSaleRep->personal_image);
-            if (!empty($GetSaleRep->personal_image) && file_exists($imagePath)) {
-                unlink($imagePath);
+    
+            if (!$GetSaleRep) {
+                return response()->json(['message' => 'Sales Rep not found'], 404);
             }
-
+    
+            // Delete personal image from S3
+            if (!empty($GetSaleRep->personal_image) && Storage::disk('s3')->exists($GetSaleRep->personal_image)) {
+                Storage::disk('s3')->delete($GetSaleRep->personal_image);
+            }
+    
             $GetSaleRep->delete();
-            return response()->json(['message' => 'Sales Reps deleted successfully', 'GetSaleRep' => $GetSaleRep], 200);
+    
+            return response()->json([
+                'message' => 'Sales Reps deleted successfully',
+                'GetSaleRep' => $GetSaleRep
+            ], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
