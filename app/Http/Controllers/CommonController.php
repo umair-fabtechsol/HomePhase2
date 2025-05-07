@@ -302,6 +302,10 @@ class CommonController extends Controller
                 $query->where(function ($q) use ($searchService) {
                     $q->where('deals.service_title', 'LIKE', "%$searchService%")
                         ->orWhere('deals.service_category', 'LIKE', "%$searchService%")
+                        ->orWhere('deals.commercial', 'LIKE', "%$searchService%")
+                        ->orWhere('deals.residential', 'LIKE', "%$searchService%")
+                        ->orWhere('deals.service_description', 'LIKE', "%$searchService%")
+                        ->orWhere('business_profiles.business_name', 'LIKE', "%$searchService%")
                         ->orWhere('deals.search_tags', 'LIKE', "%$searchService%");
                 });
             })
@@ -309,6 +313,8 @@ class CommonController extends Controller
                 'deals.id',
                 'deals.service_title',
                 'deals.service_category',
+                'deals.residential',
+                'deals.commercial',
                 'deals.service_description',
                 'deals.pricing_model',
                 'deals.flat_rate_price',
