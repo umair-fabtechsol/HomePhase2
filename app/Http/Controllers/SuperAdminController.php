@@ -237,7 +237,7 @@ class SuperAdminController extends Controller
                 }
 
                 $photo = $request->file('personal_image');
-                $photoPath = $photo->store('personal_images', 's3');
+                $photoPath = $photo->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($photoPath, 'public');
 
                 $data['personal_image'] = $photoPath;
@@ -307,7 +307,7 @@ class SuperAdminController extends Controller
 
             if ($request->hasFile('personal_image')) {
                 $photo1 = $request->file('personal_image');
-                $photoPath = $photo1->store('personal_images', 's3');
+                $photoPath = $photo1->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($photoPath, 'public');
                 $data['personal_image'] = $photoPath;
             }
@@ -360,7 +360,7 @@ class SuperAdminController extends Controller
                 }
 
                 $photo = $request->file('personal_image');
-                $photoPath = $photo->store('personal_images', 's3');
+                $photoPath = $photo->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($photoPath, 'public');
                 $data['personal_image'] = $photoPath;
             }
@@ -422,7 +422,7 @@ class SuperAdminController extends Controller
                 if (!empty($getCustomer->personal_image) && Storage::disk('s3')->exists($getCustomer->personal_image)) {
                     Storage::disk('s3')->delete($getCustomer->personal_image);
                 }
-                $path = $request->file('personal_image')->store('personal_images', 's3');
+                $path = $request->file('personal_image')->store('uploads', 's3');
                 $data['personal_image'] = $path;
             }
 
@@ -513,7 +513,7 @@ class SuperAdminController extends Controller
     
                     // Upload new image to S3
                     $file = $request->file('personal_image');
-                    $path = $file->store('personal_images', 's3'); // Stores under `personal_images/filename.ext`
+                    $path = $file->store('uploads', 's3'); // Stores under `uploads/filename.ext`
     
                     // Optionally make it public (if needed)
                     Storage::disk('s3')->setVisibility($path, 'public');
