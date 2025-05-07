@@ -37,6 +37,7 @@ Route::post('GetGoogleReviews', [ServiceProviderController::class, 'GetGoogleRev
 // Route::get('DealProvider/{user_id}', 'DealProvider')->name('DealProvider');
 Route::get('DealProvider/{user_id}', [CustomerController::class, 'DealProvider'])->name('DealProvider');
 Route::post('searchBusiness', [CommonController::class, 'searchBusiness'])->name('searchBusiness');
+Route::post('searchDealsByServiceAndLocation', [CommonController::class, 'searchDealsByServiceAndLocation'])->name('searchDealsByServiceAndLocation');
 
 
 Route::controller(AuthController::class)->group(function () {
@@ -199,13 +200,13 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('Customers', 'Customers')->name('Customers');
             Route::get('Customer/{id}', 'Customer')->name('Customer');
             Route::post('UpdateCustomer', 'UpdateCustomer')->name('UpdateCustomer');
-            Route::get('DeleteCustomer/{id}', 'DeleteCustomer')->name('DeleteCustomer');
+            Route::delete('DeleteCustomer/{id}', 'DeleteCustomer')->name('DeleteCustomer');
 
             Route::get('GetAllSaleRep', 'GetAllSaleRep')->name('GetAllSaleRep');
             Route::post('AddSalesReps', 'AddSalesReps')->name('AddSalesReps');
             Route::get('ViewSalesReps/{id}', 'ViewSalesReps')->name('ViewSalesReps');
             Route::post('UpdateSalesReps', 'UpdateSalesReps')->name('UpdateSalesReps');
-            Route::get('DeleteSalesReps/{id}', 'DeleteSalesReps')->name('DeleteSalesReps');
+            Route::delete('DeleteSalesReps/{id}', 'DeleteSalesReps')->name('DeleteSalesReps');
 
             Route::post('UpdatePersonal', 'UpdatePersonal')->name('UpdatePersonal');
             Route::post('Security', 'Security')->name('Security');

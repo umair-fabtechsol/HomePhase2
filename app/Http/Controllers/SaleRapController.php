@@ -360,7 +360,7 @@ class SaleRapController extends Controller
                     Storage::disk('s3')->delete($getProvider->personal_image);
                 }
                 $photo = $request->file('personal_image');
-                $photoPath = $photo->store('personal_images', 's3');
+                $photoPath = $photo->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($photoPath, 'public');
     
                 $data['personal_image'] = $photoPath;
@@ -395,7 +395,7 @@ class SaleRapController extends Controller
                         Storage::disk('s3')->delete($user->personal_image);
                     }
                     $photo = $request->file('personal_image');
-                    $photoPath = $photo->store('personal_images', 's3');
+                    $photoPath = $photo->store('uploads', 's3');
                     Storage::disk('s3')->setVisibility($photoPath, 'public');
     
                     $data['personal_image'] = $photoPath;
@@ -448,7 +448,7 @@ class SaleRapController extends Controller
     
             if ($request->hasFile('files')) {
                 $file = $request->file('files');
-                $filePath = $file->store('task_files', 's3');
+                $filePath = $file->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($filePath, 'public');
     
                 $data['files'] = $filePath;
@@ -513,7 +513,7 @@ class SaleRapController extends Controller
                     Storage::disk('s3')->delete($task->files);
                 }
                 $file = $request->file('files');
-                $filePath = $file->store('task_files', 's3');
+                $filePath = $file->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($filePath, 'public');
     
                 $data['files'] = $filePath;
@@ -644,7 +644,7 @@ class SaleRapController extends Controller
                     Storage::disk('s3')->delete($GetSaleRep->personal_image);
                 }
                 $photo = $request->file('personal_image');
-                $photoPath = $photo->store('personal_images', 's3');
+                $photoPath = $photo->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($photoPath, 'public');
     
                 $data['personal_image'] = $photoPath;

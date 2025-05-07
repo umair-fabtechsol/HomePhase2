@@ -130,7 +130,7 @@ class CommonController extends Controller
         }
 
         // if ($deals->isNotEmpty()) {
-            return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
+        return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
         // } else {
         //     return response()->json(['message' => 'No deals found'], 200);
         // }
@@ -198,10 +198,10 @@ class CommonController extends Controller
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-        if($user->role == 0){
+        if ($user->role == 0) {
             return response()->json(['error' => 'SuperAdmin cannot delete their account'], 404);
         }
-        
+
         if ($user) {
             $user->delete();
             return response()->json(['message' => 'Account deleted successfully'], 200);
@@ -209,7 +209,7 @@ class CommonController extends Controller
             return response()->json(['message' => 'User not found'], 404);
         }
     }
- 
+
     public function googleReview($id)
     {
         $user = User::find($id);
@@ -250,13 +250,81 @@ class CommonController extends Controller
         }
         return response()->json(['reviews' => $reviews], 200);
     }
+    // public function searchBusiness(Request $request)
+    // {
+    //     $request->validate([
+    //         'search_address' => 'required|json',
+    //     ]);
+
+    //     $searchAddress = $request->input('search_address');
+
+    //     $geocode = file_get_contents("https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($searchAddress) . "&key=AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0");
+    //     $geocode = json_decode($geocode);
+
+    //     if (isset($geocode->results[0])) {
+    //         $addressComponents = $geocode->results[0]->address_components;
+    //         $country = null;
+    //         $province = null;
+    //         $city = null;
+    //         $zip = null;
+
+    //         foreach ($addressComponents as $component) {
+    //             if (in_array('country', $component->types)) {
+    //                 $country = $component->long_name;
+    //             }
+    //             if (in_array('administrative_area_level_1', $component->types)) {
+    //                 $province = $component->long_name;
+    //             }
+    //             if (in_array('locality', $component->types)) {
+    //                 $city = $component->long_name;
+    //             }
+    //             if (in_array('postal_code', $component->types)) {
+    //                 $zip = $component->long_name;
+    //             }
+    //         }
+
+    //         $query = BusinessProfile::query();
+
+    //         if ($country) {
+    //             $query->where('business_location', 'LIKE', '%' . $country . '%');
+    //         }
+
+    //         if ($province) {
+    //             $query->where('business_location', 'LIKE', '%' . $province . '%');
+    //         }
+
+    //         if ($city) {
+    //             $query->where('business_location', 'LIKE', '%' . $city . '%');
+    //         }
+
+    //         if ($zip) {
+    //             $query->where('business_location', 'LIKE', '%' . $zip . '%');
+    //         }
+
+    //         $businesses = $query->pluck('user_id');
+
+
+    //         $deals = Deal::whereIn('user_id', $businesses)->get();
+
+    //         return response()->json([
+    //             'businesses' => $businesses,
+    //             'deals' => $deals,
+    //         ]);
+    //     } else {
+    //         return response()->json([
+    //             'no data found'
+    //         ]);
+    //     }
+    // }
     public function searchBusiness(Request $request)
     {
         $request->validate([
-            'search_address' => 'required|json',
+            'search_address' => 'required|string',
+            'service' => 'nullable|string', 
         ]);
 
         $searchAddress = $request->input('search_address');
+        $searchService = $request->input('service');
 
         $geocode = file_get_contents("https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($searchAddress) . "&key=AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0");
         $geocode = json_decode($geocode);
@@ -285,32 +353,36 @@ class CommonController extends Controller
 
             $query = BusinessProfile::query();
 
-            if ($country) {
-                $query->where('business_location', 'LIKE', '%' . $country . '%');
+            $query->where(function ($q) use ($country, $province, $city, $zip) {
+                if ($country) $q->orWhere('business_location', 'LIKE', '%' . $country . '%');
+                if ($province) $q->orWhere('business_location', 'LIKE', '%' . $province . '%');
+                if ($city) $q->orWhere('business_location', 'LIKE', '%' . $city . '%');
+                if ($zip) $q->orWhere('business_location', 'LIKE', '%' . $zip . '%');
+            });
+
+            $businesses = $query->pluck('user_id');
+
+            $dealsQuery = Deal::whereIn('user_id', $businesses);
+
+            if (!empty($searchService)) {
+                $dealsQuery->where(function ($q) use ($searchService) {
+                    $q->where('service_title', 'LIKE', '%' . $searchService . '%')
+                        ->orWhere('service_category', 'LIKE', '%' . $searchService . '%')
+                        ->orWhere('search_tags', 'LIKE', '%' . $searchService . '%');
+                });
             }
 
-            if ($province) {
-                $query->where('business_location', 'LIKE', '%' . $province . '%');
-            }
-
-            if ($city) {
-                $query->where('business_location', 'LIKE', '%' . $city . '%');
-            }
-
-            if ($zip) {
-                $query->where('business_location', 'LIKE', '%' . $zip . '%');
-            }
-
-            $businesses = $query->get();
+            $deals = $dealsQuery->get();
+            $totalDeals = $deals->count();
 
             return response()->json([
-                'businesses' => $businesses,
+                'deals' => $deals,
+                'totalDeals' => $totalDeals,
             ]);
         } else {
             return response()->json([
-                'no data found'
-            ]);
+                'message' => 'No data found.',
+            ], 404);
         }
     }
-   
 }
