@@ -37,6 +37,7 @@ Route::post('GetGoogleReviews', [ServiceProviderController::class, 'GetGoogleRev
 // Route::get('DealProvider/{user_id}', 'DealProvider')->name('DealProvider');
 Route::get('DealProvider/{user_id}', [CustomerController::class, 'DealProvider'])->name('DealProvider');
 Route::post('searchBusiness', [CommonController::class, 'searchBusiness'])->name('searchBusiness');
+Route::post('searchDealsByServiceAndLocation', [CommonController::class, 'searchDealsByServiceAndLocation'])->name('searchDealsByServiceAndLocation');
 
 
 Route::controller(AuthController::class)->group(function () {

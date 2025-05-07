@@ -130,7 +130,7 @@ class CommonController extends Controller
         }
 
         // if ($deals->isNotEmpty()) {
-            return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
+        return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
         // } else {
         //     return response()->json(['message' => 'No deals found'], 200);
         // }
@@ -198,10 +198,10 @@ class CommonController extends Controller
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-        if($user->role == 0){
+        if ($user->role == 0) {
             return response()->json(['error' => 'SuperAdmin cannot delete their account'], 404);
         }
-        
+
         if ($user) {
             $user->delete();
             return response()->json(['message' => 'Account deleted successfully'], 200);
@@ -209,7 +209,7 @@ class CommonController extends Controller
             return response()->json(['message' => 'User not found'], 404);
         }
     }
- 
+
     public function googleReview($id)
     {
         $user = User::find($id);
@@ -301,10 +301,14 @@ class CommonController extends Controller
                 $query->where('business_location', 'LIKE', '%' . $zip . '%');
             }
 
-            $businesses = $query->get();
+            $businesses = $query->pluck('user_id');
+
+
+            $deals = Deal::whereIn('user_id', $businesses)->get();
 
             return response()->json([
                 'businesses' => $businesses,
+                'deals' => $deals,
             ]);
         } else {
             return response()->json([
@@ -312,5 +316,4 @@ class CommonController extends Controller
             ]);
         }
     }
-   
 }
