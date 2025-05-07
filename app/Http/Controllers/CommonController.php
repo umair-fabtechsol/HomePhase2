@@ -9,6 +9,7 @@ use App\Models\BusinessProfile;
 use App\Models\Review;
 use App\Models\RecentDealView;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class CommonController extends Controller
@@ -250,139 +251,110 @@ class CommonController extends Controller
         }
         return response()->json(['reviews' => $reviews], 200);
     }
-    // public function searchBusiness(Request $request)
-    // {
-    //     $request->validate([
-    //         'search_address' => 'required|json',
-    //     ]);
-
-    //     $searchAddress = $request->input('search_address');
-
-    //     $geocode = file_get_contents("https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($searchAddress) . "&key=AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0");
-    //     $geocode = json_decode($geocode);
-
-    //     if (isset($geocode->results[0])) {
-    //         $addressComponents = $geocode->results[0]->address_components;
-    //         $country = null;
-    //         $province = null;
-    //         $city = null;
-    //         $zip = null;
-
-    //         foreach ($addressComponents as $component) {
-    //             if (in_array('country', $component->types)) {
-    //                 $country = $component->long_name;
-    //             }
-    //             if (in_array('administrative_area_level_1', $component->types)) {
-    //                 $province = $component->long_name;
-    //             }
-    //             if (in_array('locality', $component->types)) {
-    //                 $city = $component->long_name;
-    //             }
-    //             if (in_array('postal_code', $component->types)) {
-    //                 $zip = $component->long_name;
-    //             }
-    //         }
-
-    //         $query = BusinessProfile::query();
-
-    //         if ($country) {
-    //             $query->where('business_location', 'LIKE', '%' . $country . '%');
-    //         }
-
-    //         if ($province) {
-    //             $query->where('business_location', 'LIKE', '%' . $province . '%');
-    //         }
-
-    //         if ($city) {
-    //             $query->where('business_location', 'LIKE', '%' . $city . '%');
-    //         }
-
-    //         if ($zip) {
-    //             $query->where('business_location', 'LIKE', '%' . $zip . '%');
-    //         }
-
-    //         $businesses = $query->pluck('user_id');
-
-
-    //         $deals = Deal::whereIn('user_id', $businesses)->get();
-
-    //         return response()->json([
-    //             'businesses' => $businesses,
-    //             'deals' => $deals,
-    //         ]);
-    //     } else {
-    //         return response()->json([
-    //             'no data found'
-    //         ]);
-    //     }
-    // }
     public function searchBusiness(Request $request)
-    {
-        $request->validate([
-            'search_address' => 'required|string',
-            'service' => 'nullable|string', 
-        ]);
+{
+    $request->validate([
+        'search_address' => 'required|string',
+        'service' => 'nullable|string',
+    ]);
 
-        $searchAddress = $request->input('search_address');
-        $searchService = $request->input('service');
+    $decodedAddress = json_decode($request->input('search_address'));
 
-        $geocode = file_get_contents("https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($searchAddress) . "&key=AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0");
-        $geocode = json_decode($geocode);
-
-        if (isset($geocode->results[0])) {
-            $addressComponents = $geocode->results[0]->address_components;
-            $country = null;
-            $province = null;
-            $city = null;
-            $zip = null;
-
-            foreach ($addressComponents as $component) {
-                if (in_array('country', $component->types)) {
-                    $country = $component->long_name;
-                }
-                if (in_array('administrative_area_level_1', $component->types)) {
-                    $province = $component->long_name;
-                }
-                if (in_array('locality', $component->types)) {
-                    $city = $component->long_name;
-                }
-                if (in_array('postal_code', $component->types)) {
-                    $zip = $component->long_name;
-                }
-            }
-
-            $query = BusinessProfile::query();
-
-            $query->where(function ($q) use ($country, $province, $city, $zip) {
-                if ($country) $q->orWhere('business_location', 'LIKE', '%' . $country . '%');
-                if ($province) $q->orWhere('business_location', 'LIKE', '%' . $province . '%');
-                if ($city) $q->orWhere('business_location', 'LIKE', '%' . $city . '%');
-                if ($zip) $q->orWhere('business_location', 'LIKE', '%' . $zip . '%');
-            });
-
-            $businesses = $query->pluck('user_id');
-
-            $dealsQuery = Deal::whereIn('user_id', $businesses);
-
-            if (!empty($searchService)) {
-                $dealsQuery->where(function ($q) use ($searchService) {
-                    $q->where('service_title', 'LIKE', '%' . $searchService . '%')
-                        ->orWhere('service_category', 'LIKE', '%' . $searchService . '%')
-                        ->orWhere('search_tags', 'LIKE', '%' . $searchService . '%');
-                });
-            }
-
-            $deals = $dealsQuery->get();
-            $totalDeals = $deals->count();
-
-            return response()->json([
-                'deals' => $deals,
-                'totalDeals' => $totalDeals,
-            ]);
-        } else {
-            return response()->json([
-                'message' => 'No data found.',
-            ], 404);
-        }
+    if (!$decodedAddress || empty($decodedAddress->address)) {
+        return response()->json(['message' => 'Invalid address data provided.'], 400);
     }
+
+    $searchService = $request->input('service');
+
+    $address = $decodedAddress->address;
+
+    $geocode = file_get_contents("https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($address) . "&key=AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0");
+    $geocode = json_decode($geocode);
+
+    if (!isset($geocode->results[0])) {
+        return response()->json(['message' => 'No data found.'], 404);
+    }
+
+    $components = collect($geocode->results[0]->address_components);
+
+    $country = optional($components->first(fn($c) => in_array('country', $c->types)))->long_name;
+    $province = optional($components->first(fn($c) => in_array('administrative_area_level_1', $c->types)))->long_name;
+    $city = optional($components->first(fn($c) => in_array('locality', $c->types)))->long_name;
+    $zip = optional($components->first(fn($c) => in_array('postal_code', $c->types)))->long_name;
+
+    $locationQuery = BusinessProfile::query();
+    $locationQuery->where(function ($q) use ($country, $province, $city, $zip) {
+        if ($country) $q->orWhere('business_location', 'LIKE', "%$country%");
+        if ($province) $q->orWhere('business_location', 'LIKE', "%$province%");
+        if ($city) $q->orWhere('business_location', 'LIKE', "%$city%");
+        if ($zip) $q->orWhere('business_location', 'LIKE', "%$zip%");
+    });
+
+    $userIds = $locationQuery->pluck('user_id');
+
+    $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+        ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
+        ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+        ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
+        ->whereIn('deals.user_id', $userIds)
+        ->where('deals.publish', 1)
+        ->when($searchService, function ($query, $searchService) {
+            $query->where(function ($q) use ($searchService) {
+                $q->where('deals.service_title', 'LIKE', "%$searchService%")
+                    ->orWhere('deals.service_category', 'LIKE', "%$searchService%")
+                    ->orWhere('deals.search_tags', 'LIKE', "%$searchService%");
+            });
+        })
+        ->select(
+            'deals.id',
+            'deals.service_title',
+            'deals.service_category',
+            'deals.service_description',
+            'deals.pricing_model',
+            'deals.flat_rate_price',
+            'deals.hourly_rate',
+            'deals.images',
+            'deals.videos',
+            'deals.price1',
+            'deals.flat_estimated_service_time',
+            'deals.hourly_estimated_service_time',
+            'deals.estimated_service_timing1',
+            'deals.user_id',
+            'business_profiles.business_name as user_name',
+            'business_profiles.business_logo',
+            DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+            DB::raw('COUNT(reviews.id) as total_reviews'),
+            DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids')
+        )
+        ->groupBy(
+            'deals.id',
+            'deals.service_title',
+            'deals.service_category',
+            'deals.service_description',
+            'deals.pricing_model',
+            'deals.flat_rate_price',
+            'deals.hourly_rate',
+            'deals.price1',
+            'deals.images',
+            'deals.videos',
+            'deals.flat_estimated_service_time',
+            'deals.hourly_estimated_service_time',
+            'deals.estimated_service_timing1',
+            'deals.user_id',
+            'business_profiles.business_name',
+            'business_profiles.business_logo'
+        )
+        ->paginate($request->number_of_deals ?? 12);
+
+    $deals->transform(function ($deal) {
+        $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+        return $deal;
+    });
+
+    return response()->json([
+        'deals' => $deals,
+        'totalDeals' => $deals->total()
+    ]);
+}
+
 }
