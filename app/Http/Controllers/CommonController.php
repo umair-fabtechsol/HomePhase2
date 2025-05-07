@@ -320,7 +320,7 @@ class CommonController extends Controller
     {
         $request->validate([
             'search_address' => 'required|string',
-            'service' => 'nullable|string', // new input
+            'service' => 'nullable|string', 
         ]);
 
         $searchAddress = $request->input('search_address');
@@ -373,10 +373,11 @@ class CommonController extends Controller
             }
 
             $deals = $dealsQuery->get();
+            $totalDeals = $deals->count();
 
             return response()->json([
-                'businesses' => $businesses,
                 'deals' => $deals,
+                'totalDeals' => $totalDeals,
             ]);
         } else {
             return response()->json([
