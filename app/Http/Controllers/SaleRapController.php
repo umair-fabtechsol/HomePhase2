@@ -351,8 +351,8 @@ class SaleRapController extends Controller
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
             if ($request->hasFile('personal_image')) {
-                if (!empty($getProvider->personal_image) && Storage::disk('s3')->exists($getProvider->personal_image)) {
-                    Storage::disk('s3')->delete($getProvider->personal_image);
+                if (!empty($getProvider->personal_image) && Storage::disk('s3')->exists('uploads/' . $getProvider->personal_image)) {
+                    Storage::disk('s3')->delete('uploads/' . $getProvider->personal_image);
                 }
                 $photo = $request->file('personal_image');
                 $photoPath = $photo->store('uploads', 's3');
@@ -382,8 +382,8 @@ class SaleRapController extends Controller
                 $data = $request->all();
 
                 if ($request->hasFile('personal_image')) {
-                    if (!empty($user->personal_image) && Storage::disk('s3')->exists($user->personal_image)) {
-                        Storage::disk('s3')->delete($user->personal_image);
+                    if (!empty($user->personal_image) && Storage::disk('s3')->exists('uploads/' . $user->personal_image)) {
+                        Storage::disk('s3')->delete('uploads/' . $user->personal_image);
                     }
                     $photo = $request->file('personal_image');
                     $photoPath = $photo->store('uploads', 's3');
@@ -488,8 +488,8 @@ class SaleRapController extends Controller
             }
             $data = $request->all();
             if ($request->hasFile('files')) {
-                if (!empty($task->files) && Storage::disk('s3')->exists($task->files)) {
-                    Storage::disk('s3')->delete($task->files);
+                if (!empty($task->files) && Storage::disk('s3')->exists('uploads/' .$task->files)) {
+                    Storage::disk('s3')->delete('uploads/' .$task->files);
                 }
                 $file = $request->file('files');
                 $filePath = $file->store('uploads', 's3');
@@ -520,8 +520,8 @@ class SaleRapController extends Controller
                 return response()->json(['message' => 'Task not found'], 404);
             }
 
-            if (!empty($task->files) && Storage::disk('s3')->exists($task->files)) {
-                Storage::disk('s3')->delete($task->files);
+            if (!empty($task->files) && Storage::disk('s3')->exists('uploads/' .$task->files)) {
+                Storage::disk('s3')->delete('uploads/' .$task->files);
             }
 
             $task->delete();
@@ -614,8 +614,8 @@ class SaleRapController extends Controller
                 return response()->json(['message' => 'Customer not found'], 404);
             }
             if ($request->hasFile('personal_image')) {
-                if (!empty($GetSaleRep->personal_image) && Storage::disk('s3')->exists($GetSaleRep->personal_image)) {
-                    Storage::disk('s3')->delete($GetSaleRep->personal_image);
+                if (!empty($GetSaleRep->personal_image) && Storage::disk('s3')->exists('uploads/' .$GetSaleRep->personal_image)) {
+                    Storage::disk('s3')->delete('uploads/' .$GetSaleRep->personal_image);
                 }
                 $photo = $request->file('personal_image');
                 $photoPath = $photo->store('uploads', 's3');
