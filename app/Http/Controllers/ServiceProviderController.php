@@ -2,31 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessProfile;
-use App\Models\Review;
-use App\Models\Deal;
-use App\Models\DeliveryImage;
-use App\Models\FavoritDeal;
-use App\Models\User;
-use App\Models\PaymentDetail;
-use App\Models\Hour;
-use App\Models\Order;
-use App\Models\Price;
-use App\Models\RecentDealView;
-use App\Models\Offer;
-use App\Models\DealUpload;
-use App\Models\Notification;
-use App\Models\Support;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use App\Models\SocialProfile;
-use App\Models\PaymentHistory;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\FacadesDB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
-use phpDocumentor\Reflection\Types\Null_;
+use App\Models\Deal;
+use App\Models\User;
+use App\Models\Order;
+use App\Models\Price;
+use App\Models\Review;
+use App\Models\Support;
+use App\Models\FavoritDeal;
+use App\Models\Notification;
+use App\Models\DeliveryImage;
+use App\Models\PaymentDetail;
+use App\Models\SocialProfile;
+use App\Models\RecentDealView;
+use App\Models\PaymentHistory;
+use App\Models\BusinessProfile;
 
 class ServiceProviderController extends Controller
 {
