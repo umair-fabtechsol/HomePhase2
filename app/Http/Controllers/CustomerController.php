@@ -19,8 +19,6 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\SocialProfile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\FacadesDB;
-use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
