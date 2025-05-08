@@ -226,8 +226,8 @@ class SuperAdminController extends Controller
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
             if ($request->hasFile('personal_image')) {
-                if (!empty($getProvider->personal_image) && Storage::disk('s3')->exists($getProvider->personal_image)) {
-                    Storage::disk('s3')->delete($getProvider->personal_image);
+                if (!empty($getProvider->personal_image) && Storage::disk('s3')->exists('uploads/' .$getProvider->personal_image)) {
+                    Storage::disk('s3')->delete('uploads/' .$getProvider->personal_image);
                 }
                 $photo = $request->file('personal_image');
                 $photoPath = $photo->store('uploads', 's3');
@@ -297,8 +297,8 @@ class SuperAdminController extends Controller
             }
 
             if ($request->hasFile('personal_image')) {
-                if (!empty($getCustomer->personal_image) && Storage::disk('s3')->exists($getCustomer->personal_image)) {
-                    Storage::disk('s3')->delete($getCustomer->personal_image);
+                if (!empty($getCustomer->personal_image) && Storage::disk('s3')->exists('uploads/' .$getCustomer->personal_image)) {
+                    Storage::disk('s3')->delete('uploads/' .$getCustomer->personal_image);
                 }
                 $path = $request->file('personal_image')->store('uploads', 's3');
                 $data['personal_image'] = basename($path);
@@ -325,8 +325,8 @@ class SuperAdminController extends Controller
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
 
-            if (!empty($getCustomer->personal_image) && Storage::disk('s3')->exists($getCustomer->personal_image)) {
-                Storage::disk('s3')->delete($getCustomer->personal_image);
+            if (!empty($getCustomer->personal_image) && Storage::disk('s3')->exists('uploads/' .$getCustomer->personal_image)) {
+                Storage::disk('s3')->delete('uploads/' .$getCustomer->personal_image);
             }
 
             $getCustomer->delete();
@@ -385,8 +385,8 @@ class SuperAdminController extends Controller
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
             if ($request->hasFile('personal_image')) {
-                if (!empty($GetSaleRep->personal_image) && Storage::disk('s3')->exists($GetSaleRep->personal_image)) {
-                    Storage::disk('s3')->delete($GetSaleRep->personal_image);
+                if (!empty($GetSaleRep->personal_image) && Storage::disk('s3')->exists('uploads/' .$GetSaleRep->personal_image)) {
+                    Storage::disk('s3')->delete('uploads/' .$GetSaleRep->personal_image);
                 }
 
                 $photo = $request->file('personal_image');
@@ -413,8 +413,8 @@ class SuperAdminController extends Controller
                 return response()->json(['message' => 'Sales Rep not found'], 404);
             }
 
-            if (!empty($GetSaleRep->personal_image) && Storage::disk('s3')->exists($GetSaleRep->personal_image)) {
-                Storage::disk('s3')->delete($GetSaleRep->personal_image);
+            if (!empty($GetSaleRep->personal_image) && Storage::disk('s3')->exists('uploads/' .$GetSaleRep->personal_image)) {
+                Storage::disk('s3')->delete('uploads/' .$GetSaleRep->personal_image);
             }
 
             $GetSaleRep->delete();
@@ -468,8 +468,8 @@ class SuperAdminController extends Controller
                 $data = $request->all();
 
                 if ($request->hasFile('personal_image')) {
-                    if (!empty($user->personal_image) && Storage::disk('s3')->exists($user->personal_image)) {
-                        Storage::disk('s3')->delete($user->personal_image);
+                    if (!empty($user->personal_image) && Storage::disk('s3')->exists('uploads/' .$user->personal_image)) {
+                        Storage::disk('s3')->delete('uploads/' .$user->personal_image);
                     }
                     $file = $request->file('personal_image');
                     $path = $file->store('uploads', 's3');
@@ -869,8 +869,8 @@ class SuperAdminController extends Controller
                 return response()->json(['message' => 'Invalid User'], 403);
             }
 
-            if (!empty($provider->personal_image) && Storage::disk('s3')->exists($provider->personal_image)) {
-                Storage::disk('s3')->delete($provider->personal_image);
+            if (!empty($provider->personal_image) && Storage::disk('s3')->exists('uploads/' .$provider->personal_image)) {
+                Storage::disk('s3')->delete('uploads/' .$provider->personal_image);
             }
 
             $provider->delete();
