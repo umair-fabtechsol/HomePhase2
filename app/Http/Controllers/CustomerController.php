@@ -755,46 +755,49 @@ class CustomerController extends Controller
     public function AskForRevison(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 1) {
-            $order = Order::find($request->order_id);
-            if ($order) {
-                $data = $request->all();
-                if ($request->hasFile('images')) {
-                    foreach ($request->file('images') as $image) {
-                        $photo1 = $image;
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $images[] = $photo_name1;
-                    }
-                }
-
-                $data['revision_images'] =  json_encode($images);
-                $data['type'] =  'revision';
-                $afterImages = DeliveryImage::create($data);
-
-                if ($order->status == 'delivered') {
-
-                    $order->update([
-                        'status' => 'in_revision'
-                    ]);
-                }
-                $notification = [
-                    'title' => 'Revision Request',
-                    'message' => 'Revision request has been added successfully',
-                    'created_by' => $order->customer_id,
-                    'status' => 0,
-                    'clear' => 'no',
-                ];
-                Notification::create($notification);
-                return response()->json(['message' => 'Added revision successfully', 'afterImages' => $afterImages], 200);
-            } else {
-                return response()->json(['message' => 'No order found'], 401);
-            }
-        } else {
+        if ($role != 1) {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
+
+        $order = Order::find($request->order_id);
+        if (! $order) {
+            return response()->json(['message' => 'No order found'], 404);
+        }
+
+        $data = $request->except('images');
+        $filenames = [];
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('uploads', 's3');
+                Storage::disk('s3')->setVisibility($path, 'public');
+                $filenames[] = basename($path);
+            }
+        }
+
+        $data['revision_images'] = json_encode($filenames);
+        $data['type']            = 'revision';
+
+        $afterImages = DeliveryImage::create($data);
+
+        if ($order->status === 'delivered') {
+            $order->update(['status' => 'in_revision']);
+        }
+
+        Notification::create([
+            'title'      => 'Revision Request',
+            'message'    => 'Revision request has been added successfully',
+            'created_by' => $order->customer_id,
+            'status'     => 0,
+            'clear'      => 'no',
+        ]);
+
+        return response()->json([
+            'message'     => 'Added revision successfully',
+            'afterImages' => $afterImages,
+        ], 200);
     }
+
 
     public function GetPaymentHistory()
     {
