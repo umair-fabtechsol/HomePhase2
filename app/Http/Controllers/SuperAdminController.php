@@ -39,7 +39,6 @@ class SuperAdminController extends Controller
 
             $total_transactions = PaymentHistory::where('payment_type', 'payout')->count();
 
-            // Calculate the number of new providers added each day of the current week
             $startOfWeek = Carbon::now()->startOfWeek();
             $endOfWeek = Carbon::now()->endOfWeek();
 
@@ -75,7 +74,6 @@ class SuperAdminController extends Controller
             $addCurrentWeeklyCustomer = array_map(fn($day) => $newCustomersByDay[$day] ?? 0, $dayName);
             $addCurrentWeeklySales = array_map(fn($day) => $newSaleRapByDay[$day] ?? 0, $dayName);
 
-            // Calculate active users for each day of the current month
             $currentMonth = Carbon::now()->month;
             $previousMonth = Carbon::now()->subMonth()->month;
             $currentYear = Carbon::now()->year;
@@ -134,6 +132,7 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+
     public function ServiceProviders(Request $request)
     {
         $role = Auth::user()->role;
@@ -178,7 +177,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
     public function ProviderDetail($user_id)
     {
         $role = Auth::user()->role;
@@ -210,7 +208,7 @@ class SuperAdminController extends Controller
                     'business_profiles.business_name',
                     'business_profiles.business_logo',
                 )
-                ->where('reviews.provider_id', $user_id) // Filters by provider_id
+                ->where('reviews.provider_id', $user_id)
                 ->get();
 
             return response()->json(['message' => 'Provider Details', 'user' => $user, 'deals' => $deals, 'business' => $business, 'averageRating' => $averageRating, 'totalReview' => $totalReview, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
@@ -218,8 +216,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
-
     public function UpdateProvider(Request $request)
     {
         $role = Auth::user()->role;
@@ -235,19 +231,12 @@ class SuperAdminController extends Controller
                 if (!empty($getProvider->personal_image) && Storage::disk('s3')->exists($getProvider->personal_image)) {
                     Storage::disk('s3')->delete($getProvider->personal_image);
                 }
-
                 $photo = $request->file('personal_image');
                 $photoPath = $photo->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($photoPath, 'public');
-                
                 $data['personal_image'] = basename($photoPath);
-                // print_r($data['personal_image']);die();
             }
             $getProvider->update($data);
-            $getProvider->image_url = $getProvider->personal_image
-                ? Storage::disk('s3')->url($getProvider->personal_image)
-                : null;
-
             return response()->json([
                 'message' => 'Provider updated successfully',
                 'getProvider' => $getProvider
@@ -256,7 +245,6 @@ class SuperAdminController extends Controller
 
         return response()->json(['message' => 'You are not authorized'], 401);
     }
-
 
     public function Customers(Request $request)
     {
@@ -284,7 +272,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
     public function Customer($id)
     {
         $role = Auth::user()->role;
@@ -299,6 +286,61 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+    public function UpdateCustomer(Request $request)
+    {
+        $role = Auth::user()->role;
+
+        if ($role == 0 || $role == 3) {
+            $data = $request->all();
+
+            $getCustomer = User::find($request->id);
+            if (!$getCustomer || $getCustomer->role != 1) {
+                return response()->json(['message' => 'Invalid User Id'], 401);
+            }
+
+            if ($request->hasFile('personal_image')) {
+                if (!empty($getCustomer->personal_image) && Storage::disk('s3')->exists($getCustomer->personal_image)) {
+                    Storage::disk('s3')->delete($getCustomer->personal_image);
+                }
+                $path = $request->file('personal_image')->store('uploads', 's3');
+                $data['personal_image'] = basename($path);
+            }
+
+            $getCustomer->update($data);
+
+            return response()->json([
+                'message' => 'Customer updated successfully',
+                'getCustomer' => $getCustomer
+            ], 200);
+        }
+
+        return response()->json(['message' => 'You are not authorized'], 401);
+    }
+    public function DeleteCustomer($id)
+    {
+        $role = Auth::user()->role;
+
+        if ($role == 0) {
+            $getCustomer = User::find($id);
+
+            if (!$getCustomer || $getCustomer->role != 1) {
+                return response()->json(['message' => 'Invalid User Id'], 401);
+            }
+
+            if (!empty($getCustomer->personal_image) && Storage::disk('s3')->exists($getCustomer->personal_image)) {
+                Storage::disk('s3')->delete($getCustomer->personal_image);
+            }
+
+            $getCustomer->delete();
+
+            return response()->json([
+                'message' => 'Customer deleted successfully',
+                'getCustomer' => $getCustomer
+            ], 200);
+        }
+
+        return response()->json(['message' => 'You are not authorized'], 401);
+    }
 
     public function AddSalesReps(Request $request)
     {
@@ -311,17 +353,9 @@ class SuperAdminController extends Controller
                 $photoPath = $photo1->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($photoPath, 'public');
                 $data['personal_image'] = basename($photoPath);
-                // print_r($data['personal_image']);die();
             }
-
             $data['terms'] = 1;
             $Salesreps = User::create($data);
-
-            // Attach public image URL
-            $Salesreps->image_url = $Salesreps->personal_image
-                ? Storage::disk('s3')->url($Salesreps->personal_image)
-                : null;
-
             return response()->json([
                 'message' => 'Sales Reps created successfully',
                 'Salesreps' => $Salesreps
@@ -330,7 +364,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
     public function ViewSalesReps($id)
     {
         $role = Auth::user()->role;
@@ -343,8 +376,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
-
     public function UpdateSalesReps(Request $request)
     {
         $role = Auth::user()->role;
@@ -355,7 +386,6 @@ class SuperAdminController extends Controller
             if (!$GetSaleRep || $GetSaleRep->role != 3) {
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
-
             if ($request->hasFile('personal_image')) {
                 if (!empty($GetSaleRep->personal_image) && Storage::disk('s3')->exists($GetSaleRep->personal_image)) {
                     Storage::disk('s3')->delete($GetSaleRep->personal_image);
@@ -365,15 +395,8 @@ class SuperAdminController extends Controller
                 $photoPath = $photo->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($photoPath, 'public');
                 $data['personal_image'] = basename($photoPath);
-                print_r($data['personal_image']);die();
             }
-
             $GetSaleRep->update($data);
-
-            $GetSaleRep->image_url = $GetSaleRep->personal_image
-                ? Storage::disk('s3')->url($GetSaleRep->personal_image)
-                : null;
-
             return response()->json([
                 'message' => 'Sales Reps updated successfully',
                 'GetSaleRep' => $GetSaleRep
@@ -382,8 +405,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
-
     public function DeleteSalesReps($id)
     {
         $role = Auth::user()->role;
@@ -409,65 +430,6 @@ class SuperAdminController extends Controller
         }
     }
 
-    public function UpdateCustomer(Request $request)
-    {
-        $role = Auth::user()->role;
-
-        if ($role == 0 || $role == 3) {
-            $data = $request->all();
-
-            $getCustomer = User::find($request->id);
-            if (!$getCustomer || $getCustomer->role != 1) {
-                return response()->json(['message' => 'Invalid User Id'], 401);
-            }
-
-            if ($request->hasFile('personal_image')) {
-                if (!empty($getCustomer->personal_image) && Storage::disk('s3')->exists($getCustomer->personal_image)) {
-                    Storage::disk('s3')->delete($getCustomer->personal_image);
-                }
-                $path = $request->file('personal_image')->store('uploads', 's3');
-                $data['personal_image'] = $path;
-            }
-
-            $getCustomer->update($data);
-
-            return response()->json([
-                'message' => 'Customer updated successfully',
-                'getCustomer' => $getCustomer
-            ], 200);
-        }
-
-        return response()->json(['message' => 'You are not authorized'], 401);
-    }
-
-
-    public function DeleteCustomer($id)
-    {
-        $role = Auth::user()->role;
-    
-        if ($role == 0) {
-            $getCustomer = User::find($id);
-    
-            if (!$getCustomer || $getCustomer->role != 1) {
-                return response()->json(['message' => 'Invalid User Id'], 401);
-            }
-    
-            // Delete image from S3 if it exists
-            if (!empty($getCustomer->personal_image) && Storage::disk('s3')->exists($getCustomer->personal_image)) {
-                Storage::disk('s3')->delete($getCustomer->personal_image);
-            }
-    
-            $getCustomer->delete();
-    
-            return response()->json([
-                'message' => 'Customer deleted successfully',
-                'getCustomer' => $getCustomer
-            ], 200);
-        }
-    
-        return response()->json(['message' => 'You are not authorized'], 401);
-    }
-
     public function GetAllSaleRep(Request $request)
     {
         $role = Auth::user()->role;
@@ -486,7 +448,6 @@ class SuperAdminController extends Controller
 
             $total_sales_rap = $GetSaleRep->total();
 
-            // Fetch providers associated with each sales rep
             $GetSaleRep->getCollection()->transform(function ($salesRep) {
                 $providers = User::where('assign_sales_rep', $salesRep->id)
                     ->select('id', 'name', 'email', 'phone', 'status')
@@ -507,23 +468,17 @@ class SuperAdminController extends Controller
             $user = User::find($request->id);
             if ($user) {
                 $data = $request->all();
-    
+
                 if ($request->hasFile('personal_image')) {
-                    // Delete existing image from S3
                     if (!empty($user->personal_image) && Storage::disk('s3')->exists($user->personal_image)) {
                         Storage::disk('s3')->delete($user->personal_image);
                     }
-    
-                    // Upload new image to S3
                     $file = $request->file('personal_image');
-                    $path = $file->store('uploads', 's3'); // Stores under `uploads/filename.ext`
-    
-                    // Optionally make it public (if needed)
+                    $path = $file->store('uploads', 's3');
                     Storage::disk('s3')->setVisibility($path, 'public');
-    
-                    $data['personal_image'] = $path;
+                    $data['personal_image'] = basename($path);
                 }
-    
+
                 $user->update($data);
                 return response()->json([
                     'message' => 'User personal details updated successfully',
@@ -536,7 +491,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
     public function Security(Request $request)
     {
         $role = Auth::user()->role;
@@ -556,7 +510,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
     public function NotificationSetting(Request $request)
     {
         $role = Auth::user()->role;
@@ -593,7 +546,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
     public function AddPriceDetails(Request $request)
     {
         $role = Auth::user()->role;
@@ -613,7 +565,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
     public function GetPriceDetails()
     {
         $role = Auth::user()->role;
@@ -628,7 +579,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
     public function GetSettingDetail($id)
     {
         $role = Auth::user()->role;
@@ -648,8 +598,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
-
     public function GetProvidersSummary()
     {
         $role = Auth::user()->role;
@@ -674,7 +622,6 @@ class SuperAdminController extends Controller
                 ];
             }
 
-            // Yearly summary
             $totalYearly = array_sum(array_column($report, 'new_providers'));
 
             return response()->json([
@@ -688,7 +635,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
     public function GetClientsSummary()
     {
         $role = Auth::user()->role;
@@ -713,7 +659,6 @@ class SuperAdminController extends Controller
                 ];
             }
 
-            // Yearly summary
             $totalYearly = array_sum(array_column($report, 'new_clients'));
 
             return response()->json([
@@ -727,7 +672,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
     public function ServiceSummary()
     {
 
@@ -752,10 +696,10 @@ class SuperAdminController extends Controller
     public function SaleSummary()
     {
         $quarters = [
-            'Q1' => [1, 3],  // January - March
-            'Q2' => [4, 6],  // April - June
-            'Q3' => [7, 9],  // July - September
-            'Q4' => [10, 12] // October - December
+            'Q1' => [1, 3],
+            'Q2' => [4, 6],
+            'Q3' => [7, 9],
+            'Q4' => [10, 12]
         ];
 
         $quarterlyData = [];
@@ -805,61 +749,11 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-    // public function sendInvite(Request $request)
-    // {
-    //     $role = Auth::user()->role;
-    //     if ($role == 0) {
-    //         $request->validate([
-    //             'name'  => 'required|string',
-    //             'email' => 'required|email',
-    //         ]);
-
-    //         // Generate a unique token
-    //         $token = bin2hex(random_bytes(16));
-    //         $expiryTime = Carbon::now()->addMinutes(10);
-
-    //         // Store the token and expiry time in the database
-    //         DB::table('invitation_tokens')->insert([
-    //             'email' => $request->email,
-    //             'token' => $token,
-    //             'expires_at' => $expiryTime,
-    //         ]);
-
-    //         $signupUrl = url('https://homeprodeals.com/signup/' . urlencode($request->email) . '?token=' . $token);
-
-    //         Mail::to($request->email)->send(new InviteSalesRepMail($signupUrl));
-
-    //         return response()->json(['message' => 'Invitation sent successfully!']);
-    //     } else {
-    //         return response()->json(['message' => 'You are not authorized'], 401);
-    //     }
-    // }
-
-    // public function validateInvite(Request $request)
-    // {
-    //     $email = $request->query('email');
-    //     $token = $request->query('token');
-
-    //     // Check if the token exists and is valid
-    //     $invitation = DB::table('invitation_tokens')
-    //         ->where('email', $email)
-    //         ->where('token', $token)
-    //         ->where('expires_at', '>', Carbon::now())
-    //         ->first();
-
-    //     if (!$invitation) {
-    //         return response()->json(['message' => 'Invalid or expired invitation link'], 400);
-    //     }
-
-    //     // Proceed with the signup process
-    //     return response()->json(['message' => 'Invitation link is valid'], 200);
-    // }
     public function contact()
     {
         $getcontact = contact_pro::get()->all();
         return response()->json(['message' => 'Invitation sent successfully!', 'getcontact' => $getcontact]);
     }
-
     public function GetSupport(Request $request)
     {
 
@@ -887,7 +781,6 @@ class SuperAdminController extends Controller
 
         return response()->json(['GetSupport' => $GetSupport]);
     }
-
     public function ServiceProviderReport()
     {
         $role = Auth::user()->role;
@@ -921,10 +814,9 @@ class SuperAdminController extends Controller
                 ];
 
                 $totalNewServiceProviders += $newServiceProviders;
-                $totalCumulativeServiceProviders += $cumulativeServiceProviders; // This will be the last cumulative count
+                $totalCumulativeServiceProviders += $cumulativeServiceProviders;
             }
 
-            // Add total row
             $report[] = [
                 'period' => 'Total',
                 'new_service_providers' => $totalNewServiceProviders,
@@ -936,7 +828,6 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
     public function banProvider(Request $request)
     {
         $user = User::find($request->id);
@@ -949,16 +840,13 @@ class SuperAdminController extends Controller
             return response()->json(['message' => 'Invalid User'], 403);
         }
 
-        // Toggle status (0 → 1 OR 1 → 0)
         $newStatus = $user->status == 0 ? 1 : 0;
         $user->update(['status' => $newStatus]);
 
-        // Message based on status
         $message = $newStatus == 1 ? 'User banned successfully' : 'User unbanned successfully';
 
         return response()->json(['message' => $message, 'user' => $user], 200);
     }
-
     public function GetDateUser(Request $request)
     {
         $tillDate = $request->date;
@@ -978,24 +866,22 @@ class SuperAdminController extends Controller
             if (!$provider) {
                 return response()->json(['message' => 'Provider not found'], 404);
             }
-    
+
             if ($provider->role != 2) {
                 return response()->json(['message' => 'Invalid User'], 403);
             }
-    
-            // Delete personal image from S3
+
             if (!empty($provider->personal_image) && Storage::disk('s3')->exists($provider->personal_image)) {
                 Storage::disk('s3')->delete($provider->personal_image);
             }
-    
-            // Delete provider and related records
+
             $provider->delete();
             Deal::where('user_id', $id)->delete();
             BusinessProfile::where('user_id', $id)->delete();
             Review::where('provider_id', $id)->delete();
             Order::where('provider_id', $id)->delete();
             PaymentHistory::where('user_id', $id)->delete();
-    
+
             return response()->json([
                 'message' => 'Provider and its associated records deleted successfully',
                 'provider' => $provider
@@ -1039,9 +925,6 @@ class SuperAdminController extends Controller
             }
 
             if ($request->unassign == "false") {
-                // if (!is_null($provider->assign_sales_rep)) {
-                //     return response()->json(['message' => 'Providers Sale Rep updated successfully'], 202);
-                // }
                 $provider->update(['assign_sales_rep' => $request->salesrep_id]);
                 return response()->json(['message' => 'Provider assigned to Sales Rep successfully', 'provider' => $provider], 200);
             } elseif ($request->unassign == "true") {
@@ -1082,7 +965,6 @@ class SuperAdminController extends Controller
                 return response()->json(['message' => 'Invalid Sales Rep ID'], 403);
             }
 
-            // Check if the permission name is valid
             $validPermissions = ['assign_permission_1', 'assign_permission_2', 'assign_permission_3'];
             if (!in_array($request->permission_name, $validPermissions)) {
                 return response()->json(['message' => 'Invalid permission name'], 400);
