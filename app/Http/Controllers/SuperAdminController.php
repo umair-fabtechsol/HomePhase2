@@ -239,8 +239,9 @@ class SuperAdminController extends Controller
                 $photo = $request->file('personal_image');
                 $photoPath = $photo->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($photoPath, 'public');
-
-                $data['personal_image'] = $photoPath;
+                
+                $data['personal_image'] = basename($photoPath);
+                // print_r($data['personal_image']);die();
             }
             $getProvider->update($data);
             $getProvider->image_url = $getProvider->personal_image
@@ -309,7 +310,8 @@ class SuperAdminController extends Controller
                 $photo1 = $request->file('personal_image');
                 $photoPath = $photo1->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($photoPath, 'public');
-                $data['personal_image'] = $photoPath;
+                $data['personal_image'] = basename($photoPath);
+                // print_r($data['personal_image']);die();
             }
 
             $data['terms'] = 1;
@@ -362,7 +364,8 @@ class SuperAdminController extends Controller
                 $photo = $request->file('personal_image');
                 $photoPath = $photo->store('uploads', 's3');
                 Storage::disk('s3')->setVisibility($photoPath, 'public');
-                $data['personal_image'] = $photoPath;
+                $data['personal_image'] = basename($photoPath);
+                print_r($data['personal_image']);die();
             }
 
             $GetSaleRep->update($data);
