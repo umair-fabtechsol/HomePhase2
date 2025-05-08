@@ -1,26 +1,17 @@
 <?php
-
-
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ServiceProviderController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SaleRapController;
-use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\CommonController;
-use App\Http\Controllers\StripePaymentController;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\PayController;
 
-Route::post('createPayout', [PaymentController::class, 'createPayout'])->name('createPayout');
-Route::get('checkBalance', [PaymentController::class, 'checkBalance'])->name('checkBalance');
 Route::get('contact', [SuperAdminController::class, 'contact'])->name('contact');
 Route::get('GetSupport', [SuperAdminController::class, 'GetSupport'])->name('GetSupport');
 Route::post('UpdateSupport', [SuperAdminController::class, 'UpdateSupport'])->name('UpdateSupport');
 
-Route::post('charge', [PaymentController::class, 'charge'])->name('charge');
 Route::post('/ForgetPassword', [AuthController::class, 'ForgetPassword']);
 Route::get('ResetPassword', [AuthController::class, 'ResetPassword'])->name('ResetPassword');
 Route::post('ChangePassword', [AuthController::class, 'ChangePassword'])->name('ChangePassword');
@@ -144,7 +135,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('Customer')->group(function () {
         Route::controller(CustomerController::class)->group(function () {
-            Route::post('uploadImage', 'uploadImage')->name('uploadImage');
             Route::get('ListDeals', 'ListDeals')->name('ListDeals');
             Route::get('SingleDeal/{id}', 'SingleDeal')->name('SingleDeal');
             Route::post('MyDetail', 'MyDetail')->name('MyDetail');
@@ -154,7 +144,6 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('UpdatePaymentMethod', 'UpdatePaymentMethod')->name('UpdatePaymentMethod');
             Route::post('AddSocial', 'AddSocial')->name('AddSocial');
             Route::post('DeleteSocial', 'DeleteSocial')->name('DeleteSocial');
-            // Route::get('DealProvider/{user_id}', 'DealProvider')->name('DealProvider');
             Route::get('DetailUser/{user_id}', 'DetailUser')->name('DetailUser');
             Route::get('CustomerSocial/{user_id}', 'CustomerSocial')->name('CustomerSocial');
 
@@ -264,14 +253,3 @@ Route::middleware('auth:sanctum')->group(function () {
 
 });
 
-
-Route::controller(StripePaymentController::class)->group(function () {
-    Route::get('callpro', 'callpro')->name('callpro');
-});
-
-// common provider and customer
-// FilterHomeDeals
-//RecentViewDeals
-//HomeProviderOrders
-
-// AddRecentDeal

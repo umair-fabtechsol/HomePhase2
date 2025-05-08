@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Deal;
-use App\Models\BusinessProfile;
 use App\Models\Review;
+use App\Models\FavoritDeal;
 use App\Models\RecentDealView;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use App\Models\BusinessProfile;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class CommonController extends Controller
@@ -37,7 +38,7 @@ class CommonController extends Controller
         $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
             ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
             ->orderBy('deals.id', 'desc')
             ->select(
                 'deals.id',
@@ -56,10 +57,9 @@ class CommonController extends Controller
                 'deals.user_id',
                 'business_profiles.business_name as user_name',
                 'business_profiles.business_logo',
-                // 'users.personal_image',
-                \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                \DB::raw('COUNT(reviews.id) as total_reviews'),
-                \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+                DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                DB::raw('COUNT(reviews.id) as total_reviews'),
+                DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids')
             )
             ->groupBy(
                 'deals.id',
@@ -80,7 +80,6 @@ class CommonController extends Controller
                 'business_profiles.business_logo',
             )->where('deals.publish', 1);
 
-        // Apply Filters
         if ($service) {
             $deals = $deals->where('deals.service_category', 'like', '%' . $service . '%');
         }
@@ -130,11 +129,7 @@ class CommonController extends Controller
             $favoritDeals = null;
         }
 
-        // if ($deals->isNotEmpty()) {
         return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
-        // } else {
-        //     return response()->json(['message' => 'No deals found'], 200);
-        // }
     }
 
     public function GetDealDetail(Request $request, $id)
@@ -144,11 +139,10 @@ class CommonController extends Controller
         $token = $request->bearerToken();
 
         if ($token) {
-            // Find the user by token
             $accessToken = PersonalAccessToken::findToken($token);
 
             if ($accessToken) {
-                $user = $accessToken->tokenable; // Get the associated user
+                $user = $accessToken->tokenable;
                 $userId = $user->id;
             }
         } else {
@@ -156,9 +150,9 @@ class CommonController extends Controller
         }
 
         if ($deal) {
-            $favoriteUserIds = \DB::table('favorit_deals')
+            $favoriteUserIds = DB::table('favorit_deals')
                 ->where('deal_id', $deal->id)
-                ->pluck('user_id') // Get only user IDs
+                ->pluck('user_id')
                 ->toArray();
 
             $deal->favorite_user_ids = $favoriteUserIds;
@@ -195,21 +189,21 @@ class CommonController extends Controller
     }
     public function deleteMyAccount()
     {
-        $user = Auth::user();
+        $user = Auth::user()->id;
+
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
+
         if ($user->role == 0) {
-            return response()->json(['error' => 'SuperAdmin cannot delete their account'], 404);
+            return response()->json(['error' => 'SuperAdmin cannot delete their account'], 403);
         }
 
-        if ($user) {
-            $user->delete();
-            return response()->json(['message' => 'Account deleted successfully'], 200);
-        } else {
-            return response()->json(['message' => 'User not found'], 404);
-        }
+        $user->delete();
+
+        return response()->json(['message' => 'Account deleted successfully'], 200);
     }
+
 
     public function googleReview($id)
     {
@@ -226,11 +220,9 @@ class CommonController extends Controller
         if (!$placeId) {
             return response()->json(['message' => 'Place ID not found'], 404);
         }
-        // echo $placeId;die();
 
         $apiKey = env('GOOGLE_API_KEY');
         $apiKey = 'AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0';
-        // $url = "https://maps.googleapis.com/maps/api/place/details/json?place_id={$placeId}&key={$apiKey}";
         $url = "https://maps.googleapis.com/maps/api/place/details/json?place_id={$placeId}&fields=name,rating,user_ratings_total,reviews&key={$apiKey}";
         $response = file_get_contents($url);
         $data = json_decode($response, true);

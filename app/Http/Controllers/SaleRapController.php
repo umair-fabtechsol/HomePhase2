@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Deal;
-use App\Models\User;
-use App\Models\Task;
-use App\Models\Order;
-use App\Models\BusinessProfile;
-use App\Models\Review;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
+use App\Models\Deal;
+use App\Models\User;
+use App\Models\Task;
+use App\Models\Order;
+use App\Models\Review;
+use App\Models\BusinessProfile;
 
 class SaleRapController extends Controller
 {
