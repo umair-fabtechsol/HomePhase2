@@ -2,30 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessProfile;
-use App\Models\Review;
-use App\Models\Deal;
-use App\Models\DeliveryImage;
-use App\Models\FavoritDeal;
-use App\Models\User;
-use App\Models\PaymentDetail;
-use App\Models\Hour;
-use App\Models\Order;
-use App\Models\Price;
-use App\Models\RecentDealView;
-use App\Models\Offer;
-use App\Models\DealUpload;
-use App\Models\Notification;
-use App\Models\Support;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use App\Models\SocialProfile;
-use App\Models\PaymentHistory;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
-use phpDocumentor\Reflection\Types\Null_;
+use App\Models\Deal;
+use App\Models\User;
+use App\Models\Order;
+use App\Models\Price;
+use App\Models\Review;
+use App\Models\Support;
+use App\Models\FavoritDeal;
+use App\Models\Notification;
+use App\Models\DeliveryImage;
+use App\Models\PaymentDetail;
+use App\Models\SocialProfile;
+use App\Models\RecentDealView;
+use App\Models\PaymentHistory;
+use App\Models\BusinessProfile;
 
 class ServiceProviderController extends Controller
 {
@@ -41,7 +37,7 @@ class ServiceProviderController extends Controller
             $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
                 ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
                 ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
                 ->orderBy('deals.id', 'desc')
                 ->select(
                     'deals.id',
@@ -60,9 +56,9 @@ class ServiceProviderController extends Controller
                     'deals.user_id',
                     'business_profiles.business_name as user_name',
                     'business_profiles.business_logo',
-                    \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                    \DB::raw('COUNT(reviews.id) as total_reviews'),
-                    \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+                    DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                    DB::raw('COUNT(reviews.id) as total_reviews'),
+                    DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids')
                 )
                 ->groupBy(
                     'deals.id',
@@ -80,24 +76,23 @@ class ServiceProviderController extends Controller
                     'deals.estimated_service_timing1',
                     'deals.user_id',
                     'business_profiles.business_name',
-                    // 'users.personal_image'
-                'business_profiles.business_logo',
+                    'business_profiles.business_logo',
                 )->where('deals.user_id', $userId);
-                
-                if ($service) {
-                    $deals = $deals->where(function ($query) use ($service) {
-                        $query->where('deals.service_category', 'like', '%' . $service . '%')
-                            ->orWhere('deals.service_title', 'like', '%' . $service . '%')
-                            ->orWhere('deals.search_tags', 'like', '%' . $service . '%')
-                            ->orWhere('deals.service_description', 'like', '%' . $service . '%')
-                            ->orWhere('deals.commercial', 'like', '%' . $service . '%')
-                            ->orWhere('deals.residential', 'like', '%' . $service . '%');
-                    });
-                }
-                
-                $deals = $deals->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ??12);
 
-                $totalDeals = $deals->total();
+            if ($service) {
+                $deals = $deals->where(function ($query) use ($service) {
+                    $query->where('deals.service_category', 'like', '%' . $service . '%')
+                        ->orWhere('deals.service_title', 'like', '%' . $service . '%')
+                        ->orWhere('deals.search_tags', 'like', '%' . $service . '%')
+                        ->orWhere('deals.service_description', 'like', '%' . $service . '%')
+                        ->orWhere('deals.commercial', 'like', '%' . $service . '%')
+                        ->orWhere('deals.residential', 'like', '%' . $service . '%');
+                });
+            }
+
+            $deals = $deals->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
+
+            $totalDeals = $deals->total();
 
             $deals->transform(function ($deal) {
                 $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
@@ -111,7 +106,7 @@ class ServiceProviderController extends Controller
                 } else {
                     $favoritDeals = null;
                 }
-                return response()->json(['deals' => $deals,'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
+                return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
             } else {
                 return response()->json(['message' => 'No deals found'], 401);
             }
@@ -126,13 +121,13 @@ class ServiceProviderController extends Controller
         $deal = Deal::find($id);
 
         if ($deal) {
-            $favoriteUserIds = \DB::table('favorit_deals')
-            ->where('deal_id', $deal->id)
-            ->pluck('user_id') // Get only user IDs
-            ->toArray();
+            $favoriteUserIds = DB::table('favorit_deals')
+                ->where('deal_id', $deal->id)
+                ->pluck('user_id')
+                ->toArray();
 
             $deal->favorite_user_ids = $favoriteUserIds;
-            
+
             $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
             $getReviews = Review::where('deal_id', $id)->get();
             if ($getReviews->isNotEmpty()) {
@@ -170,14 +165,6 @@ class ServiceProviderController extends Controller
         if ($deal) {
             $deal->update(['publish' => 1]);
             $deal = Deal::find($deal_id);
-            // $notifications = [
-            //     'title' => 'Deal Publish',
-            //     'message' => '"' . $deal->service_title . '" Deal Publish successfully',
-            //     'created_by' => $deal->user_id,
-            //     'status' => 0,
-            //     'clear' => 'no',
-            // ];
-            // Notification::create($notifications);
             return response()->json(['message' => 'Deal Publish successfully', 'deal' => $deal], 200);
         } else {
             return response()->json(['message' => 'No deals found'], 401);
@@ -192,7 +179,6 @@ class ServiceProviderController extends Controller
         $validator = Validator::make($request->all(), [
             'service_title' => 'required',
             'service_category' => 'required',
-            // 'search_tags' => 'required',
             'service_description' => 'required',
             'commercial' => 'nullable',
             'residential' => 'nullable',
@@ -248,7 +234,6 @@ class ServiceProviderController extends Controller
             $validator = Validator::make($request->all(), [
                 'service_title' => 'required',
                 'service_category' => 'required',
-                // 'search_tags' => 'required',
                 'service_description' => 'required',
                 'commercial' => 'nullable',
                 'residential' => 'nullable',
@@ -390,7 +375,6 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-    //left: admin can update any but provider can only his
     public function MediaUpload(Request $request)
     {
         $userId = Auth::id();
@@ -404,13 +388,11 @@ class ServiceProviderController extends Controller
                 $DealImages[] = $photo_name;
             }
         }
-        
-        // Handle existing image strings (already uploaded)
+
         if ($request->has('images') && is_array($request->input('images'))) {
             $DealImages = array_merge($DealImages, $request->input('images'));
         }
-        
-        // Handle uploaded videos
+
         if ($request->hasFile('videos')) {
             foreach ($request->file('videos') as $video) {
                 $video_name = time() . '-' . $video->getClientOriginalName();
@@ -418,8 +400,7 @@ class ServiceProviderController extends Controller
                 $DealVideos[] = $video_name;
             }
         }
-        
-        // Handle existing video strings (already uploaded)
+
         if ($request->has('videos') && is_array($request->input('videos'))) {
             $DealVideos = array_merge($DealVideos, $request->input('videos'));
         }
@@ -430,7 +411,6 @@ class ServiceProviderController extends Controller
                     return response()->json(['message' => 'You are not authorized to update this deal.'], 401);
                 }
             }
-            // Update deal with new media
             $deal->update([
                 'images' => json_encode($DealImages),
                 'videos' => json_encode($DealVideos),
@@ -461,41 +441,39 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function DeleteMediaUpload(Request $request){
+    public function DeleteMediaUpload(Request $request)
+    {
 
-        $getDeal=Deal::find($request->id);
-          
-        if($request->type == 'images'){
+        $getDeal = Deal::find($request->id);
 
-            $images= json_decode($getDeal->images);
+        if ($request->type == 'images') {
+
+            $images = json_decode($getDeal->images);
             $imagePath = public_path('uploads/' . $images[$request->index]);
-        if (file_exists($imagePath)) {
-            unlink($imagePath);
-        }
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
             unset($images[$request->index]);
-            $updateimages=array_values($images);
+            $updateimages = array_values($images);
 
             $getDeal->update(['images' => json_encode($updateimages)]);
             return response()->json([
-            'message' => 'Image deleted successfully'
-        ], 200);
-            
-        }elseif($request->type == 'videos'){
-            $videos= json_decode($getDeal->videos);
+                'message' => 'Image deleted successfully'
+            ], 200);
+        } elseif ($request->type == 'videos') {
+            $videos = json_decode($getDeal->videos);
             $videoPath = public_path('uploads/' . $videos[$request->index]);
             if (file_exists($videoPath)) {
-            unlink($videoPath);
+                unlink($videoPath);
             }
             unset($videos[$request->index]);
-            $updatevideos=array_values($videos);
+            $updatevideos = array_values($videos);
 
             $getDeal->update(['videos' => json_encode($updatevideos)]);
             return response()->json([
-            'message' => 'Video deleted successfully'
-        ], 200);
-
+                'message' => 'Video deleted successfully'
+            ], 200);
         }
-        
     }
     public function PublishMediaUpload(Request $request)
     {
@@ -576,7 +554,7 @@ class ServiceProviderController extends Controller
 
     public function UpdatePriceAndPackage(Request $request)
     {
-        
+
         $deal = Deal::find($request->id);
         if ($deal) {
             $data = $request->all();
@@ -671,37 +649,6 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-
-    // public function DeleteDeal($id)
-    // {
-    //     $deal = Deal::find($id);
-    //     $images = json_decode($deal->images, true);
-    //     $videos = json_decode($deal->videos, true);
-
-    //     if ($deal) {
-    //         if (!empty($images)) {
-    //             foreach ($images as $image) {
-    //                 $imagePath = public_path('uploads/' . $image);
-    //                 if (file_exists($imagePath)) {
-    //                     unlink($imagePath);
-    //                 }
-    //             }
-    //         }
-    //         if (!empty($videos)) {
-    //             foreach ($videos as $video) {
-    //                 $videoPath = public_path('uploads/' . $video);
-    //                 if (file_exists($videoPath)) {
-    //                     unlink($videoPath);
-    //                 }
-    //             }
-    //         }
-    //         $deal->delete();
-
-    //         return response()->json(['message' => 'Deal deleted successfully', 'deal' => $deal], 200);
-    //     } else {
-    //         return response()->json(['message' => 'No deal found'], 401);
-    //     }
-    // }
     public function DeleteDeal($id)
     {
         $role = Auth::user()->role;
@@ -712,7 +659,6 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'No deal found'], 404);
         }
 
-        // Check permissions
         if ($role == 2 && $deal->user_id != $userId) {
             return response()->json(['message' => 'You are not authorized to delete this deal'], 403);
         }
@@ -720,9 +666,8 @@ class ServiceProviderController extends Controller
         $images = is_array(json_decode($deal->images, true)) ? json_decode($deal->images, true) : [];
         $videos = is_array(json_decode($deal->videos, true)) ? json_decode($deal->videos, true) : [];
 
-        // Delete images
         foreach ($images as $image) {
-            if (is_string($image)) { // Ensure $image is a string
+            if (is_string($image)) {
                 $imagePath = public_path('uploads/' . $image);
                 if (file_exists($imagePath)) {
                     unlink($imagePath);
@@ -730,9 +675,8 @@ class ServiceProviderController extends Controller
             }
         }
 
-        // Delete videos
         foreach ($videos as $video) {
-            if (is_string($video)) { // Ensure $video is a string
+            if (is_string($video)) {
                 $videoPath = public_path('uploads/' . $video);
                 if (file_exists($videoPath)) {
                     unlink($videoPath);
@@ -740,164 +684,154 @@ class ServiceProviderController extends Controller
             }
         }
 
-        // Delete the deal from favorites
         FavoritDeal::where('deal_id', $id)->delete();
 
-        // Delete the deal
         $deal->delete();
 
         return response()->json(['message' => 'Deal and associated favorites deleted successfully'], 200);
     }
-    public function MyDetails(Request $request ,$id = null)
+    public function MyDetails(Request $request, $id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if($id != null){
+        if ($id != null) {
             $user = User::find($id);
-        }else{
-            $user = User::find($userId); 
+        } else {
+            $user = User::find($userId);
         }
-       
-            
-            if ($user) {
-                $data = $request->all();
-                if ($request->hasFile('personal_image')) {
-                    $imagePath = public_path('uploads/' . $user->personal_image);
-                    if (!empty($user->personal_image) && file_exists($imagePath)) {
-                        unlink($imagePath);
-                    }
-                    $photo1 = $request->file('personal_image');
+
+
+        if ($user) {
+            $data = $request->all();
+            if ($request->hasFile('personal_image')) {
+                $imagePath = public_path('uploads/' . $user->personal_image);
+                if (!empty($user->personal_image) && file_exists($imagePath)) {
+                    unlink($imagePath);
+                }
+                $photo1 = $request->file('personal_image');
+                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+                $photo_destination = public_path('uploads');
+                $photo1->move($photo_destination, $photo_name1);
+                $data['personal_image'] = $photo_name1;
+            } else {
+
+                $data['personal_image'] = null;
+            }
+            if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
+                $data['phone'] = '+' . $data['phone'];
+            }
+
+            $validator = Validator::make($data, [
+                'phone' => ['required', 'phone:AUTO'],
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['phone' => 'Invalid phone number'], 400);
+            }
+
+            $user->update($data);
+
+            return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
+        } else {
+            return response()->json(['message' => 'No user found'], 401);
+        }
+    }
+
+    public function UpdatePassword(Request $request, $id = null)
+    {
+        $role = Auth::user()->role;
+        $userId = Auth::id();
+        if ($id != null) {
+
+            $user = User::find($id);
+        } else {
+
+            $user = User::find($userId);
+        }
+        if ($user) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json(['message' => 'Current password is incorrect'], 401);
+            }
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            return response()->json(['message' => 'User Password Updated successfully', 'user' => $user], 200);
+        } else {
+            return response()->json(['message' => 'No user found'], 401);
+        }
+    }
+
+    public function BusinessProfile(Request $request, $id = null)
+    {
+        $role = Auth::user()->role;
+        $userId = Auth::id();
+        if ($id != null && $role != 0) {
+            return response()->json(['message' => 'Only admin can pass id parameter'], 401);
+        }
+        if ($id != null) {
+            $businessProfile = BusinessProfile::where('user_id', $id)->first();
+            $userExist = User::find($id);
+        } else {
+            $businessProfile = BusinessProfile::where('user_id', $userId)->first();
+            $userExist = User::where('id', $userId);
+        }
+        $data = $request->all();
+        if ($businessProfile) {
+            if ($request->hasFile('business_logo')) {
+                $imagePath = public_path('uploads/' . $businessProfile->business_logo);
+                if (!empty($businessProfile->business_logo) && file_exists($imagePath)) {
+                    unlink($imagePath);
+                }
+                $photo1 = $request->file('business_logo');
+                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+                $photo_destination = public_path('uploads');
+                $photo1->move($photo_destination, $photo_name1);
+                $data['business_logo'] = $photo_name1;
+            }
+            $businessProfileup = $businessProfile->update($data);
+            $notifications = [
+                'title' => 'Update User Business Profile',
+                'message' => 'User Business Profile Updated successfully',
+                'created_by' => $userId,
+                'status' => 0,
+                'clear' => 'no',
+
+            ];
+            Notification::create($notifications);
+
+            return response()->json(['message' => 'Business Profile Updated successfully', 'BusinessProfile' => $businessProfile], 200);
+        } else {
+            if ($userExist) {
+                if ($request->hasFile('business_logo')) {
+                    $photo1 = $request->file('business_logo');
                     $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
                     $photo_destination = public_path('uploads');
                     $photo1->move($photo_destination, $photo_name1);
-                    $data['personal_image'] = $photo_name1;
-                    
-                }else{
-
-                    $data['personal_image'] = null;
-                    
+                    $data['business_logo'] = $photo_name1;
                 }
-                if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
-                    $data['phone'] = '+' . $data['phone'];
-                }
-           
-                $validator = Validator::make($data, [
-                    'phone' => ['required', 'phone:AUTO'], 
-                ]);
-         
-                if ($validator->fails()) {
-                    return response()->json(['phone' => 'Invalid phone number'], 400);
-                }
-                
-                $user->update($data);
-
-                return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
-            } else {
-                return response()->json(['message' => 'No user found'], 401);
-            }
-       
-    }
-
-    public function UpdatePassword(Request $request , $id = null)
-    {
-        $role = Auth::user()->role;
-        $userId = Auth::id();
-            if($id != null){
-
-                $user = User::find($id);
-                }else{
-                
-                $user = User::find($userId);    
-                }
-            if ($user) {
-                if (!Hash::check($request->current_password, $user->password)) {
-                    return response()->json(['message' => 'Current password is incorrect'], 401);
-                }
-                $user->password = Hash::make($request->password);
-                $user->save();
-
-                return response()->json(['message' => 'User Password Updated successfully', 'user' => $user], 200);
-            } else {
-                return response()->json(['message' => 'No user found'], 401);
-            }
-       
-    }
-
-    public function BusinessProfile(Request $request ,$id = null)
-    {
-        $role = Auth::user()->role;
-        $userId = Auth::id();
-            if($id != null && $role != 0){
-                return response()->json(['message' => 'Only admin can pass id parameter'], 401);
-            }
-            if($id != null){
-                $businessProfile = BusinessProfile::where('user_id', $id)->first();
-                $userExist = User::find($id);
-            }else{  
-                $businessProfile = BusinessProfile::where('user_id', $userId)->first();
-                $userExist = User::where('id',$userId);
-            }
-            // return response()->json(['BusinessProfile' => $businessProfile], 200); die();
-                $data = $request->all();
-                if ($businessProfile) {
-                    if ($request->hasFile('business_logo')) {
-                        $imagePath = public_path('uploads/' . $businessProfile->business_logo);
-                        if (!empty($businessProfile->business_logo) && file_exists($imagePath)) {
-                            unlink($imagePath);
-                        }
-                        $photo1 = $request->file('business_logo');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['business_logo'] = $photo_name1;
-                    }
-                    $businessProfileup = $businessProfile->update($data);
-                    // $businessProfile = $businessProfile->update($data);
-                    $notifications = [
-                        'title' => 'Update User Business Profile',
-                        'message' => 'User Business Profile Updated successfully',
-                        'created_by' => $userId,
-                        'status' => 0,
-                        'clear' => 'no',
-
-                    ];
-                    Notification::create($notifications);
-
-                    return response()->json(['message' => 'Business Profile Updated successfully', 'BusinessProfile' => $businessProfile], 200);
+                if ($id != null) {
+                    $data['user_id'] = $id;
                 } else {
-                    if($userExist) {
-                        if ($request->hasFile('business_logo')) {
-                            $photo1 = $request->file('business_logo');
-                            $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                            $photo_destination = public_path('uploads');
-                            $photo1->move($photo_destination, $photo_name1);
-                            $data['business_logo'] = $photo_name1;
-                        }
-                        if($id != null){
-                            $data['user_id'] = $id;
-                        } else{
-                            $data['user_id'] = $userId;
-                        }
-                        $businessProfile = BusinessProfile::create($data);
-                        $notifications = [
-                            'title' => 'Created User Business Profile',
-                            'message' => 'User Business Profile created successfully',
-                            'created_by' => $userId,
-                            'status' => 0,
-                            'clear' => 'no',
-
-                        ];
-                        Notification::create($notifications);
-                    }
-                    else {
-                        return response()->json([
-                            'message' => 'Error: User does not exist. In order to create or update business profile, please add a valid user first.'
-                        ], 404);
-                    }
+                    $data['user_id'] = $userId;
                 }
+                $businessProfile = BusinessProfile::create($data);
+                $notifications = [
+                    'title' => 'Created User Business Profile',
+                    'message' => 'User Business Profile created successfully',
+                    'created_by' => $userId,
+                    'status' => 0,
+                    'clear' => 'no',
 
-                return response()->json(['message' => 'User Business Profile created successfully', 'BusinessProfile' => $businessProfile], 200);
-    
+                ];
+                Notification::create($notifications);
+            } else {
+                return response()->json([
+                    'message' => 'Error: User does not exist. In order to create or update business profile, please add a valid user first.'
+                ], 404);
+            }
+        }
+
+        return response()->json(['message' => 'User Business Profile created successfully', 'BusinessProfile' => $businessProfile], 200);
     }
     public function AddPaymentDetails(Request $request)
     {
@@ -968,284 +902,161 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function AdditionalPhotos(Request $request ,$id = null)
+    public function AdditionalPhotos(Request $request, $id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-       
-            
-            if($id != null){
+
+
+        if ($id != null) {
             $businessProfile = BusinessProfile::where('user_id', $id)->first();
-            }else{
+        } else {
             $businessProfile = BusinessProfile::where('user_id', $userId)->first();
+        }
+
+        $data = $request->all();
+
+        if ($businessProfile) {
+            $fields = ['about_video', 'technician_photo', 'vehicle_photo', 'facility_photo', 'project_photo'];
+            foreach ($fields as $field) {
+                $uploadedFiles = [];
+
+                if ($request->hasFile($field)) {
+                    foreach ($request->file($field) as $file) {
+                        $fileName = time() . '-' . $file->getClientOriginalName();
+                        $file->move(public_path('uploads'), $fileName);
+                        $uploadedFiles[] = $fileName;
+                    }
+                }
+
+                if ($request->has($field) && is_array($request->input($field))) {
+                    $uploadedFiles = array_merge($uploadedFiles, $request->input($field));
+                }
+
+                if (!empty($uploadedFiles)) {
+                    $data[$field] = json_encode($uploadedFiles);
+                } else {
+                    $data[$field] = [];
+                }
             }
-          
-                $data = $request->all();
-                
-                if ($businessProfile) {
-                    $fields = ['about_video', 'technician_photo', 'vehicle_photo', 'facility_photo', 'project_photo'];
-                    // echo "dddddd"; die();
-                    foreach ($fields as $field) {
-                        $uploadedFiles = [];
+            $businessProfile->update($data);
 
-                        // Handle file uploads
-                        if ($request->hasFile($field)) {
-                            foreach ($request->file($field) as $file) {
-                                $fileName = time() . '-' . $file->getClientOriginalName();
-                                $file->move(public_path('uploads'), $fileName);
-                                $uploadedFiles[] = $fileName;
-                            }
-                        }
+            Notification::create([
+                'title' => 'Update User Business Additional Info',
+                'message' => 'User Business Additional Info Updated successfully',
+                'created_by' => $businessProfile->user_id,
+                'status' => 0,
+                'clear' => 'no',
+            ]);
 
-                        // Handle string-based input
-                        if ($request->has($field) && is_array($request->input($field))) {
-                            $uploadedFiles = array_merge($uploadedFiles, $request->input($field));
-                        }
+            return response()->json([
+                'message' => 'User Business Additional Info Updated successfully',
+                'BusinessProfile' => $businessProfile
+            ], 200);
+        } else {
+            if ($request->hasFile('technician_photo')) {
+                $photo1 = $request->file('technician_photo');
+                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+                $photo_destination = public_path('uploads');
+                $photo1->move($photo_destination, $photo_name1);
+                $data['technician_photo'] = $photo_name1;
+            }
+            if ($request->hasFile('about_video')) {
+                $photo1 = $request->file('about_video');
+                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+                $photo_destination = public_path('uploads');
+                $photo1->move($photo_destination, $photo_name1);
+                $data['about_video'] = $photo_name1;
+            }
+            if ($request->hasFile('vehicle_photo')) {
+                $photo1 = $request->file('vehicle_photo');
+                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+                $photo_destination = public_path('uploads');
+                $photo1->move($photo_destination, $photo_name1);
+                $data['vehicle_photo'] = $photo_name1;
+            }
+            if ($request->hasFile('facility_photo')) {
+                $photo1 = $request->file('facility_photo');
+                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+                $photo_destination = public_path('uploads');
+                $photo1->move($photo_destination, $photo_name1);
+                $data['facility_photo'] = $photo_name1;
+            }
+            if ($request->hasFile('project_photo')) {
+                $photo1 = $request->file('project_photo');
+                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+                $photo_destination = public_path('uploads');
+                $photo1->move($photo_destination, $photo_name1);
+                $data['project_photo'] = $photo_name1;
+            }
+            $data['user_id'] = $userId;
+            $businessProfile = BusinessProfile::create($data);
+            $notifications = [
+                'title' => 'Created User Business Additional Info',
+                'message' => 'User Business Additional Info created successfully',
+                'created_by' => $userId,
+                'status' => 0,
+                'clear' => 'no',
 
-                        // Save combined data to DB
-                        if (!empty($uploadedFiles)) {
-                            $data[$field] = json_encode($uploadedFiles);
-                        }
-                        else{
-                            $data[$field] = [];
-                        }
-                    }
-                    $businessProfile->update($data);
-                
-                    Notification::create([
-                        'title' => 'Update User Business Additional Info',
-                        'message' => 'User Business Additional Info Updated successfully',
-                        'created_by' => $businessProfile->user_id,
-                        'status' => 0,
-                        'clear' => 'no',
-                    ]);
-                
-                    return response()->json([
-                        'message' => 'User Business Additional Info Updated successfully',
-                        'BusinessProfile' => $businessProfile
-                    ], 200);
-                }
-                
-                else {
-                    if ($request->hasFile('technician_photo')) {
-                        $photo1 = $request->file('technician_photo');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['technician_photo'] = $photo_name1;
-                    }
-                    if ($request->hasFile('about_video')) {
-                        $photo1 = $request->file('about_video');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['about_video'] = $photo_name1;
-                    }
-                    if ($request->hasFile('vehicle_photo')) {
-                        $photo1 = $request->file('vehicle_photo');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['vehicle_photo'] = $photo_name1;
-                    }
-                    if ($request->hasFile('facility_photo')) {
-                        $photo1 = $request->file('facility_photo');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['facility_photo'] = $photo_name1;
-                    }
-                    if ($request->hasFile('project_photo')) {
-                        $photo1 = $request->file('project_photo');
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $data['project_photo'] = $photo_name1;
-                    }
-                    $data['user_id'] = $userId;
-                    $businessProfile = BusinessProfile::create($data);
-                    $notifications = [
-                        'title' => 'Created User Business Additional Info',
-                        'message' => 'User Business Additional Info created successfully',
-                        'created_by' => $userId,
-                        'status' => 0,
-                        'clear' => 'no',
+            ];
+            Notification::create($notifications);
+        }
 
-                    ];
-                    Notification::create($notifications);
-                }
-
-                return response()->json(['message' => 'User Business Additional Info created successfully','BusinessProfile' => $businessProfile], 200);
-           
-
+        return response()->json(['message' => 'User Business Additional Info created successfully', 'BusinessProfile' => $businessProfile], 200);
     }
 
-    // public function AddCertificateHours(Request $request ,$id = null)
-    // {
-    //     $role = Auth::user()->role;
-    //     $userId = Auth::id();
-     
-    //         $data = $request->all();
-    //         if($id != null){
-
-          
-    //         $updateCertificateHours = BusinessProfile::where('user_id', $id)->first();
-    //         }else{
-            
-    //         $updateCertificateHours = BusinessProfile::where('user_id', $userId)->first();
-    //         }
-    //         if ($updateCertificateHours) {
-
-    //             if ($request->hasFile('insurance_certificate')) {
-    //                 $imagePath = public_path('uploads/' . $updateCertificateHours->insurance_certificate);
-    //                 if (!empty($updateCertificateHours->insurance_certificate) && file_exists($imagePath)) {
-    //                     unlink($imagePath);
-    //                 }
-    //                 $photo1 = $request->file('insurance_certificate');
-    //                 $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-    //                 $photo_destination = public_path('uploads');
-    //                 $photo1->move($photo_destination, $photo_name1);
-    //                 $data['insurance_certificate'] = $photo_name1;
-    //             }
-    //             if ($request->hasFile('license_certificate')) {
-    //                 $imagePath = public_path('uploads/' . $updateCertificateHours->license_certificate);
-    //                 if (!empty($updateCertificateHours->license_certificate) && file_exists($imagePath)) {
-    //                     unlink($imagePath);
-    //                 }
-    //                 $photo2 = $request->file('license_certificate');
-    //                 $photo_name2 = time() . '-' . $photo2->getClientOriginalName();
-    //                 $photo_destination = public_path('uploads');
-    //                 $photo2->move($photo_destination, $photo_name2);
-    //                 $data['license_certificate'] = $photo_name2;
-    //             }
-    //             if ($request->hasFile('award_certificate')) {
-    //                 $imagePath = public_path('uploads/' . $updateCertificateHours->award_certificate);
-    //                 if (!empty($updateCertificateHours->award_certificate) && file_exists($imagePath)) {
-    //                     unlink($imagePath);
-    //                 }
-    //                 $photo3 = $request->file('award_certificate');
-    //                 $photo_name3 = time() . '-' . $photo3->getClientOriginalName();
-    //                 $photo_destination = public_path('uploads');
-    //                 $photo3->move($photo_destination, $photo_name3);
-    //                 $data['award_certificate'] = $photo_name3;
-    //             }
-    //             $updateCertificateHours->update($data);
-
-    //             $notifications = [
-    //                 'title' => 'Update Business CertificateHour',
-    //                 'message' => 'Business CertificateHour updated successfully',
-    //                 'created_by' => $updateCertificateHours->user_id,
-    //                 'status' => 0,
-    //                 'clear' => 'no',
-
-    //             ];
-    //             Notification::create($notifications);
-    //             return response()->json(['message' => 'Business CertificateHour updated successfully', 'updateCertificateHours' => $updateCertificateHours], 200);
-    //         } else {
-
-
-    //             if ($request->hasFile('insurance_certificate')) {
-    //                 $photo1 = $request->file('insurance_certificate');
-    //                 $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-    //                 $photo_destination = public_path('uploads');
-    //                 $photo1->move($photo_destination, $photo_name1);
-    //                 $data['insurance_certificate'] = $photo_name1;
-    //             }
-    //             if ($request->hasFile('license_certificate')) {
-    //                 $photo2 = $request->file('license_certificate');
-    //                 $photo_name2 = time() . '-' . $photo2->getClientOriginalName();
-    //                 $photo_destination = public_path('uploads');
-    //                 $photo2->move($photo_destination, $photo_name2);
-    //                 $data['license_certificate'] = $photo_name2;
-    //             }
-    //             if ($request->hasFile('award_certificate')) {
-    //                 $photo3 = $request->file('award_certificate');
-    //                 $photo_name3 = time() . '-' . $photo3->getClientOriginalName();
-    //                 $photo_destination = public_path('uploads');
-    //                 $photo3->move($photo_destination, $photo_name3);
-    //                 $data['award_certificate'] = $photo_name3;
-    //             }
-
-    //             $data['user_id'] = $userId;
-    //             $certificate = BusinessProfile::create($data);
-    //             $notifications = [
-    //                 'title' => 'Business CertificateHour ',
-    //                 'message' => 'Business CertificateHour created successfully',
-    //                 'created_by' => $userId,
-    //                 'status' => 0,
-    //                 'clear' => 'no',
-
-    //             ];
-    //             Notification::create($notifications);
-
-    //             return response()->json(['message' => 'Business CertificateHour created successfully', 'certificate' => $certificate], 200);
-    //         }
-       
-    // }
     public function AddCertificateHours(Request $request, $id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        $data = $request->except(['insurance_certificate', 'license_certificate', 'award_certificate']); // Exclude files
-    
-        // Get business profile by user ID
-        // $targetUserId = $id ?? $userId;
-        // $updateCertificateHours = BusinessProfile::where('user_id', $targetUserId)->first();
+        $data = $request->except(['insurance_certificate', 'license_certificate', 'award_certificate']);
 
-        if($id != null){
+        if ($id != null) {
             $updateCertificateHours = BusinessProfile::where('user_id', $id)->first();
             $userExist = User::find($id);
-        }else{
+        } else {
             $updateCertificateHours = BusinessProfile::where('user_id', $userId)->first();
             $userExist = User::find($userId);
         }
-        if($role != 0 && $id !=Null) {
+        if ($role != 0 && $id != Null) {
             return response()->json(['message' => 'Unauthorized! Only admin can provide id parameter'], 403);
         }
-        if($role == 0 && $id == Null) {
+        if ($role == 0 && $id == Null) {
             return response()->json(['message' => 'Unauthorized! Incorrect token. Please use provider token'], 403);
         }
-        // Function to handle multiple image uploads
         $uploadMultiple = function ($fieldName, $existingPaths = []) use ($request) {
             $newFiles = [];
-                // Delete old files
-                foreach ((array) $existingPaths as $oldFile) {
-                    $oldPath = public_path('uploads/' . $oldFile);
-                    // if (!empty($oldFile) && file_exists($oldPath)) {
-                    //     unlink($oldPath);
-                    // }
+            foreach ((array) $existingPaths as $oldFile) {
+                $oldPath = public_path('uploads/' . $oldFile);
+            }
+
+            if ($request->hasFile($fieldName)) {
+                foreach ($request->file($fieldName) as $file) {
+                    $filename = time() . '-' . $file->getClientOriginalName();
+                    $file->move(public_path('uploads'), $filename);
+                    $newFiles[] = $filename;
                 }
-    
-                // Upload new files
-                if ($request->hasFile($fieldName)) {
-                    foreach ($request->file($fieldName) as $file) {
-                        $filename = time() . '-' . $file->getClientOriginalName();
-                        $file->move(public_path('uploads'), $filename);
-                        $newFiles[] = $filename;
-                    }
-                }
-                
-                // If existing files are submitted (e.g. string names from hidden inputs)
-                if ($request->has($fieldName) && is_array($request->input($fieldName))) {
-                    $newFiles = array_merge($newFiles, $request->input($fieldName));
-                }
+            }
+
+            if ($request->has($fieldName) && is_array($request->input($fieldName))) {
+                $newFiles = array_merge($newFiles, $request->input($fieldName));
+            }
             return $newFiles;
         };
-    
-        if($userExist) {
+
+        if ($userExist) {
             if ($updateCertificateHours) {
-                if($id != Null) {
+                if ($id != Null) {
                     $data['user_id'] = $id;
-                }
-                else {
+                } else {
                     $data['user_id'] = $userId;
                 }
                 $data['insurance_certificate'] = json_encode($uploadMultiple('insurance_certificate', json_decode($updateCertificateHours->insurance_certificate, true)));
                 $data['license_certificate'] = json_encode($uploadMultiple('license_certificate', json_decode($updateCertificateHours->license_certificate, true)));
                 $data['award_certificate'] = json_encode($uploadMultiple('award_certificate', json_decode($updateCertificateHours->award_certificate, true)));
-        
+
                 $updateCertificateHours->update($data);
-        
+
                 Notification::create([
                     'title' => 'Update Business CertificateHour',
                     'message' => 'Business CertificateHour updated successfully',
@@ -1253,25 +1064,23 @@ class ServiceProviderController extends Controller
                     'status' => 0,
                     'clear' => 'no',
                 ]);
-        
+
                 return response()->json([
                     'message' => 'Business CertificateHour updated successfully',
                     'updateCertificateHours' => $updateCertificateHours
                 ], 200);
             } else {
-                // Create new entry
                 $data['insurance_certificate'] = json_encode($uploadMultiple('insurance_certificate'));
                 $data['license_certificate'] = json_encode($uploadMultiple('license_certificate'));
                 $data['award_certificate'] = json_encode($uploadMultiple('award_certificate'));
-                if($id !=Null) {
+                if ($id != Null) {
                     $data['user_id'] = $id;
-                }
-                else {
+                } else {
                     $data['user_id'] = $userId;
                 }
-        
+
                 $certificate = BusinessProfile::create($data);
-        
+
                 Notification::create([
                     'title' => 'Business CertificateHour',
                     'message' => 'Business CertificateHour created successfully',
@@ -1279,18 +1088,17 @@ class ServiceProviderController extends Controller
                     'status' => 0,
                     'clear' => 'no',
                 ]);
-        
+
                 return response()->json([
                     'message' => 'Business CertificateHour created successfully',
                     'certificate' => $certificate
                 ], 200);
             }
-        }
-        else {
+        } else {
             return response()->json(['message' => 'Invalid User'], 403);
         }
     }
-    
+
     public function UpdateCertificateHours(Request $request)
     {
         $role = Auth::user()->role;
@@ -1338,251 +1146,245 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function AddConversation(Request $request , $id = null)
+    public function AddConversation(Request $request, $id = null)
     {
         $role = Auth::user()->role;
-    
-            $userId = Auth::id();
 
-            $data = $request->all();
-            if($id != null){
+        $userId = Auth::id();
 
-                
+        $data = $request->all();
+        if ($id != null) {
+
+
             $conversation = BusinessProfile::where('user_id', $id)->first();
-            }else{
-               
+        } else {
+
             $conversation = BusinessProfile::where('user_id', $userId)->first();
+        }
+        if ($conversation) {
+            if (!empty($data['conversation_call_number']) && !str_starts_with($data['conversation_call_number'], '+')) {
+                $data['conversation_call_number'] = '+' . $data['conversation_call_number'];
             }
-            if ($conversation) {
-                if (!empty($data['conversation_call_number']) && !str_starts_with($data['conversation_call_number'], '+')) {
-                    $data['conversation_call_number'] = '+' . $data['conversation_call_number'];
-                }
 
-                if (!empty($data['conversation_text_number']) && !str_starts_with($data['conversation_text_number'], '+')) {
-                    $data['conversation_text_number'] = '+' . $data['conversation_text_number'];
-                }
-           
-                $validator = Validator::make($data, [
-                    'conversation_call_number' => ['nullable', 'phone:AUTO'], 
-                    'conversation_text_number' => ['nullable', 'phone:AUTO'], 
-                ], [
-                    'conversation_call_number.phone' => 'Invalid phone number',
-                    'conversation_text_number.phone' => 'Invalid phone number',
-                ]);
-         
-                if ($validator->fails()) {
-                    return response()->json(['error' => $validator->errors()], 400);
-                }
-                $conversation->update($data);
-                $notifications = [
-                    'title' => 'Updated Conversation Details',
-                    'message' => 'Conversation Details updated successfully',
-                    'created_by' => $conversation->user_id,
-                    'status' => 0,
-                    'clear' => 'no',
+            if (!empty($data['conversation_text_number']) && !str_starts_with($data['conversation_text_number'], '+')) {
+                $data['conversation_text_number'] = '+' . $data['conversation_text_number'];
+            }
 
-                ];
-                Notification::create($notifications);
-                return response()->json(['message' => 'Conversation Details updated successfully', 'conversation' => $conversation], 200);
+            $validator = Validator::make($data, [
+                'conversation_call_number' => ['nullable', 'phone:AUTO'],
+                'conversation_text_number' => ['nullable', 'phone:AUTO'],
+            ], [
+                'conversation_call_number.phone' => 'Invalid phone number',
+                'conversation_text_number.phone' => 'Invalid phone number',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 400);
+            }
+            $conversation->update($data);
+            $notifications = [
+                'title' => 'Updated Conversation Details',
+                'message' => 'Conversation Details updated successfully',
+                'created_by' => $conversation->user_id,
+                'status' => 0,
+                'clear' => 'no',
+
+            ];
+            Notification::create($notifications);
+            return response()->json(['message' => 'Conversation Details updated successfully', 'conversation' => $conversation], 200);
+        } else {
+            $data['user_id'] = $userId;
+            if (!empty($data['conversation_call_number']) && !str_starts_with($data['conversation_call_number'], '+')) {
+                $data['conversation_call_number'] = '+' . $data['conversation_call_number'];
+            }
+
+            if (!empty($data['conversation_text_number']) && !str_starts_with($data['conversation_text_number'], '+')) {
+                $data['conversation_text_number'] = '+' . $data['conversation_text_number'];
+            }
+
+            $validator = Validator::make($data, [
+                'conversation_call_number' => ['nullable', 'phone:AUTO'],
+                'conversation_text_number' => ['nullable', 'phone:AUTO'],
+            ], [
+                'conversation_call_number.phone' => 'Invalid phone number',
+                'conversation_text_number.phone' => 'Invalid phone number',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['error' => $validator->errors()], 400);
+            }
+            $conversation = BusinessProfile::create($data);
+            $notifications = [
+                'title' => 'Created Conversation Details',
+                'message' => 'Conversation Details created successfully',
+                'created_by' => $userId,
+                'status' => 0,
+                'clear' => 'no',
+
+            ];
+            Notification::create($notifications);
+            return response()->json(['message' => 'Conversation Details created successfully', 'conversation' => $conversation], 200);
+        }
+    }
+    public function Social(Request $request, $id = null)
+    {
+        $role = Auth::user()->role;
+        $userId = Auth::id();
+        if ($id != null) {
+            $user = User::find($id);
+            $social = SocialProfile::where('user_id', $id)->first();
+        } else {
+            $user = User::find($userId);
+            $social = SocialProfile::where('user_id', $userId)->first();
+        }
+        $data = $request->all();
+        if ($social) {
+            $social->update($data);
+            $notifications = [
+                'title' => 'Updated Social Link',
+                'message' => 'Social Link updated successfully',
+                'created_by' => $userId,
+                'status' => 0,
+                'clear' => 'no',
+
+            ];
+            Notification::create($notifications);
+            return response()->json(['message' => 'Social Link updated successfully', 'user' => $user, 'Social' => $social], 200);
+        } else {
+
+            if ($id != null) {
+                $data['user_id'] = $id;
             } else {
                 $data['user_id'] = $userId;
-                if (!empty($data['conversation_call_number']) && !str_starts_with($data['conversation_call_number'], '+')) {
-                    $data['conversation_call_number'] = '+' . $data['conversation_call_number'];
-                }
-
-                if (!empty($data['conversation_text_number']) && !str_starts_with($data['conversation_text_number'], '+')) {
-                    $data['conversation_text_number'] = '+' . $data['conversation_text_number'];
-                }
-           
-                $validator = Validator::make($data, [
-                    'conversation_call_number' => ['nullable', 'phone:AUTO'], 
-                    'conversation_text_number' => ['nullable', 'phone:AUTO'], 
-                ], [
-                    'conversation_call_number.phone' => 'Invalid phone number',
-                    'conversation_text_number.phone' => 'Invalid phone number',
-                ]);
-         
-                if ($validator->fails()) {
-                    return response()->json(['error' => $validator->errors()], 400);
-                }
-                $conversation = BusinessProfile::create($data);
-                $notifications = [
-                    'title' => 'Created Conversation Details',
-                    'message' => 'Conversation Details created successfully',
-                    'created_by' => $userId,
-                    'status' => 0,
-                    'clear' => 'no',
-
-                ];
-                Notification::create($notifications);
-                return response()->json(['message' => 'Conversation Details created successfully', 'conversation' => $conversation], 200);
             }
+            $social = SocialProfile::create($data);
+            $notifications = [
+                'title' => 'Added Social Link',
+                'message' => 'Social Link added successfully',
+                'created_by' => $userId,
+                'status' => 0,
+                'clear' => 'no',
+
+            ];
+            Notification::create($notifications);
+            return response()->json(['message' => 'Social Link added successfully', 'user' => $user, 'Social' => $social], 200);
+        }
     }
-    public function Social(Request $request , $id = null)
+
+    public function UserDetails($id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-            if($id != null){
-                $user = User::find($id);
-                $social = SocialProfile::where('user_id', $id)->first();
-            }else{
-                $user = User::find($userId);
-                $social = SocialProfile::where('user_id', $userId)->first();
-            }
-            $data = $request->all();
-            if ($social) {
-                $social->update($data);
-                $notifications = [
-                    'title' => 'Updated Social Link',
-                    'message' => 'Social Link updated successfully',
-                    'created_by' => $userId,
-                    'status' => 0,
-                    'clear' => 'no',
 
-                ];
-                Notification::create($notifications);
-                return response()->json(['message' => 'Social Link updated successfully', 'user' => $user, 'Social' => $social], 200);
-            } else {
-                
-                if($id != null){
-                    $data['user_id'] = $id;
-                }else{
-                    $data['user_id'] = $userId;
-                }
-                $social = SocialProfile::create($data);
-                $notifications = [
-                    'title' => 'Added Social Link',
-                    'message' => 'Social Link added successfully',
-                    'created_by' => $userId,
-                    'status' => 0,
-                    'clear' => 'no',
 
-                ];
-                Notification::create($notifications);
-                return response()->json(['message' => 'Social Link added successfully', 'user' => $user, 'Social' => $social], 200);
-            }
-        
-    }
+        if ($id != null) {
 
-    public function UserDetails($id=null)
-    {
-        $role = Auth::user()->role;
-        $userId = Auth::id();
-    
-            
-            if($id != null){
-               
-                $user = User::find($id);
+            $user = User::find($id);
             $businessProfile = BusinessProfile::where('user_id', $id)->get();
-            }else{
-           
+        } else {
+
             $user = User::find($userId);
             $businessProfile = BusinessProfile::where('user_id', $userId)->get();
-            }
-            $getPayment = PaymentDetail::where('user_id', $userId)->get();
-            $getDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
-                ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
-                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
-                ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-                ->orderBy('deals.id', 'desc')
-                ->select(
-                    'deals.id',
-                    'deals.service_title',
-                    'deals.service_category',
-                    'deals.service_description',
-                    'deals.pricing_model',
-                    'deals.flat_rate_price',
-                    'deals.hourly_rate',
-                    'deals.images',
-                    'deals.videos',
-                    'deals.price1',
-                    'deals.pricing_model',
-                    'deals.flat_estimated_service_time',
-                    'deals.hourly_estimated_service_time',
-                    'deals.estimated_service_timing1',
-                    'deals.user_id',
-                    // 'users.name as user_name',
-                    // 'users.personal_image'
-                    'business_profiles.business_name as user_name',
-                    'business_profiles.business_logo',
-                    \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                    \DB::raw('COUNT(reviews.id) as total_reviews'),
-                    \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
-                )
-                ->groupBy(
-                    'deals.id',
-                    'deals.service_title',
-                    'deals.service_category',
-                    'deals.service_description',
-                    'deals.pricing_model',
-                    'deals.flat_rate_price',
-                    'deals.hourly_rate',
-                    'deals.price1',
-                    'deals.images',
-                    'deals.videos',
-                    'deals.pricing_model',
-                    'deals.flat_estimated_service_time',
-                    'deals.hourly_estimated_service_time',
-                    'deals.estimated_service_timing1',
-                    'deals.user_id',
-                    'business_profiles.business_name',
-                    'business_profiles.business_logo',
-                )->where('deals.publish', 1)->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
-            $getDeal->transform(function ($deal) {
-                $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
-                return $deal;
-            });
-            if($id != null){
-                $getSocial = SocialProfile::where('user_id', $id)->get();
-            }
-            else {
-                $getSocial = SocialProfile::where('user_id', $userId)->get();
-            }
-
-            if($id != null){
-                $getReviews = Review::where('provider_id', $userId)->get();
-            }
-            else {
-                $getReviews = Review::where('provider_id', $userId)->get();
-            }
-            if ($getReviews->isNotEmpty()) {
-                $provider_reviews = [];
-                $provider_reviews['average'] = floor($getReviews->avg('rating'));
-                $provider_reviews['total'] = $getReviews->count();
-            } else {
-                $provider_reviews = [];
-                $provider_reviews['average'] = 0;
-                $provider_reviews['total'] = 0;
-            }
-
-            $stars = Review::select(
-                DB::raw('SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_star'),
-                DB::raw('SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_star'),
-                DB::raw('SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_star'),
-                DB::raw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star'),
-                DB::raw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star')
+        }
+        $getPayment = PaymentDetail::where('user_id', $userId)->get();
+        $getDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
+            ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
+            ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+            ->orderBy('deals.id', 'desc')
+            ->select(
+                'deals.id',
+                'deals.service_title',
+                'deals.service_category',
+                'deals.service_description',
+                'deals.pricing_model',
+                'deals.flat_rate_price',
+                'deals.hourly_rate',
+                'deals.images',
+                'deals.videos',
+                'deals.price1',
+                'deals.pricing_model',
+                'deals.flat_estimated_service_time',
+                'deals.hourly_estimated_service_time',
+                'deals.estimated_service_timing1',
+                'deals.user_id',
+                'business_profiles.business_name as user_name',
+                'business_profiles.business_logo',
+                DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                DB::raw('COUNT(reviews.id) as total_reviews'),
+                DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids')
             )
-                ->where('provider_id', $userId)
-                ->first();
+            ->groupBy(
+                'deals.id',
+                'deals.service_title',
+                'deals.service_category',
+                'deals.service_description',
+                'deals.pricing_model',
+                'deals.flat_rate_price',
+                'deals.hourly_rate',
+                'deals.price1',
+                'deals.images',
+                'deals.videos',
+                'deals.pricing_model',
+                'deals.flat_estimated_service_time',
+                'deals.hourly_estimated_service_time',
+                'deals.estimated_service_timing1',
+                'deals.user_id',
+                'business_profiles.business_name',
+                'business_profiles.business_logo',
+            )->where('deals.publish', 1)->where('deals.user_id', $userId)->orderBy('deals.id', 'desc')->get();
+        $getDeal->transform(function ($deal) {
+            $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
+            return $deal;
+        });
+        if ($id != null) {
+            $getSocial = SocialProfile::where('user_id', $id)->get();
+        } else {
+            $getSocial = SocialProfile::where('user_id', $userId)->get();
+        }
 
-            $detailReviews = Review::leftJoin('users', 'users.id', '=', 'reviews.user_id')
-                ->leftJoin('deals', 'deals.id', '=', 'reviews.deal_id')
-                ->select(
-                    'reviews.*',
-                    'users.name as user_name',
-                    'users.personal_image',
-                    'deals.service_title'
-                )
-                ->where('reviews.provider_id', $userId) // Filters by provider_id
-                ->get();
+        if ($id != null) {
+            $getReviews = Review::where('provider_id', $userId)->get();
+        } else {
+            $getReviews = Review::where('provider_id', $userId)->get();
+        }
+        if ($getReviews->isNotEmpty()) {
+            $provider_reviews = [];
+            $provider_reviews['average'] = floor($getReviews->avg('rating'));
+            $provider_reviews['total'] = $getReviews->count();
+        } else {
+            $provider_reviews = [];
+            $provider_reviews['average'] = 0;
+            $provider_reviews['total'] = 0;
+        }
+
+        $stars = Review::select(
+            DB::raw('SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as five_star'),
+            DB::raw('SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as four_star'),
+            DB::raw('SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as three_star'),
+            DB::raw('SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as two_star'),
+            DB::raw('SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as one_star')
+        )
+            ->where('provider_id', $userId)
+            ->first();
+
+        $detailReviews = Review::leftJoin('users', 'users.id', '=', 'reviews.user_id')
+            ->leftJoin('deals', 'deals.id', '=', 'reviews.deal_id')
+            ->select(
+                'reviews.*',
+                'users.name as user_name',
+                'users.personal_image',
+                'deals.service_title'
+            )
+            ->where('reviews.provider_id', $userId)
+            ->get();
 
 
 
-            if ($user) {
+        if ($user) {
 
-                return response()->json(['user' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
-            }
-        
+            return response()->json(['user' => $user, 'businessProfile' => $businessProfile, 'getPayment' => $getPayment, 'getDeal' => $getDeal, 'getSocial' => $getSocial, 'provider_reviews' => $provider_reviews, 'stars' => $stars, 'detailReviews' => $detailReviews], 200);
+        }
     }
 
     public function SocialDelete(Request $request, $id = null)
@@ -1591,72 +1393,58 @@ class ServiceProviderController extends Controller
         $uid = Auth::user()->id;
 
         if ($role == 2 || $role == 0) {
-            if($role == 0 && $id == null) {
+            if ($role == 0 && $id == null) {
                 return response()->json(['error' => "Admin is not allowed to update his profile"], 401);
-            }
-            else {
-                if($id != null){
+            } else {
+                if ($id != null) {
                     $social = SocialProfile::where('user_id', $id)->first();
-                    // $socialExist = Social::where('user_id',$id);
-                }else {
+                } else {
                     $social = SocialProfile::where('user_id', $uid)->first();
-                    // $socialExist = Social::where('user_id',$id);
                 }
-                if($social) {
+                if ($social) {
                     $message = 'Old link is incorrect or already null';
                     if ($social->facebook != null && $request['facebook'] == $social->facebook) {
                         $social->update(['facebook' => null]);
                         $message = 'Social facebook has been removed successfully';
                     }
                     if ($social->twitter != null && $request['twitter'] == $social->twitter) {
-        
+
                         $social->update(['twitter' => null]);
                         $message = 'Social twitter has been removed successfully';
                     }
                     if ($social->tiktok != null && $request['tiktok'] == $social->tiktok) {
-        
+
                         $social->update(['tiktok' => null]);
                         $message = 'Social tiktok has been removed successfully';
                     }
                     if ($social->instagram != null && $request['instagram'] == $social->instagram) {
-        
+
                         $social->update(['instagram' => null]);
                         $message = 'Social Instagram has been removed successfully';
                     }
                     if ($social->linkedin != null && $request['linkedin'] == $social->linkedin) {
-        
+
                         $social->update(['linkedin' => null]);
                         $message = 'Social Linkdin has been removed successfully';
                     }
                     if ($social->youtube != null && $request['youtube'] == $social->youtube) {
-        
+
                         $social->update(['youtube' => null]);
                         $message = 'Social Youtube has been removed successfully';
                     }
                     if ($social->google_business != null && $request['google_business'] == $social->google_business) {
-        
+
                         $social->update(['google_business' => null]);
                         $message = 'Social Google Business has been removed successfully';
                     }
                     if ($social->alignable != null && $request['alignable'] == $social->alignable) {
-        
+
                         $social->update(['alignable' => null]);
                         $message = 'Social alignable has been removed successfully';
                     }
-        
-                    // $notifications = [
-                    //     'title' => 'Delete Social Link',
-                    //     'message' => 'Socials Link deleted successfully',
-                    //     'created_by' => $social->user_id,
-                    //     'status' => 0,
-                    //     'clear' => 'no',
-        
-                    // ];
-                    // Notification::create($notifications);
-                    
+
                     return response()->json(['message' => $message, 'social' => $social], 200);
-                }
-                else {
+                } else {
                     return response()->json(['error' => "Invalid Profile User"], 403);
                 }
             }
@@ -1664,70 +1452,69 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized, This api is only for provider and admin'], 401);
         }
     }
-    public function AddBusinessLocation(Request $request ,$id = null)
+    public function AddBusinessLocation(Request $request, $id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
         $data = $request->all();
-       
-            if($id != null) {
-               
+
+        if ($id != null) {
+
             $businesslocation = BusinessProfile::where('user_id', $id)->first();
-            }else{
-            
-            $businesslocation = BusinessProfile::where('user_id', $userId)->first();   
-            }
-            if ($businesslocation) {
-            
-                if (isset($data['business_location'])) {
-                    $data['business_location'] = json_encode($data['business_location']);
-                }
-                
-                if (isset($data['service_location'])) {
-                    $data['service_location'] = json_encode($data['service_location']);
-                }
-                
-                if (isset($data['restrict_location'])) {
-                    $data['restrict_location'] = json_encode($data['restrict_location']);
-                }
-            
-                $updatedbusinesslocation = $businesslocation->update($data);
-                $notifications = [
-                    'title' => 'Update Service Area',
-                    'message' => 'Service Area updated successfully',
-                    'created_by' => $businesslocation->user_id,
-                    'status' => 0,
-                    'clear' => 'no',
+        } else {
 
-                ];
-                Notification::create($notifications);
-                return response()->json(['message' => 'Service Area updated successfully', 'servicelocation' => $businesslocation], 200);
-            } else {
-                if (isset($data['business_location'])) {
-                    $data['business_location'] = json_encode($data['business_location']);
-                }
-                
-                if (isset($data['service_location'])) {
-                    $data['service_location'] = json_encode($data['service_location']);
-                }
-                
-                if (isset($data['restrict_location'])) {
-                    $data['restrict_location'] = json_encode($data['restrict_location']);
-                }
-                $data['user_id'] = $userId;
-                $servicelocation = BusinessProfile::create($data);
-                $notifications = [
-                    'title' => 'Created Service Area',
-                    'message' => 'Service Area created successfully',
-                    'created_by' => $userId,
-                    'status' => 0,
-                    'clear' => 'no',
+            $businesslocation = BusinessProfile::where('user_id', $userId)->first();
+        }
+        if ($businesslocation) {
 
-                ];
-                Notification::create($notifications);
-                return response()->json(['message' => 'Service Area created successfully', 'servicelocation' => $servicelocation], 200);
+            if (isset($data['business_location'])) {
+                $data['business_location'] = json_encode($data['business_location']);
             }
-        
+
+            if (isset($data['service_location'])) {
+                $data['service_location'] = json_encode($data['service_location']);
+            }
+
+            if (isset($data['restrict_location'])) {
+                $data['restrict_location'] = json_encode($data['restrict_location']);
+            }
+
+            $updatedbusinesslocation = $businesslocation->update($data);
+            $notifications = [
+                'title' => 'Update Service Area',
+                'message' => 'Service Area updated successfully',
+                'created_by' => $businesslocation->user_id,
+                'status' => 0,
+                'clear' => 'no',
+
+            ];
+            Notification::create($notifications);
+            return response()->json(['message' => 'Service Area updated successfully', 'servicelocation' => $businesslocation], 200);
+        } else {
+            if (isset($data['business_location'])) {
+                $data['business_location'] = json_encode($data['business_location']);
+            }
+
+            if (isset($data['service_location'])) {
+                $data['service_location'] = json_encode($data['service_location']);
+            }
+
+            if (isset($data['restrict_location'])) {
+                $data['restrict_location'] = json_encode($data['restrict_location']);
+            }
+            $data['user_id'] = $userId;
+            $servicelocation = BusinessProfile::create($data);
+            $notifications = [
+                'title' => 'Created Service Area',
+                'message' => 'Service Area created successfully',
+                'created_by' => $userId,
+                'status' => 0,
+                'clear' => 'no',
+
+            ];
+            Notification::create($notifications);
+            return response()->json(['message' => 'Service Area created successfully', 'servicelocation' => $servicelocation], 200);
+        }
     }
 
     public function UpdateBusinessLocation(Request $request)
@@ -1800,29 +1587,28 @@ class ServiceProviderController extends Controller
 
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if($id != null){
+        if ($id != null) {
             $setting = BusinessProfile::where('user_id', $id)->first();
-        }else{
+        } else {
             $setting = BusinessProfile::where('user_id', $userId)->first();
         }
-                
-            if ($setting) {
-                $setting->update(['publish' => 1]);
 
-                $notifications = [
-                    'title' => 'Setting Publish',
-                    'message' => 'Setting Publish successfully',
-                    'created_by' => $setting->user_id,
-                    'status' => 0,
-                    'clear' => 'no',
+        if ($setting) {
+            $setting->update(['publish' => 1]);
 
-                ];
-                Notification::create($notifications);
-                return response()->json(['message' => 'Setting Publish successfully', 'setting' => $setting], 200);
-            } else {
-                return response()->json(['message' => 'No Setting found'], 401);
-            }
-        
+            $notifications = [
+                'title' => 'Setting Publish',
+                'message' => 'Setting Publish successfully',
+                'created_by' => $setting->user_id,
+                'status' => 0,
+                'clear' => 'no',
+
+            ];
+            Notification::create($notifications);
+            return response()->json(['message' => 'Setting Publish successfully', 'setting' => $setting], 200);
+        } else {
+            return response()->json(['message' => 'No Setting found'], 401);
+        }
     }
 
     public function GetDealsByCategory(Request $request)
@@ -2077,7 +1863,7 @@ class ServiceProviderController extends Controller
         $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
             ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
             ->orderBy('deals.id', 'desc')
             ->select(
                 'deals.id',
@@ -2096,9 +1882,9 @@ class ServiceProviderController extends Controller
                 'deals.user_id',
                 'business_profiles.business_name as user_name',
                 'business_profiles.business_logo',
-                \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                \DB::raw('COUNT(reviews.id) as total_reviews'),
-                \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+                DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                DB::raw('COUNT(reviews.id) as total_reviews'),
+                DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids')
             )
             ->groupBy(
                 'deals.id',
@@ -2118,7 +1904,7 @@ class ServiceProviderController extends Controller
                 'business_profiles.business_name',
                 'business_profiles.business_logo',
             )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
-            $totalDeals = $deals->total();
+        $totalDeals = $deals->total();
 
         $deals->transform(function ($deal) {
             $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
@@ -2190,7 +1976,7 @@ class ServiceProviderController extends Controller
     {
         $userId = Auth::id();
 
-        $GetSalesRep = User::where('role', $role)->where('id',"<>", $userId)->orderBy('id', 'desc')->get();
+        $GetSalesRep = User::where('role', $role)->where('id', "<>", $userId)->orderBy('id', 'desc')->get();
         return response()->json(['sales_reps' => $GetSalesRep]);
     }
 
@@ -2227,7 +2013,6 @@ class ServiceProviderController extends Controller
         }
     }
 
-    // for home section service provider 
     public function SearchHomeServices(Request $request)
     {
         $role = Auth::user()->role;
@@ -2255,7 +2040,6 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-    // for home page for provider and customer 
     public function FilterHomeDeals(Request $request)
     {
 
@@ -2270,7 +2054,7 @@ class ServiceProviderController extends Controller
         $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
             ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
             ->orderBy('deals.id', 'desc')
             ->select(
                 'deals.id',
@@ -2290,9 +2074,9 @@ class ServiceProviderController extends Controller
                 'deals.user_id',
                 'business_profiles.business_name as user_name',
                 'business_profiles.business_logo',
-                \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                \DB::raw('COUNT(reviews.id) as total_reviews'),
-                \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+                DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                DB::raw('COUNT(reviews.id) as total_reviews'),
+                DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids')
             )
             ->groupBy(
                 'deals.id',
@@ -2316,9 +2100,7 @@ class ServiceProviderController extends Controller
                 'business_profiles.business_logo',
             )->where('deals.publish', 1);
 
-        // Category Filters 
         if ($service) {
-            // $deals = $deals->where('deals.service_category', 'like', '%' . $service . '%');
             $deals = $deals->where(function ($query) use ($service) {
                 $query->where('deals.service_category', 'like', '%' . $service . '%')
                     ->orWhere('deals.service_title', 'like', '%' . $service . '%')
@@ -2361,7 +2143,7 @@ class ServiceProviderController extends Controller
         if ($location) {
             $locationDistance = BusinessProfile::where(function ($query) use ($location) {
                 $query->where('business_location', 'like', '%' . $location . '%')
-                    ->orWhere('service_location','like', '%' . $location . '%');
+                    ->orWhere('service_location', 'like', '%' . $location . '%');
             })->pluck('user_id')->toArray();
             $deals = $deals->whereIn('deals.user_id', $locationDistance);
         }
@@ -2381,11 +2163,7 @@ class ServiceProviderController extends Controller
             $favoritDeals = null;
         }
 
-        // if ($deals->isNotEmpty()) {
         return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals, 'favoritDeals' => $favoritDeals], 200);
-        // } else {
-        //     return response()->json(['message' => 'No deals found'], 401);
-        // }
     }
 
 
@@ -2423,7 +2201,6 @@ class ServiceProviderController extends Controller
         }
     }
 
-    // for home page for provider and customer 
     public function RecentViewDeals(Request $request)
     {
         $role = Auth::user()->role;
@@ -2433,7 +2210,7 @@ class ServiceProviderController extends Controller
         $recentDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
             ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
             ->orderBy('deals.id', 'desc')
             ->select(
                 'deals.id',
@@ -2452,9 +2229,9 @@ class ServiceProviderController extends Controller
                 'deals.user_id',
                 'business_profiles.business_name as user_name',
                 'business_profiles.business_logo',
-                \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                \DB::raw('COUNT(reviews.id) as total_reviews'),
-                \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+                DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                DB::raw('COUNT(reviews.id) as total_reviews'),
+                DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids')
             )
             ->groupBy(
                 'deals.id',
@@ -2474,7 +2251,7 @@ class ServiceProviderController extends Controller
                 'business_profiles.business_name',
                 'business_profiles.business_logo',
             )->where('deals.publish', 1)->whereIn('deals.id', $recentDealId)->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
-            $totalViewDeals = $recentDeal->total();
+        $totalViewDeals = $recentDeal->total();
 
         $recentDeal->transform(function ($deal) {
             $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
@@ -2486,28 +2263,26 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'No deal available'], 401);
         }
     }
-    // common but not use 
     public function AddRecentDeal($id)
     {
         $userId = Auth::id();
         if ($userId) {
             $viewedDeal = RecentDealView::where('user_id', $userId)->where('deal_id', $id)->first();
-                if ($viewedDeal) {
-                    $viewedDeal->update([
-                        'created_at' => now()
-                    ]);
-                } else {
-                    $viewedDeal = RecentDealView::create([
-                        'user_id' => $userId,
-                        'deal_id' => $id,
-                    ]);
-                }
-            return response()->json(['message' => 'Add in recent view successfully','recentDeal' => $viewedDeal], 200);
+            if ($viewedDeal) {
+                $viewedDeal->update([
+                    'created_at' => now()
+                ]);
+            } else {
+                $viewedDeal = RecentDealView::create([
+                    'user_id' => $userId,
+                    'deal_id' => $id,
+                ]);
+            }
+            return response()->json(['message' => 'Add in recent view successfully', 'recentDeal' => $viewedDeal], 200);
         } else {
             return response()->json(['message' => 'You need to login'], 200);
         }
     }
-    // fetch google reviews 
     public function GetGoogleReviews(Request $request)
     {
         $businessLink = $request->business_link;
@@ -2547,7 +2322,7 @@ class ServiceProviderController extends Controller
     private function resolveShortLink($shortUrl)
     {
         $apiKey = config('services.google_reviews.place_api');
-        
+
         $resolveUrl = "https://maps.googleapis.com/maps/api/place/details/json?key={$apiKey}&fields=place_id&place_id={$shortUrl}";
 
         $response = Http::get($resolveUrl);
