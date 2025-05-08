@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Laravel\Sanctum\PersonalAccessToken;
 use App\Models\User;
 use App\Models\Deal;
 use App\Models\Review;
 use App\Models\FavoritDeal;
 use App\Models\RecentDealView;
 use App\Models\BusinessProfile;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class CommonController extends Controller
 {

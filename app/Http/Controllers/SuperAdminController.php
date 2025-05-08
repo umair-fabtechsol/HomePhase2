@@ -1,12 +1,15 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
+use App\Mail\InviteSalesRepMail;
 use App\Models\Deal;
 use App\Models\User;
 use App\Models\Order;
@@ -16,9 +19,6 @@ use App\Models\Support;
 use App\Models\contact_pro;
 use App\Models\PaymentHistory;
 use App\Models\BusinessProfile;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use App\Mail\InviteSalesRepMail;
 
 class SuperAdminController extends Controller
 {

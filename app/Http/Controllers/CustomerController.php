@@ -2,64 +2,69 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessProfile;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Deal;
-use App\Models\DeliveryImage;
+use App\Models\User;
+use App\Models\Order;
+use App\Models\Review;
 use App\Models\FavoritDeal;
 use App\Models\Notification;
-use App\Models\Order;
-use App\Models\PaymentMethod;
 use App\Models\PaymentDetail;
-use App\Models\Review;
-use App\Models\RecentDealView;
-use App\Models\User;
-use App\Models\PaymentHistory;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Models\PaymentMethod;
+use App\Models\DeliveryImage;
 use App\Models\SocialProfile;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use App\Models\RecentDealView;
+use App\Models\PaymentHistory;
+use App\Models\BusinessProfile;
+
 
 class CustomerController extends Controller
 {
     public function MyDetail(Request $request)
     {
-        $role = Auth::user()->role;
+        $role   = Auth::user()->role;
         $userId = Auth::id();
 
         $user = User::find($request->id);
-        if ($user) {
-            $data = $request->all();
-            if ($request->hasFile('personal_image')) {
-                $imagePath = public_path('uploads/' . $user->personal_image);
-                if (!empty($user->personal_image) && file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-                $photo1 = $request->file('personal_image');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['personal_image'] = $photo_name1;
-            } else {
-                $data['personal_image'] = null;
-            }
-            if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
-                $data['phone'] = '+' . $data['phone'];
-            }
-            $user->update($data);
-            $notification = [
-                'title' => 'Profile Updated',
-                'message' => 'Profile has been updated successfully',
-                'created_by' => $userId,
-                'status' => 0,
-                'clear' => 'no',
-            ];
-            Notification::create($notification);
-            return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
-        } else {
+        if (! $user) {
             return response()->json(['message' => 'No user found'], 401);
         }
+        $data = $request->except('personal_image');
+        if (! empty($data['phone']) && ! str_starts_with($data['phone'], '+')) {
+            $data['phone'] = '+' . $data['phone'];
+        }
+
+        if ($request->hasFile('personal_image')) {
+            if (
+                ! empty($user->personal_image)
+                && Storage::disk('s3')->exists('uploads/' . $user->personal_image)
+            ) {
+                Storage::disk('s3')->delete('uploads/' . $user->personal_image);
+            }
+            $photo    = $request->file('personal_image');
+            $path     = $photo->store('uploads', 's3');
+            Storage::disk('s3')->setVisibility($path, 'public');
+            $data['personal_image'] = basename($path);
+        }
+        $user->update($data);
+        Notification::create([
+            'title'      => 'Profile Updated',
+            'message'    => 'Profile has been updated successfully',
+            'created_by' => $userId,
+            'status'     => 0,
+            'clear'      => 'no',
+        ]);
+
+        return response()->json([
+            'message' => 'User Personal details updated successfully',
+            'user'    => $user,
+        ], 200);
     }
+
 
     public function NewPassword(Request $request)
     {
