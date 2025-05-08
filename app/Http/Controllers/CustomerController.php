@@ -894,30 +894,6 @@ class CustomerController extends Controller
         }
     }
 
-    public function uploadImage(Request $request)
-    {
-        if (!Auth::user()) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-        $request->validate([
-            'img' => 'required|image|mimes:jpeg,png,jpg,gif',
-        ]);
-
-        if ($request->hasFile('img')) {
-            $photo = $request->file('img');
-            $photo_name = time() . '-' . $photo->getClientOriginalName();
-            $photo_destination = public_path('uploads');
-            $photo->move($photo_destination, $photo_name);
-            return response()->json([
-                'message' => 'Image uploaded successfully',
-                'image_name' => $photo_name
-            ], 200);
-        }
-
-        return response()->json(['message' => 'No image uploaded'], 400);
-    }
-
-
     public function PublishSetting($id)
     {
 
