@@ -204,7 +204,6 @@ class CommonController extends Controller
         return response()->json(['message' => 'Account deleted successfully'], 200);
     }
 
-
     public function googleReview($id)
     {
         $user = User::find($id);
@@ -246,44 +245,55 @@ class CommonController extends Controller
     public function searchBusiness(Request $request)
     {
         $request->validate([
-            'search_address' => 'required|string',
+            'search_address' => 'required|string|max:255',
             'service' => 'nullable|string',
         ]);
-
-        $decodedAddress = json_decode($request->input('search_address'));
-
-        if (!$decodedAddress || empty($decodedAddress->address)) {
-            return response()->json(['message' => 'Invalid address data provided.'], 400);
-        }
-
+    
+        $searchAddress = $request->input('search_address');
         $searchService = $request->input('service');
-
-        $address = $decodedAddress->address;
-
-        $geocode = file_get_contents("https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($address) . "&key=AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0");
+    
+        $geocode = file_get_contents("https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($searchAddress) . "&key=AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0");
         $geocode = json_decode($geocode);
-
+    
         if (!isset($geocode->results[0])) {
-            return response()->json(['message' => 'No data found.'], 404);
+            return response()->json(['message' => 'Address not found.'], 404);
         }
-
-        $components = collect($geocode->results[0]->address_components);
-
-        $country = optional($components->first(fn($c) => in_array('country', $c->types)))->long_name;
-        $province = optional($components->first(fn($c) => in_array('administrative_area_level_1', $c->types)))->long_name;
-        $city = optional($components->first(fn($c) => in_array('locality', $c->types)))->long_name;
-        $zip = optional($components->first(fn($c) => in_array('postal_code', $c->types)))->long_name;
-
+    
+        $addressComponents = $geocode->results[0]->address_components;
+        $country = $province = $city = $zip = null;
+    
+        foreach ($addressComponents as $component) {
+            if (in_array('country', $component->types)) {
+                $country = $component->long_name;
+            }
+            if (in_array('administrative_area_level_1', $component->types)) {
+                $province = $component->long_name;
+            }
+            if (in_array('locality', $component->types)) {
+                $city = $component->long_name;
+            }
+            if (in_array('postal_code', $component->types)) {
+                $zip = $component->long_name;
+            }
+        }
+    
         $locationQuery = BusinessProfile::query();
         $locationQuery->where(function ($q) use ($country, $province, $city, $zip) {
-            if ($country) $q->orWhere('business_location', 'LIKE', "%$country%");
-            if ($province) $q->orWhere('business_location', 'LIKE', "%$province%");
-            if ($city) $q->orWhere('business_location', 'LIKE', "%$city%");
-            if ($zip) $q->orWhere('business_location', 'LIKE', "%$zip%");
+            if ($zip) {
+                $q->where('business_location', 'LIKE', "%$zip%");
+            } elseif ($city) {
+                $q->where('business_location', 'LIKE', "%$city%");
+            } elseif ($province) {
+                $q->where('business_location', 'LIKE', "%$province%");
+            } elseif ($country) {
+                $q->where('business_location', 'LIKE', "%$country%");
+            }
         });
-
+        
+    
         $userIds = $locationQuery->pluck('user_id');
-
+    
+        // Main deal query
         $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
             ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
@@ -343,15 +353,16 @@ class CommonController extends Controller
                 'business_profiles.business_logo'
             )
             ->paginate($request->number_of_deals ?? 12);
-
+    
         $deals->transform(function ($deal) {
             $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
             return $deal;
         });
-
+    
         return response()->json([
             'deals' => $deals,
             'totalDeals' => $deals->total()
         ]);
     }
+    
 }
