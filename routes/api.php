@@ -1,5 +1,7 @@
 <?php
 
+use Aws\S3\S3Client;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PayController;
 use App\Http\Controllers\AuthController;
@@ -198,4 +200,49 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/stripe/payout', [PayController::class, 'payoutProvider']);
     Route::post('/stripe/webhook', [PayController::class, 'stripeWebhook']);
     Route::get('/stripe/onboarding/{id}', [PayController::class, 'onboardStripe'])->name('stripe.onboarding');
+
+    Route::get('/generate-presigned-url', function () {
+        $s3Config = config('filesystems.disks.s3');
+
+        $s3Client = new S3Client([
+            'region' => $s3Config['region'],
+            'version' => 'latest',
+            'credentials' => [
+                'key' => $s3Config['key'],
+                'secret' => $s3Config['secret'],
+            ],
+        ]);
+
+        $extension = request()->query('extension', 'jpg');
+        $filenameOnly = Str::uuid() . '.' . $extension;
+        $s3Key = 'uploads/' . $filenameOnly;
+
+        $mimeTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'mp4' => 'video/mp4',
+            'mov' => 'video/quicktime',
+            'avi' => 'video/x-msvideo',
+            'mkv' => 'video/x-matroska',
+        ];
+
+        $contentType = $mimeTypes[strtolower($extension)] ?? 'application/octet-stream';
+
+        $cmd = $s3Client->getCommand('PutObject', [
+            'Bucket' => $s3Config['bucket'],
+            'Key' => $s3Key,
+            'ACL' => 'public-read',
+            'ContentType' => $contentType,
+        ]);
+
+        $request = $s3Client->createPresignedRequest($cmd, '+10 minutes');
+
+        return response()->json([
+            'url' => (string) $request->getUri(),
+            'key' => $filenameOnly,
+        ]);
+    });
 });
