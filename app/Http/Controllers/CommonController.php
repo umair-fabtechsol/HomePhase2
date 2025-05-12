@@ -245,68 +245,38 @@ class CommonController extends Controller
     public function searchBusiness(Request $request)
     {
         $request->validate([
-            'search_address' => 'required|string|max:255',
+            'search_address' => 'required|string|max:1000',
             'service' => 'nullable|string',
         ]);
 
-        $searchAddress = $request->input('search_address');
+        $addressData = json_decode($request->input('search_address'), true);
         $searchService = $request->input('service');
 
-        $geocode = file_get_contents("https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($searchAddress) . "&key=AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0");
-        $geocode = json_decode($geocode);
-
-        if (!isset($geocode->results[0])) {
-            return response()->json(['message' => 'Address not found.'], 404);
-        }
-
-        $addressComponents = $geocode->results[0]->address_components;
-        $country = $province = $city = $zip = null;
-
-        foreach ($addressComponents as $component) {
-            if (in_array('country', $component->types)) {
-                $country = $component->long_name;
-            }
-            if (in_array('administrative_area_level_1', $component->types)) {
-                $province = $component->long_name;
-            }
-            if (in_array('locality', $component->types)) {
-                $city = $component->long_name;
-            }
-            if (in_array('postal_code', $component->types)) {
-                $zip = $component->long_name;
-            }
-        }
+        $country = $addressData['country'] ?? null;
+        $province = $addressData['state'] ?? null;
+        $city = $addressData['city'] ?? null;
+        $zip = $addressData['zip'] ?? null;
 
         $locationQuery = BusinessProfile::query();
         $locationQuery->where(function ($q) use ($country, $province, $city, $zip) {
             if ($zip) {
-                $q->where(function ($q2) use ($zip) {
-                    $q2->where('business_location', 'LIKE', "%$zip%")
-                        ->orWhere('service_location', 'LIKE', "%$zip%")
-                        ->orWhere('primary_location', 'LIKE', "%$zip%");
-                });
+                $q->where('business_location', 'LIKE', "%$zip%")
+                ->orWhere('primary_location', 'LIKE', "%$zip%")
+                ->orWhere('service_location', 'LIKE', "%$zip%");
             } elseif ($city) {
-                $q->where(function ($q2) use ($city) {
-                    $q2->where('business_location', 'LIKE', "%$city%")
-                        ->orWhere('service_location', 'LIKE', "%$city%")
-                        ->orWhere('primary_location', 'LIKE', "%$city%");
-                });
+                $q->where('business_location', 'LIKE', "%$city%")
+                ->orWhere('primary_location', 'LIKE', "%$city%")
+                ->orWhere('service_location', 'LIKE', "%$city%");
             } elseif ($province) {
-                $q->where(function ($q2) use ($province) {
-                    $q2->where('business_location', 'LIKE', "%$province%")
-                        ->orWhere('service_location', 'LIKE', "%$province%")
-                        ->orWhere('primary_location', 'LIKE', "%$province%");
-                });
+                $q->where('business_location', 'LIKE', "%$province%")
+                ->orWhere('primary_location', 'LIKE', "%$province%")
+                ->orWhere('service_location', 'LIKE', "%$province%");
             } elseif ($country) {
-                $q->where(function ($q2) use ($country) {
-                    $q2->where('business_location', 'LIKE', "%$country%")
-                        ->orWhere('service_location', 'LIKE', "%$country%")
-                        ->orWhere('primary_location', 'LIKE', "%$country%");
-                });
+                $q->where('business_location', 'LIKE', "%$country%")
+                ->orWhere('primary_location', 'LIKE', "%$country%")
+                ->orWhere('service_location', 'LIKE', "%$country%");
             }
         });
-
-
 
         $userIds = $locationQuery->pluck('user_id');
 
