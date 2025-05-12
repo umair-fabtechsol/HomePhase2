@@ -47,6 +47,18 @@ class ServiceProviderController extends Controller
                     'deals.pricing_model',
                     'deals.flat_rate_price',
                     'deals.hourly_rate',
+
+                    'deals.flat_by_now_discount',
+                    'deals.flat_final_list_price',
+                    'deals.discount as hourly_discount',
+                    'deals.hourly_final_list_price',
+                    'deals.by_now_discount1',
+                    'deals.final_list_price1',
+                    'deals.by_now_discount2',
+                    'deals.final_list_price2',
+                    'deals.by_now_discount3',
+                    'deals.final_list_price3',
+
                     'deals.images',
                     'deals.videos',
                     'deals.price1',
@@ -75,8 +87,18 @@ class ServiceProviderController extends Controller
                     'deals.hourly_estimated_service_time',
                     'deals.estimated_service_timing1',
                     'deals.user_id',
-                    'business_profiles.business_name',
+                    'business_profiles.business_name', 
                     'business_profiles.business_logo',
+                    'deals.flat_by_now_discount',
+                    'deals.flat_final_list_price',
+                    'deals.discount',
+                    'deals.hourly_final_list_price',
+                    'deals.by_now_discount1',
+                    'deals.final_list_price1',
+                    'deals.by_now_discount2',
+                    'deals.final_list_price2',
+                    'deals.by_now_discount3',
+                    'deals.final_list_price3',
                 )->where('deals.user_id', $userId);
 
             if ($service) {

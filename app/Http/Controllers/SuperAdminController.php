@@ -165,9 +165,10 @@ class SuperAdminController extends Controller
 
 
             $totalProviders = $serviceProviders->total();
+            $activeProviders = User::where('role',2)->where('status', 0)->count();
 
             if ($serviceProviders) {
-                return response()->json(['totalProviders' => $totalProviders, 'serviceProviders' => $serviceProviders], 200);
+                return response()->json(['totalProviders' => $totalProviders, 'activeProviders' => $activeProviders, 'serviceProviders' => $serviceProviders], 200);
             } else {
                 return response()->json(['message' => 'No Service Provider Available'], 401);
             }
