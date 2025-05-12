@@ -421,6 +421,10 @@ class CustomerController extends Controller
 
             $social->update(['tiktok' => null]);
         }
+          if ($request['alignable'] == $social->alignable) {
+
+            $social->update(['alignable' => null]);
+        }
         return response()->json(['social' => $social], 200);
     }
 
