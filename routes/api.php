@@ -201,7 +201,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/stripe/webhook', [PayController::class, 'stripeWebhook']);
     Route::get('/stripe/onboarding/{id}', [PayController::class, 'onboardStripe'])->name('stripe.onboarding');
 
-    Route::put('/generate-presigned-url', function () {
+    Route::get('/generate-presigned-url', function () {
         $s3Config = config('filesystems.disks.s3');
 
         $s3Client = new S3Client([
