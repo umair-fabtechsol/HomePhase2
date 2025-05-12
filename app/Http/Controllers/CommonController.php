@@ -248,20 +248,20 @@ class CommonController extends Controller
             'search_address' => 'required|string|max:255',
             'service' => 'nullable|string',
         ]);
-    
+
         $searchAddress = $request->input('search_address');
         $searchService = $request->input('service');
-    
+
         $geocode = file_get_contents("https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($searchAddress) . "&key=AIzaSyAu1gwHCSzLG9ACacQqLk-LG8oJMkarNF0");
         $geocode = json_decode($geocode);
-    
+
         if (!isset($geocode->results[0])) {
             return response()->json(['message' => 'Address not found.'], 404);
         }
-    
+
         $addressComponents = $geocode->results[0]->address_components;
         $country = $province = $city = $zip = null;
-    
+
         foreach ($addressComponents as $component) {
             if (in_array('country', $component->types)) {
                 $country = $component->long_name;
@@ -276,23 +276,40 @@ class CommonController extends Controller
                 $zip = $component->long_name;
             }
         }
-    
+
         $locationQuery = BusinessProfile::query();
         $locationQuery->where(function ($q) use ($country, $province, $city, $zip) {
             if ($zip) {
-                $q->where('business_location', 'LIKE', "%$zip%");
+                $q->where(function ($q2) use ($zip) {
+                    $q2->where('business_location', 'LIKE', "%$zip%")
+                        ->orWhere('service_location', 'LIKE', "%$zip%")
+                        ->orWhere('primary_location', 'LIKE', "%$zip%");
+                });
             } elseif ($city) {
-                $q->where('business_location', 'LIKE', "%$city%");
+                $q->where(function ($q2) use ($city) {
+                    $q2->where('business_location', 'LIKE', "%$city%")
+                        ->orWhere('service_location', 'LIKE', "%$city%")
+                        ->orWhere('primary_location', 'LIKE', "%$city%");
+                });
             } elseif ($province) {
-                $q->where('business_location', 'LIKE', "%$province%");
+                $q->where(function ($q2) use ($province) {
+                    $q2->where('business_location', 'LIKE', "%$province%")
+                        ->orWhere('service_location', 'LIKE', "%$province%")
+                        ->orWhere('primary_location', 'LIKE', "%$province%");
+                });
             } elseif ($country) {
-                $q->where('business_location', 'LIKE', "%$country%");
+                $q->where(function ($q2) use ($country) {
+                    $q2->where('business_location', 'LIKE', "%$country%")
+                        ->orWhere('service_location', 'LIKE', "%$country%")
+                        ->orWhere('primary_location', 'LIKE', "%$country%");
+                });
             }
         });
-        
-    
+
+
+
         $userIds = $locationQuery->pluck('user_id');
-    
+
         // Main deal query
         $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
@@ -353,16 +370,15 @@ class CommonController extends Controller
                 'business_profiles.business_logo'
             )
             ->paginate($request->number_of_deals ?? 12);
-    
+
         $deals->transform(function ($deal) {
             $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
             return $deal;
         });
-    
+
         return response()->json([
             'deals' => $deals,
             'totalDeals' => $deals->total()
         ]);
     }
-    
 }
