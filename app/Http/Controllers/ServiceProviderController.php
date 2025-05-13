@@ -1472,70 +1472,75 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized, This api is only for provider and admin'], 401);
         }
     }
-    public function AddBusinessLocation(Request $request, $id = null)
-    {
-        $role = Auth::user()->role;
-        $userId = Auth::id();
-        $data = $request->all();
+  public function AddBusinessLocation(Request $request, $id = null)
+{
+    $role = Auth::user()->role;
+    $userId = Auth::id();
 
-        if ($id != null) {
+    // Properly parse JSON input
+    $data = $request->json()->all();
 
-            $businesslocation = BusinessProfile::where('user_id', $id)->first();
-        } else {
+    // Determine which user ID to use
+    $targetUserId = $id ?? $userId;
 
-            $businesslocation = BusinessProfile::where('user_id', $userId)->first();
-        }
-        if ($businesslocation) {
+    // Try to find existing BusinessProfile
+    $businesslocation = BusinessProfile::where('user_id', $targetUserId)->first();
 
-            if (isset($data['business_location'])) {
-                $data['business_location'] = json_encode($data['business_location']);
-            }
-
-            if (isset($data['service_location'])) {
-                $data['service_location'] = json_encode($data['service_location']);
-            }
-
-            if (isset($data['restrict_location'])) {
-                $data['restrict_location'] = json_encode($data['restrict_location']);
-            }
-
-            $updatedbusinesslocation = $businesslocation->update($data);
-            $notifications = [
-                'title' => 'Update Service Area',
-                'message' => 'Service Area updated successfully',
-                'created_by' => $businesslocation->user_id,
-                'status' => 0,
-                'clear' => 'no',
-
-            ];
-            Notification::create($notifications);
-            return response()->json(['message' => 'Service Area updated successfully', 'servicelocation' => $businesslocation], 200);
-        } else {
-            if (isset($data['business_location'])) {
-                $data['business_location'] = json_encode($data['business_location']);
-            }
-
-            if (isset($data['service_location'])) {
-                $data['service_location'] = json_encode($data['service_location']);
-            }
-
-            if (isset($data['restrict_location'])) {
-                $data['restrict_location'] = json_encode($data['restrict_location']);
-            }
-            $data['user_id'] = $userId;
-            $servicelocation = BusinessProfile::create($data);
-            $notifications = [
-                'title' => 'Created Service Area',
-                'message' => 'Service Area created successfully',
-                'created_by' => $userId,
-                'status' => 0,
-                'clear' => 'no',
-
-            ];
-            Notification::create($notifications);
-            return response()->json(['message' => 'Service Area created successfully', 'servicelocation' => $servicelocation], 200);
-        }
+    // Handle JSON encoding of location fields if they exist
+    if (isset($data['business_location'])) {
+        $data['business_location'] = json_encode($data['business_location']);
     }
+
+    if (isset($data['service_location'])) {
+        $data['service_location'] = json_encode($data['service_location']);
+    }
+
+    if (isset($data['restrict_location'])) {
+        $data['restrict_location'] = json_encode($data['restrict_location']);
+    }
+
+    if (isset($data['primary_location'])) {
+        $data['primary_location'] = json_encode($data['primary_location']);
+    }
+
+    // Add the correct user_id to data
+    $data['user_id'] = $targetUserId;
+
+    // If record exists, update
+    if ($businesslocation) {
+        $businesslocation->update($data);
+
+        Notification::create([
+            'title' => 'Update Service Area',
+            'message' => 'Service Area updated successfully',
+            'created_by' => $targetUserId,
+            'status' => 0,
+            'clear' => 'no',
+        ]);
+
+        return response()->json([
+            'message' => 'Service Area updated successfully',
+            'servicelocation' => $businesslocation,
+        ], 200);
+    }
+
+    // Otherwise, create new record
+    $servicelocation = BusinessProfile::create($data);
+
+    Notification::create([
+        'title' => 'Created Service Area',
+        'message' => 'Service Area created successfully',
+        'created_by' => $targetUserId,
+        'status' => 0,
+        'clear' => 'no',
+    ]);
+
+    return response()->json([
+        'message' => 'Service Area created successfully',
+        'servicelocation' => $servicelocation->fresh(),
+    ], 200);
+}
+
 
     public function UpdateBusinessLocation(Request $request)
     {
