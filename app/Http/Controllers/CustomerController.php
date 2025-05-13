@@ -26,30 +26,28 @@ class CustomerController extends Controller
 {
     public function MyDetail(Request $request)
     {
-        $role   = Auth::user()->role;
         $userId = Auth::id();
+        $role = Auth::user()->role;
 
         $user = User::find($request->id);
         if (! $user) {
-            return response()->json(['message' => 'No user found'], 401);
-        }
-        $data = $request->except('personal_image');
-        if (! empty($data['phone']) && ! str_starts_with($data['phone'], '+')) {
-            $data['phone'] = '+' . $data['phone'];
+            return response()->json(['message' => 'No user found'], 404);
         }
 
-        if ($request->hasFile('personal_image')) {
-            if (
-                ! empty($user->personal_image)
-                && Storage::disk('s3')->exists('uploads/' . $user->personal_image)
-            ) {
-                Storage::disk('s3')->delete('uploads/' . $user->personal_image);
-            }
-            $photo    = $request->file('personal_image');
-            $path     = $photo->store('uploads', 's3');
-            Storage::disk('s3')->setVisibility($path, 'public');
-            $data['personal_image'] = basename($path);
+        $data = $request->except('personal_image');
+        if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
+            $data['phone'] = '+' . $data['phone'];
         }
+        if (!empty($request->personal_image)) {
+            if (!empty($user->personal_image)) {
+                $oldPath = 'uploads/' . $user->personal_image;
+                if (Storage::disk('s3')->exists($oldPath)) {
+                    Storage::disk('s3')->delete($oldPath);
+                }
+            }
+            $data['personal_image'] = $request->personal_image;
+        }
+
         $user->update($data);
         Notification::create([
             'title'      => 'Profile Updated',
@@ -60,10 +58,11 @@ class CustomerController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'User Personal details updated successfully',
+            'message' => 'User personal details updated successfully',
             'user'    => $user,
         ], 200);
     }
+
 
 
     public function NewPassword(Request $request)
@@ -755,6 +754,7 @@ class CustomerController extends Controller
     public function AskForRevison(Request $request)
     {
         $role = Auth::user()->role;
+
         if ($role != 1) {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
@@ -766,17 +766,12 @@ class CustomerController extends Controller
 
         $data = $request->except('images');
         $filenames = [];
-
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('uploads', 's3');
-                Storage::disk('s3')->setVisibility($path, 'public');
-                $filenames[] = basename($path);
-            }
+        if (!empty($request->images) && is_array($request->images)) {
+            $filenames = $request->images;
         }
 
         $data['revision_images'] = json_encode($filenames);
-        $data['type']            = 'revision';
+        $data['type'] = 'revision';
 
         $afterImages = DeliveryImage::create($data);
 
@@ -797,6 +792,7 @@ class CustomerController extends Controller
             'afterImages' => $afterImages,
         ], 200);
     }
+
 
 
     public function GetPaymentHistory()
