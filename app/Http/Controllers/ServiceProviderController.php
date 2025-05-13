@@ -1665,50 +1665,49 @@ class ServiceProviderController extends Controller
     public function OrderBeforeImages(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 2) {
-            $imageNames = [];
-
-            $data = $request->all();
-            $existingImage = DeliveryImage::where('order_id', $request->order_id)
-                ->where('type', 'before')
-                ->first();
-
-
-            $existingImageArray = $existingImage ? json_decode($existingImage->before_images, true) : [];
-
-
-            if ($request->hasFile('before_images')) {
-                foreach ($request->file('before_images') as $beforeImage) {
-                    $photo_name = time() . '-' . $beforeImage->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $beforeImage->move($photo_destination, $photo_name);
-
-                    $imageNames[] = $photo_name;
-                }
-            }
-
-
-            $mergedImages = array_merge($existingImageArray, $imageNames);
-
-            if ($existingImage) {
-
-                $data['before_images'] = json_encode($mergedImages);
-                $existingImage->update($data);
-                return response()->json(['message' => 'Before Delivery Image update successfully', 'GetOrderBeforeImages' => $mergedImages]);
-            } else {
-
-                DeliveryImage::create([
-                    'order_id' => $request->order_id,
-                    'type' => 'before',
-                    'before_images' => json_encode($mergedImages),
-                ]);
-
-                return response()->json(['message' => 'Before Delivery Image created successfully', 'GetOrderBeforeImages' => $mergedImages]);
-            }
-        } else {
+        if ($role != 2) {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
+
+        $request->validate([
+            'order_id' => 'required|integer|exists:orders,id',
+            'before_images' => 'required|array',
+            'before_images.*' => 'required|string',
+        ]);
+
+        $imageUrls = $request->before_images;
+
+        $existingImage = DeliveryImage::where('order_id', $request->order_id)
+            ->where('type', 'before')
+            ->first();
+
+        $existingImageArray = $existingImage ? json_decode($existingImage->before_images, true) : [];
+
+        $mergedImages = array_merge($existingImageArray, $imageUrls);
+
+        if ($existingImage) {
+            $existingImage->update([
+                'before_images' => json_encode($mergedImages)
+            ]);
+
+            return response()->json([
+                'message' => 'Before Delivery Images updated successfully',
+                'GetOrderBeforeImages' => $mergedImages
+            ]);
+        } else {
+            DeliveryImage::create([
+                'order_id' => $request->order_id,
+                'type' => 'before',
+                'before_images' => json_encode($mergedImages)
+            ]);
+
+            return response()->json([
+                'message' => 'Before Delivery Images created successfully',
+                'GetOrderBeforeImages' => $mergedImages
+            ]);
+        }
     }
+
 
     public function OrderConfirm(Request $request)
     {
