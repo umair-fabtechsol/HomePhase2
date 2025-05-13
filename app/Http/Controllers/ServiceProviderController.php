@@ -378,43 +378,32 @@ class ServiceProviderController extends Controller
     public function MediaUpload(Request $request)
     {
         $userId = Auth::id();
+        $role = Auth::user()->role;
+
         $DealImages = [];
         $DealVideos = [];
-        $role = Auth::user()->role;
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $photo) {
-                $photo_name = time() . '-' . $photo->getClientOriginalName();
-                $photo->move(public_path('uploads'), $photo_name);
-                $DealImages[] = $photo_name;
-            }
-        }
 
+        // These should be keys or full URLs uploaded via frontend using pre-signed URLs
         if ($request->has('images') && is_array($request->input('images'))) {
-            $DealImages = array_merge($DealImages, $request->input('images'));
-        }
-
-        if ($request->hasFile('videos')) {
-            foreach ($request->file('videos') as $video) {
-                $video_name = time() . '-' . $video->getClientOriginalName();
-                $video->move(public_path('uploads'), $video_name);
-                $DealVideos[] = $video_name;
-            }
+            $DealImages = $request->input('images');
         }
 
         if ($request->has('videos') && is_array($request->input('videos'))) {
-            $DealVideos = array_merge($DealVideos, $request->input('videos'));
+            $DealVideos = $request->input('videos');
         }
+
         $deal = Deal::find($request->deal_id);
+
         if ($deal) {
-            if ($role == 2) {
-                if ($deal->user_id != $userId) {
-                    return response()->json(['message' => 'You are not authorized to update this deal.'], 401);
-                }
+            if ($role == 2 && $deal->user_id != $userId) {
+                return response()->json(['message' => 'You are not authorized to update this deal.'], 401);
             }
+
             $deal->update([
                 'images' => json_encode($DealImages),
                 'videos' => json_encode($DealVideos),
             ]);
+
             return response()->json([
                 'message' => 'Deal media updated successfully.',
                 'deal' => $deal,
@@ -422,6 +411,7 @@ class ServiceProviderController extends Controller
                 'uploaded_videos' => $DealVideos,
             ], 200);
         } else {
+            // Prevent Admin from creating deal
             if ($role == 0) {
                 return response()->json(['message' => 'Admin is not authorized to create a new deal.'], 401);
             }
@@ -430,6 +420,7 @@ class ServiceProviderController extends Controller
             $data['user_id'] = $userId;
             $data['images'] = json_encode($DealImages);
             $data['videos'] = json_encode($DealVideos);
+
             $deal = Deal::create($data);
 
             return response()->json([
@@ -440,6 +431,7 @@ class ServiceProviderController extends Controller
             ], 200);
         }
     }
+
 
     public function DeleteMediaUpload(Request $request)
     {
