@@ -433,92 +433,93 @@ class ServiceProviderController extends Controller
         }
     }
 
-
     public function DeleteMediaUpload(Request $request)
     {
+        $deal = Deal::find($request->id);
 
-        $getDeal = Deal::find($request->id);
-
-        if ($request->type == 'images') {
-
-            $images = json_decode($getDeal->images);
-            $imagePath = public_path('uploads/' . $images[$request->index]);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
-            }
-            unset($images[$request->index]);
-            $updateimages = array_values($images);
-
-            $getDeal->update(['images' => json_encode($updateimages)]);
-            return response()->json([
-                'message' => 'Image deleted successfully'
-            ], 200);
-        } elseif ($request->type == 'videos') {
-            $videos = json_decode($getDeal->videos);
-            $videoPath = public_path('uploads/' . $videos[$request->index]);
-            if (file_exists($videoPath)) {
-                unlink($videoPath);
-            }
-            unset($videos[$request->index]);
-            $updatevideos = array_values($videos);
-
-            $getDeal->update(['videos' => json_encode($updatevideos)]);
-            return response()->json([
-                'message' => 'Video deleted successfully'
-            ], 200);
+        if (!$deal) {
+            return response()->json(['message' => 'Deal not found'], 404);
         }
+
+        $type = $request->type;
+        $index = $request->index;
+
+        if (!in_array($type, ['images', 'videos'])) {
+            return response()->json(['message' => 'Invalid media type'], 400);
+        }
+
+        $media = json_decode($deal->$type, true);
+
+        if (!is_array($media) || !isset($media[$index])) {
+            return response()->json(['message' => 'Invalid index or media missing'], 400);
+        }
+
+        $file = $media[$index];
+
+        // Delete file - determine if it's local or S3
+        if (str_starts_with($file, 'http')) {
+            // S3 storage
+            $parsed = parse_url($file);
+            $path = isset($parsed['path']) ? ltrim($parsed['path'], '/') : null;
+
+            if ($path && Storage::disk('s3')->exists($path)) {
+                Storage::disk('s3')->delete($path);
+            }
+        } else {
+            // Local storage
+            $localPath = public_path('uploads/' . $file);
+            if (file_exists($localPath)) {
+                unlink($localPath);
+            }
+        }
+
+        // Remove media from array
+        unset($media[$index]);
+        $media = array_values($media);
+
+        $deal->update([$type => json_encode($media)]);
+
+        return response()->json([
+            'message' => ucfirst(rtrim($type, 's')) . ' deleted successfully'
+        ], 200);
     }
+
+
     public function PublishMediaUpload(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 2) {
-            $userId = Auth::id();
-            $userRole = Auth::user()->role;
-            $validator = Validator::make($request->all(), [
 
-                'images' => 'required',
-                'videos' => 'required',
-
-            ]);
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
-            }
-
-            $data = $request->all();
-            $DealImages = [];
-            $DealVideos = [];
-
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $photo) {
-                    $photo_name = time() . '-' . $photo->getClientOriginalName();
-                    $photo->move(public_path('uploads'), $photo_name);
-                    $DealImages[] = $photo_name;
-                }
-            }
-
-            if ($request->hasFile('videos')) {
-                foreach ($request->file('videos') as $video) {
-                    $video_name = time() . '-' . $video->getClientOriginalName();
-                    $video->move(public_path('uploads'), $video_name);
-                    $DealVideos[] = $video_name;
-                }
-            }
-
-
-            $data['images'] = json_encode($DealImages);
-            $data['videos'] = json_encode($DealVideos);
-            $data['user_id'] = $userId;
-            $data['publish'] = 1;
-
-            $deal = Deal::create($data);
-            return response()->json([
-                'message' => 'Added new deal with Images and Publish successfully',
-                'deal' => $deal,
-            ], 200);
-        } else {
+        if ($role != 2) {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
+
+        $validator = Validator::make($request->all(), [
+            'images' => 'required|array',
+            'videos' => 'required|array',
+            'images.*' => 'string',
+            'videos.*' => 'string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $userId = Auth::id();
+
+        $data = $request->all();
+        $data['images'] = json_encode($request->images);
+        $data['videos'] = json_encode($request->videos);
+        $data['user_id'] = $userId;
+        $data['publish'] = 1;
+
+        $deal = Deal::create($data);
+
+        return response()->json([
+            'message' => 'Added new deal with S3 media and published successfully',
+            'deal' => $deal,
+        ], 200);
     }
+
 
     public function UpdateBasicInfo(Request $request)
     {
