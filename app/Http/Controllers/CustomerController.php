@@ -351,7 +351,7 @@ class CustomerController extends Controller
     public function AddSocial(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 1) {
+        if ($role == 1 || $role == 0 ) {
             $user = User::find($request->user_id);
             if ($user) {
                 $social = SocialProfile::where('user_id', $user->id)->first();
