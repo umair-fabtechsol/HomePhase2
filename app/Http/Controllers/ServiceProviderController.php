@@ -754,78 +754,82 @@ class ServiceProviderController extends Controller
         }
     }
 
+
     public function BusinessProfile(Request $request, $id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($id != null && $role != 0) {
+
+        if ($id !== null && $role != 0) {
             return response()->json(['message' => 'Only admin can pass id parameter'], 401);
         }
-        if ($id != null) {
-            $businessProfile = BusinessProfile::where('user_id', $id)->first();
-            $userExist = User::find($id);
-        } else {
-            $businessProfile = BusinessProfile::where('user_id', $userId)->first();
-            $userExist = User::where('id', $userId);
+
+        $targetUserId = $id ?? $userId;
+
+        $businessProfile = BusinessProfile::where('user_id', $targetUserId)->first();
+        $userExist = User::find($targetUserId);
+
+        if (!$userExist) {
+            return response()->json([
+                'message' => 'Error: User does not exist. In order to create or update business profile, please add a valid user first.'
+            ], 404);
         }
+
         $data = $request->all();
+
         if ($businessProfile) {
-            if ($request->hasFile('business_logo')) {
-                $imagePath = public_path('uploads/' . $businessProfile->business_logo);
-                if (!empty($businessProfile->business_logo) && file_exists($imagePath)) {
-                    unlink($imagePath);
+            // Replace existing S3 logo with new one
+            if ($request->filled('business_logo')) {
+                // Delete old S3 file
+                if (!empty($businessProfile->business_logo)) {
+                    $parsed = parse_url($businessProfile->business_logo);
+                    if (isset($parsed['path'])) {
+                        $key = ltrim($parsed['path'], '/');
+                        Storage::disk('s3')->delete($key);
+                    }
                 }
-                $photo1 = $request->file('business_logo');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['business_logo'] = $photo_name1;
+                $data['business_logo'] = $request->input('business_logo'); // new S3 URL
             }
-            $businessProfileup = $businessProfile->update($data);
-            $notifications = [
+
+            $businessProfile->update($data);
+
+            Notification::create([
                 'title' => 'Update User Business Profile',
-                'message' => 'User Business Profile Updated successfully',
+                'message' => 'User Business Profile updated successfully',
                 'created_by' => $userId,
                 'status' => 0,
                 'clear' => 'no',
+            ]);
 
-            ];
-            Notification::create($notifications);
-
-            return response()->json(['message' => 'Business Profile Updated successfully', 'BusinessProfile' => $businessProfile], 200);
-        } else {
-            if ($userExist) {
-                if ($request->hasFile('business_logo')) {
-                    $photo1 = $request->file('business_logo');
-                    $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo1->move($photo_destination, $photo_name1);
-                    $data['business_logo'] = $photo_name1;
-                }
-                if ($id != null) {
-                    $data['user_id'] = $id;
-                } else {
-                    $data['user_id'] = $userId;
-                }
-                $businessProfile = BusinessProfile::create($data);
-                $notifications = [
-                    'title' => 'Created User Business Profile',
-                    'message' => 'User Business Profile created successfully',
-                    'created_by' => $userId,
-                    'status' => 0,
-                    'clear' => 'no',
-
-                ];
-                Notification::create($notifications);
-            } else {
-                return response()->json([
-                    'message' => 'Error: User does not exist. In order to create or update business profile, please add a valid user first.'
-                ], 404);
-            }
+            return response()->json([
+                'message' => 'Business Profile updated successfully',
+                'BusinessProfile' => $businessProfile
+            ], 200);
         }
 
-        return response()->json(['message' => 'User Business Profile created successfully', 'BusinessProfile' => $businessProfile], 200);
+        // Create new profile
+        if ($request->filled('business_logo')) {
+            $data['business_logo'] = $request->input('business_logo');
+        }
+
+        $data['user_id'] = $targetUserId;
+
+        $businessProfile = BusinessProfile::create($data);
+
+        Notification::create([
+            'title' => 'Created User Business Profile',
+            'message' => 'User Business Profile created successfully',
+            'created_by' => $userId,
+            'status' => 0,
+            'clear' => 'no',
+        ]);
+
+        return response()->json([
+            'message' => 'User Business Profile created successfully',
+            'BusinessProfile' => $businessProfile
+        ], 200);
     }
+
     public function AddPaymentDetails(Request $request)
     {
         $role = Auth::user()->role;
