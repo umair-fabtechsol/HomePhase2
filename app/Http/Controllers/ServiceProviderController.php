@@ -895,43 +895,48 @@ class ServiceProviderController extends Controller
         }
     }
 
+
     public function AdditionalPhotos(Request $request, $id = null)
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
 
+        $targetUserId = $id ?? $userId;
 
-        if ($id != null) {
-            $businessProfile = BusinessProfile::where('user_id', $id)->first();
-        } else {
-            $businessProfile = BusinessProfile::where('user_id', $userId)->first();
+        if ($id !== null && $role != 0) {
+            return response()->json(['message' => 'Unauthorized! Only admin can provide id parameter'], 403);
         }
 
+        if ($id === null && $role == 0) {
+            return response()->json(['message' => 'Unauthorized! Incorrect token. Please use provider token'], 403);
+        }
+
+        $businessProfile = BusinessProfile::where('user_id', $targetUserId)->first();
         $data = $request->all();
 
-        if ($businessProfile) {
-            $fields = ['about_video', 'technician_photo', 'vehicle_photo', 'facility_photo', 'project_photo'];
-            foreach ($fields as $field) {
-                $uploadedFiles = [];
+        $fields = ['about_video', 'technician_photo', 'vehicle_photo', 'facility_photo', 'project_photo'];
 
-                if ($request->hasFile($field)) {
-                    foreach ($request->file($field) as $file) {
-                        $fileName = time() . '-' . $file->getClientOriginalName();
-                        $file->move(public_path('uploads'), $fileName);
-                        $uploadedFiles[] = $fileName;
-                    }
-                }
-
-                if ($request->has($field) && is_array($request->input($field))) {
-                    $uploadedFiles = array_merge($uploadedFiles, $request->input($field));
-                }
-
-                if (!empty($uploadedFiles)) {
-                    $data[$field] = json_encode($uploadedFiles);
-                } else {
-                    $data[$field] = [];
+        // Helper to delete old S3 files
+        $deleteOldS3Files = function ($oldJson) {
+            $oldFiles = json_decode($oldJson, true) ?? [];
+            foreach ($oldFiles as $url) {
+                $parsed = parse_url($url);
+                if (isset($parsed['path'])) {
+                    $key = ltrim($parsed['path'], '/');
+                    Storage::disk('s3')->delete($key);
                 }
             }
+        };
+
+        if ($businessProfile) {
+            foreach ($fields as $field) {
+                if ($request->has($field) && is_array($request[$field])) {
+                    // Delete previous images if replacing
+                    $deleteOldS3Files($businessProfile->$field);
+                    $data[$field] = json_encode(array_filter($request[$field]));
+                }
+            }
+
             $businessProfile->update($data);
 
             Notification::create([
@@ -946,56 +951,30 @@ class ServiceProviderController extends Controller
                 'message' => 'User Business Additional Info Updated successfully',
                 'BusinessProfile' => $businessProfile
             ], 200);
-        } else {
-            if ($request->hasFile('technician_photo')) {
-                $photo1 = $request->file('technician_photo');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['technician_photo'] = $photo_name1;
-            }
-            if ($request->hasFile('about_video')) {
-                $photo1 = $request->file('about_video');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['about_video'] = $photo_name1;
-            }
-            if ($request->hasFile('vehicle_photo')) {
-                $photo1 = $request->file('vehicle_photo');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['vehicle_photo'] = $photo_name1;
-            }
-            if ($request->hasFile('facility_photo')) {
-                $photo1 = $request->file('facility_photo');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['facility_photo'] = $photo_name1;
-            }
-            if ($request->hasFile('project_photo')) {
-                $photo1 = $request->file('project_photo');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['project_photo'] = $photo_name1;
-            }
-            $data['user_id'] = $userId;
-            $businessProfile = BusinessProfile::create($data);
-            $notifications = [
-                'title' => 'Created User Business Additional Info',
-                'message' => 'User Business Additional Info created successfully',
-                'created_by' => $userId,
-                'status' => 0,
-                'clear' => 'no',
-
-            ];
-            Notification::create($notifications);
         }
 
-        return response()->json(['message' => 'User Business Additional Info created successfully', 'BusinessProfile' => $businessProfile], 200);
+        // Create new business profile
+        foreach ($fields as $field) {
+            if ($request->has($field) && is_array($request[$field])) {
+                $data[$field] = json_encode(array_filter($request[$field]));
+            }
+        }
+
+        $data['user_id'] = $targetUserId;
+        $businessProfile = BusinessProfile::create($data);
+
+        Notification::create([
+            'title' => 'Created User Business Additional Info',
+            'message' => 'User Business Additional Info created successfully',
+            'created_by' => $targetUserId,
+            'status' => 0,
+            'clear' => 'no',
+        ]);
+
+        return response()->json([
+            'message' => 'User Business Additional Info created successfully',
+            'BusinessProfile' => $businessProfile
+        ], 200);
     }
 
 
@@ -1037,7 +1016,7 @@ class ServiceProviderController extends Controller
 
         $getNewUrls = function ($field) use ($request) {
             return $request->has($field) && is_array($request[$field])
-                ? array_filter($request[$field]) 
+                ? array_filter($request[$field])
                 : [];
         };
 
@@ -1093,54 +1072,6 @@ class ServiceProviderController extends Controller
             'message' => 'Business CertificateHour created successfully',
             'certificate' => $certificate
         ], 200);
-    }
-
-
-    public function UpdateCertificateHours(Request $request)
-    {
-        $role = Auth::user()->role;
-        if ($role == 2) {
-            $data = $request->all();
-            $updateCertificateHours = BusinessProfile::where('user_id', $request->id)->first();
-            if ($request->hasFile('insurance_certificate')) {
-                $imagePath = public_path('uploads/' . $updateCertificateHours->insurance_certificate);
-                if (!empty($updateCertificateHours->insurance_certificate) && file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-                $photo1 = $request->file('insurance_certificate');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['insurance_certificate'] = $photo_name1;
-            }
-            if ($request->hasFile('license_certificate')) {
-                $imagePath = public_path('uploads/' . $updateCertificateHours->license_certificate);
-                if (!empty($updateCertificateHours->license_certificate) && file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-                $photo2 = $request->file('license_certificate');
-                $photo_name2 = time() . '-' . $photo2->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo2->move($photo_destination, $photo_name2);
-                $data['license_certificate'] = $photo_name2;
-            }
-            if ($request->hasFile('award_certificate')) {
-                $imagePath = public_path('uploads/' . $updateCertificateHours->award_certificate);
-                if (!empty($updateCertificateHours->award_certificate) && file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-                $photo3 = $request->file('award_certificate');
-                $photo_name3 = time() . '-' . $photo3->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo3->move($photo_destination, $photo_name3);
-                $data['award_certificate'] = $photo_name3;
-            }
-            $updateCertificateHours->update($data);
-
-            return response()->json(['message' => 'CertificateHour updated successfully', 'updateCertificateHours' => $updateCertificateHours], 200);
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
     }
 
     public function AddConversation(Request $request, $id = null)
