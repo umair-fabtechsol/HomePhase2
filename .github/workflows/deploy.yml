@@ -3,7 +3,7 @@ name: SSH to Azure VM
 on:
   push:
     branches:
-      - main
+      - stagging
 jobs:
   ssh:
     runs-on: ubuntu-22.04
