@@ -437,6 +437,7 @@ class CustomerController extends Controller
         $getPayment = PaymentDetail::where('user_id', $userId->id)->get();
         $getDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
+            ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
             ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
             ->orderBy('deals.id', 'desc')
             ->select(
@@ -454,8 +455,8 @@ class CustomerController extends Controller
                 'deals.hourly_estimated_service_time',
                 'deals.estimated_service_timing1',
                 'deals.user_id',
-                'users.name as user_name',
-                'users.personal_image',
+                'business_profiles.business_name as user_name',
+                'business_profiles.business_logo',
                 'deals.flat_by_now_discount',
                 'deals.flat_final_list_price',
                 'deals.discount as hourly_discount',
@@ -485,8 +486,8 @@ class CustomerController extends Controller
                 'deals.hourly_estimated_service_time',
                 'deals.estimated_service_timing1',
                 'deals.user_id',
-                'users.name',
-                'users.personal_image',
+                'business_profiles.business_name',
+                'business_profiles.business_logo',
                 'deals.flat_by_now_discount',
                 'deals.flat_final_list_price',
                 'deals.discount',
