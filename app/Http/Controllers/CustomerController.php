@@ -2,71 +2,69 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessProfile;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Deal;
-use App\Models\DeliveryImage;
+use App\Models\User;
+use App\Models\Order;
+use App\Models\Review;
 use App\Models\FavoritDeal;
 use App\Models\Notification;
-use App\Models\Order;
-use App\Models\PaymentMethod;
 use App\Models\PaymentDetail;
-use App\Models\Review;
-use App\Models\RecentDealView;
-use App\Models\User;
-use App\Models\PaymentHistory;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Models\PaymentMethod;
+use App\Models\DeliveryImage;
 use App\Models\SocialProfile;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
+use App\Models\RecentDealView;
+use App\Models\PaymentHistory;
+use App\Models\BusinessProfile;
+
 
 class CustomerController extends Controller
 {
     public function MyDetail(Request $request)
     {
-        $role = Auth::user()->role;
+        $role   = Auth::user()->role;
         $userId = Auth::id();
-        
+
         $user = User::find($request->id);
-        if ($user) {
-            $data = $request->all();
-            if ($request->hasFile('personal_image')) {
-                $imagePath = public_path('uploads/' . $user->personal_image);
-                if (!empty($user->personal_image) && file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-                $photo1 = $request->file('personal_image');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['personal_image'] = $photo_name1;
-            } else {
-                $data['personal_image'] = null;
-            }
-            if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
-                $data['phone'] = '+' . $data['phone'];
-            }
-            // $validator = Validator::make($data, [
-            //     'phone' => ['required', 'phone:AUTO'], 
-            // ]);
-            // if ($validator->fails()) {
-            //     return response()->json(['phone' => 'Invalid phone number'], 400);
-            // }
-            $user->update($data);
-            $notification = [
-                'title' => 'Profile Updated',
-                'message' => 'Profile has been updated successfully',
-                'created_by' => $userId,
-                'status' => 0,
-                'clear' => 'no',
-            ];
-            Notification::create($notification);
-            return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
-        } else {
+        if (! $user) {
             return response()->json(['message' => 'No user found'], 401);
         }
+        $data = $request->except('personal_image');
+        if (! empty($data['phone']) && ! str_starts_with($data['phone'], '+')) {
+            $data['phone'] = '+' . $data['phone'];
+        }
+
+        if ($request->hasFile('personal_image')) {
+            if (
+                ! empty($user->personal_image)
+                && Storage::disk('s3')->exists('uploads/' . $user->personal_image)
+            ) {
+                Storage::disk('s3')->delete('uploads/' . $user->personal_image);
+            }
+            $photo    = $request->file('personal_image');
+            $path     = $photo->store('uploads', 's3');
+            Storage::disk('s3')->setVisibility($path, 'public');
+            $data['personal_image'] = basename($path);
+        }
+        $user->update($data);
+        Notification::create([
+            'title'      => 'Profile Updated',
+            'message'    => 'Profile has been updated successfully',
+            'created_by' => $userId,
+            'status'     => 0,
+            'clear'      => 'no',
+        ]);
+
+        return response()->json([
+            'message' => 'User Personal details updated successfully',
+            'user'    => $user,
+        ], 200);
     }
+
 
     public function NewPassword(Request $request)
     {
@@ -79,14 +77,6 @@ class CustomerController extends Controller
             }
             $user->password = Hash::make($request->password);
             $user->save();
-            // $notification = [
-            //     'title' => 'Password Updated',
-            //     'message' => 'Password has been updated successfully',
-            //     'created_by' => $userId,
-            //     'status' => 0,
-            //     'clear' => 'no',
-            // ];
-            // Notification::create($notification);
             return response()->json(['message' => 'User Password Updated successfully', 'user' => $user], 200);
         } else {
             return response()->json(['message' => 'No user found'], 401);
@@ -172,10 +162,9 @@ class CustomerController extends Controller
     {
         $role = Auth::user()->role;
         if ($role == 1) {
-            // $deals = Deal::orderBy('id', 'desc')->get();
             $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
                 ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
                 ->orderBy('deals.id', 'desc')
                 ->select(
                     'deals.id',
@@ -194,9 +183,9 @@ class CustomerController extends Controller
                     'deals.user_id',
                     'users.name as user_name',
                     'users.personal_image',
-                    \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                    \DB::raw('COUNT(reviews.id) as total_reviews'),
-                    \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+                    DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                    DB::raw('COUNT(reviews.id) as total_reviews'),
+                    DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids')
                 )
                 ->groupBy(
                     'deals.id',
@@ -229,7 +218,6 @@ class CustomerController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
-    // for home page 
     public function FilterHomeService(Request $request)
     {
         $role = Auth::user()->role;
@@ -322,13 +310,13 @@ class CustomerController extends Controller
             $deal = Deal::find($id);
 
             if ($deal) {
-                $favoriteUserIds = \DB::table('favorit_deals')
-                ->where('deal_id', $deal->id)
-                ->pluck('user_id') // Get only user IDs
-                ->toArray();
+                $favoriteUserIds = DB::table('favorit_deals')
+                    ->where('deal_id', $deal->id)
+                    ->pluck('user_id')
+                    ->toArray();
 
                 $deal->favorite_user_ids = $favoriteUserIds;
-                
+
                 $businessProfile = BusinessProfile::where('user_id', $deal->user_id)->first();
                 $getReviews = Review::where('deal_id', $id)->get();
                 if ($getReviews->isNotEmpty()) {
@@ -363,7 +351,7 @@ class CustomerController extends Controller
     public function AddSocial(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 1) {
+        if ($role == 1 || $role == 0 ) {
             $user = User::find($request->user_id);
             if ($user) {
                 $social = SocialProfile::where('user_id', $user->id)->first();
@@ -433,16 +421,11 @@ class CustomerController extends Controller
 
             $social->update(['tiktok' => null]);
         }
-        // $notification = [
-        //     'title' => 'Delete Social Link',
-        //     'message' => 'Social link has been deleted successfully',
-        //     'created_by' => $social->user_id,
-        //     'status' => 0,
-        //     'clear' => 'no',
-        // ];
-        // Notification::create($notification);
+          if ($request['alignable'] == $social->alignable) {
+
+            $social->update(['alignable' => null]);
+        }
         return response()->json(['social' => $social], 200);
-        
     }
 
     public function DealProvider($user_id)
@@ -454,7 +437,8 @@ class CustomerController extends Controller
         $getPayment = PaymentDetail::where('user_id', $userId->id)->get();
         $getDeal = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
             ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+            ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
+            ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
             ->orderBy('deals.id', 'desc')
             ->select(
                 'deals.id',
@@ -471,11 +455,21 @@ class CustomerController extends Controller
                 'deals.hourly_estimated_service_time',
                 'deals.estimated_service_timing1',
                 'deals.user_id',
-                'users.name as user_name',
-                'users.personal_image',
-                \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                \DB::raw('COUNT(reviews.id) as total_reviews'),
-                \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+                'business_profiles.business_name as user_name',
+                'business_profiles.business_logo',
+                'deals.flat_by_now_discount',
+                'deals.flat_final_list_price',
+                'deals.discount as hourly_discount',
+                'deals.hourly_final_list_price',
+                'deals.by_now_discount1',
+                'deals.final_list_price1',
+                'deals.by_now_discount2',
+                'deals.final_list_price2',
+                'deals.by_now_discount3',
+                'deals.final_list_price3',
+                DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                DB::raw('COUNT(reviews.id) as total_reviews'),
+                DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids')
             )
             ->groupBy(
                 'deals.id',
@@ -492,8 +486,18 @@ class CustomerController extends Controller
                 'deals.hourly_estimated_service_time',
                 'deals.estimated_service_timing1',
                 'deals.user_id',
-                'users.name',
-                'users.personal_image'
+                'business_profiles.business_name',
+                'business_profiles.business_logo',
+                'deals.flat_by_now_discount',
+                'deals.flat_final_list_price',
+                'deals.discount',
+                'deals.hourly_final_list_price',
+                'deals.by_now_discount1',
+                'deals.final_list_price1',
+                'deals.by_now_discount2',
+                'deals.final_list_price2',
+                'deals.by_now_discount3',
+                'deals.final_list_price3',
             )->where('deals.user_id', $userId->id)->orderBy('deals.id', 'desc')->get();
         $getDeal->transform(function ($deal) {
             $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
@@ -530,7 +534,7 @@ class CustomerController extends Controller
                 'users.personal_image',
                 'deals.service_title'
             )
-            ->where('reviews.provider_id', $userId->id) // Filters by provider_id
+            ->where('reviews.provider_id', $userId->id)
             ->get();
 
 
@@ -776,46 +780,49 @@ class CustomerController extends Controller
     public function AskForRevison(Request $request)
     {
         $role = Auth::user()->role;
-        if ($role == 1) {
-            $order = Order::find($request->order_id);
-            if ($order) {
-                $data = $request->all();
-                if ($request->hasFile('images')) {
-                    foreach ($request->file('images') as $image) {
-                        $photo1 = $image;
-                        $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                        $photo_destination = public_path('uploads');
-                        $photo1->move($photo_destination, $photo_name1);
-                        $images[] = $photo_name1;
-                    }
-                }
-
-                $data['revision_images'] =  json_encode($images);
-                $data['type'] =  'revision';
-                $afterImages = DeliveryImage::create($data);
-
-                if ($order->status == 'delivered') {
-
-                    $order->update([
-                        'status' => 'in_revision'
-                    ]);
-                }
-                $notification = [
-                    'title' => 'Revision Request',
-                    'message' => 'Revision request has been added successfully',
-                    'created_by' => $order->customer_id,
-                    'status' => 0,
-                    'clear' => 'no',
-                ];
-                Notification::create($notification);
-                return response()->json(['message' => 'Added revision successfully', 'afterImages' => $afterImages], 200);
-            } else {
-                return response()->json(['message' => 'No order found'], 401);
-            }
-        } else {
+        if ($role != 1) {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
+
+        $order = Order::find($request->order_id);
+        if (! $order) {
+            return response()->json(['message' => 'No order found'], 404);
+        }
+
+        $data = $request->except('images');
+        $filenames = [];
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('uploads', 's3');
+                Storage::disk('s3')->setVisibility($path, 'public');
+                $filenames[] = basename($path);
+            }
+        }
+
+        $data['revision_images'] = json_encode($filenames);
+        $data['type']            = 'revision';
+
+        $afterImages = DeliveryImage::create($data);
+
+        if ($order->status === 'delivered') {
+            $order->update(['status' => 'in_revision']);
+        }
+
+        Notification::create([
+            'title'      => 'Revision Request',
+            'message'    => 'Revision request has been added successfully',
+            'created_by' => $order->customer_id,
+            'status'     => 0,
+            'clear'      => 'no',
+        ]);
+
+        return response()->json([
+            'message'     => 'Added revision successfully',
+            'afterImages' => $afterImages,
+        ], 200);
     }
+
 
     public function GetPaymentHistory()
     {
@@ -912,30 +919,6 @@ class CustomerController extends Controller
         }
     }
 
-    public function uploadImage(Request $request)
-    {
-        if (!auth()->user()) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-        $request->validate([
-            'img' => 'required|image|mimes:jpeg,png,jpg,gif',
-        ]);
-
-        if ($request->hasFile('img')) {
-            $photo = $request->file('img');
-            $photo_name = time() . '-' . $photo->getClientOriginalName();
-            $photo_destination = public_path('uploads');
-            $photo->move($photo_destination, $photo_name);
-            return response()->json([
-                'message' => 'Image uploaded successfully',
-                'image_name' => $photo_name
-            ], 200);
-        }
-
-        return response()->json(['message' => 'No image uploaded'], 400);
-    }
-
-
     public function PublishSetting($id)
     {
 
@@ -1030,7 +1013,7 @@ class CustomerController extends Controller
             $deals = Deal::leftJoin('users', 'users.id', '=', 'deals.user_id')
                 ->leftJoin('business_profiles', 'business_profiles.user_id', '=', 'deals.user_id')
                 ->leftJoin('reviews', 'reviews.deal_id', '=', 'deals.id')
-                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id') // Join favorit_deals table
+                ->leftJoin('favorit_deals', 'favorit_deals.deal_id', '=', 'deals.id')
                 ->orderBy('deals.id', 'desc')
                 ->select(
                     'deals.id',
@@ -1049,9 +1032,19 @@ class CustomerController extends Controller
                     'deals.user_id',
                     'business_profiles.business_name as user_name',
                     'business_profiles.business_logo',
-                    \DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
-                    \DB::raw('COUNT(reviews.id) as total_reviews'),
-                    \DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids') // Get all user_ids from favorit_deals
+                    'deals.flat_by_now_discount',
+                    'deals.flat_final_list_price',
+                    'deals.discount as hourly_discount',
+                    'deals.hourly_final_list_price',
+                    'deals.by_now_discount1',
+                    'deals.final_list_price1',
+                    'deals.by_now_discount2',
+                    'deals.final_list_price2',
+                    'deals.by_now_discount3',
+                    'deals.final_list_price3',
+                    DB::raw('COALESCE(AVG(reviews.rating), 0) as avg_rating'),
+                    DB::raw('COUNT(reviews.id) as total_reviews'),
+                    DB::raw('GROUP_CONCAT(DISTINCT favorit_deals.user_id ORDER BY favorit_deals.user_id ASC) as favorite_user_ids')
                 )
                 ->groupBy(
                     'deals.id',
@@ -1072,14 +1065,14 @@ class CustomerController extends Controller
                     'business_profiles.business_logo',
                 )->whereIn('deals.id', $favoritService)->orderBy('deals.id', 'desc')->paginate($request->number_of_deals ?? 12);
 
-                $totalDeals = $deals->total();
+            $totalDeals = $deals->total();
 
             $deals->transform(function ($deal) {
                 $deal->favorite_user_ids = $deal->favorite_user_ids ? explode(',', $deal->favorite_user_ids) : [];
                 return $deal;
             });
 
-            return response()->json(['deals' => $deals,'totalDeals' => $totalDeals], 200);
+            return response()->json(['deals' => $deals, 'totalDeals' => $totalDeals], 200);
         } else {
             return response()->json(['message' => 'You are not authorized'], 401);
         }
@@ -1096,7 +1089,7 @@ class CustomerController extends Controller
             } else {
                 return response()->json(['message' => 'No order available'], 401);
             }
-        } elseif($role == 2) {
+        } elseif ($role == 2) {
             $GetActiveOrders = Order::where('provider_id', $userId)->where('status', '!=', 'completed')->orderBy('id', 'desc')->limit(3)->get();
             if ($GetActiveOrders) {
                 return response()->json(['message' => 'Orders List', 'activeOrders' => $GetActiveOrders], 200);
