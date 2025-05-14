@@ -22,6 +22,7 @@ use App\Models\SocialProfile;
 use App\Models\RecentDealView;
 use App\Models\PaymentHistory;
 use App\Models\BusinessProfile;
+use Illuminate\Support\Facades\Storage;
 
 class ServiceProviderController extends Controller
 {
@@ -997,6 +998,7 @@ class ServiceProviderController extends Controller
         return response()->json(['message' => 'User Business Additional Info created successfully', 'BusinessProfile' => $businessProfile], 200);
     }
 
+
     public function AddCertificateHours(Request $request, $id = null)
     {
         $role = Auth::user()->role;
@@ -1004,92 +1006,95 @@ class ServiceProviderController extends Controller
         $data = $request->except(['insurance_certificate', 'license_certificate', 'award_certificate']);
 
         if ($id != null) {
-            $updateCertificateHours = BusinessProfile::where('user_id', $id)->first();
-            $userExist = User::find($id);
+            if ($role != 0) {
+                return response()->json(['message' => 'Unauthorized! Only admin can provide id parameter'], 403);
+            }
+            $targetUserId = $id;
         } else {
-            $updateCertificateHours = BusinessProfile::where('user_id', $userId)->first();
-            $userExist = User::find($userId);
+            if ($role == 0) {
+                return response()->json(['message' => 'Unauthorized! Incorrect token. Please use provider token'], 403);
+            }
+            $targetUserId = $userId;
         }
-        if ($role != 0 && $id != Null) {
-            return response()->json(['message' => 'Unauthorized! Only admin can provide id parameter'], 403);
-        }
-        if ($role == 0 && $id == Null) {
-            return response()->json(['message' => 'Unauthorized! Incorrect token. Please use provider token'], 403);
-        }
-        $uploadMultiple = function ($fieldName, $existingPaths = []) use ($request) {
-            $newFiles = [];
-            foreach ((array) $existingPaths as $oldFile) {
-                $oldPath = public_path('uploads/' . $oldFile);
-            }
 
-            if ($request->hasFile($fieldName)) {
-                foreach ($request->file($fieldName) as $file) {
-                    $filename = time() . '-' . $file->getClientOriginalName();
-                    $file->move(public_path('uploads'), $filename);
-                    $newFiles[] = $filename;
-                }
-            }
+        $updateCertificateHours = BusinessProfile::where('user_id', $targetUserId)->first();
+        $userExist = User::find($targetUserId);
 
-            if ($request->has($fieldName) && is_array($request->input($fieldName))) {
-                $newFiles = array_merge($newFiles, $request->input($fieldName));
-            }
-            return $newFiles;
-        };
-
-        if ($userExist) {
-            if ($updateCertificateHours) {
-                if ($id != Null) {
-                    $data['user_id'] = $id;
-                } else {
-                    $data['user_id'] = $userId;
-                }
-                $data['insurance_certificate'] = json_encode($uploadMultiple('insurance_certificate', json_decode($updateCertificateHours->insurance_certificate, true)));
-                $data['license_certificate'] = json_encode($uploadMultiple('license_certificate', json_decode($updateCertificateHours->license_certificate, true)));
-                $data['award_certificate'] = json_encode($uploadMultiple('award_certificate', json_decode($updateCertificateHours->award_certificate, true)));
-
-                $updateCertificateHours->update($data);
-
-                Notification::create([
-                    'title' => 'Update Business CertificateHour',
-                    'message' => 'Business CertificateHour updated successfully',
-                    'created_by' => $updateCertificateHours->user_id,
-                    'status' => 0,
-                    'clear' => 'no',
-                ]);
-
-                return response()->json([
-                    'message' => 'Business CertificateHour updated successfully',
-                    'updateCertificateHours' => $updateCertificateHours
-                ], 200);
-            } else {
-                $data['insurance_certificate'] = json_encode($uploadMultiple('insurance_certificate'));
-                $data['license_certificate'] = json_encode($uploadMultiple('license_certificate'));
-                $data['award_certificate'] = json_encode($uploadMultiple('award_certificate'));
-                if ($id != Null) {
-                    $data['user_id'] = $id;
-                } else {
-                    $data['user_id'] = $userId;
-                }
-
-                $certificate = BusinessProfile::create($data);
-
-                Notification::create([
-                    'title' => 'Business CertificateHour',
-                    'message' => 'Business CertificateHour created successfully',
-                    'created_by' => $userId,
-                    'status' => 0,
-                    'clear' => 'no',
-                ]);
-
-                return response()->json([
-                    'message' => 'Business CertificateHour created successfully',
-                    'certificate' => $certificate
-                ], 200);
-            }
-        } else {
+        if (!$userExist) {
             return response()->json(['message' => 'Invalid User'], 403);
         }
+
+        $deleteOldS3Files = function ($oldJson) {
+            $oldUrls = json_decode($oldJson, true) ?? [];
+            foreach ($oldUrls as $url) {
+                $parsed = parse_url($url);
+                if (isset($parsed['path'])) {
+                    $key = ltrim($parsed['path'], '/');
+                    Storage::disk('s3')->delete($key);
+                }
+            }
+        };
+
+        $getNewUrls = function ($field) use ($request) {
+            return $request->has($field) && is_array($request[$field])
+                ? array_filter($request[$field]) 
+                : [];
+        };
+
+        if ($updateCertificateHours) {
+            if ($request->has('insurance_certificate')) {
+                $deleteOldS3Files($updateCertificateHours->insurance_certificate);
+                $data['insurance_certificate'] = json_encode($getNewUrls('insurance_certificate'));
+            }
+
+            if ($request->has('license_certificate')) {
+                $deleteOldS3Files($updateCertificateHours->license_certificate);
+                $data['license_certificate'] = json_encode($getNewUrls('license_certificate'));
+            }
+
+            if ($request->has('award_certificate')) {
+                $deleteOldS3Files($updateCertificateHours->award_certificate);
+                $data['award_certificate'] = json_encode($getNewUrls('award_certificate'));
+            }
+
+            $data['user_id'] = $targetUserId;
+            $updateCertificateHours->update($data);
+
+            Notification::create([
+                'title' => 'Update Business CertificateHour',
+                'message' => 'Business CertificateHour updated successfully',
+                'created_by' => $targetUserId,
+                'status' => 0,
+                'clear' => 'no',
+            ]);
+
+            return response()->json([
+                'message' => 'Business CertificateHour updated successfully',
+                'updateCertificateHours' => $updateCertificateHours
+            ], 200);
+        }
+
+        $data['insurance_certificate'] = json_encode($getNewUrls('insurance_certificate'));
+        $data['license_certificate'] = json_encode($getNewUrls('license_certificate'));
+        $data['award_certificate'] = json_encode($getNewUrls('award_certificate'));
+        $data['user_id'] = $targetUserId;
+
+        $certificate = BusinessProfile::create($data);
+
+        Notification::create([
+            'title' => 'Business CertificateHour',
+            'message' => 'Business CertificateHour created successfully',
+            'created_by' => $targetUserId,
+            'status' => 0,
+            'clear' => 'no',
+        ]);
+
+        return response()->json([
+            'message' => 'Business CertificateHour created successfully',
+            'certificate' => $certificate
+        ], 200);
     }
+
 
     public function UpdateCertificateHours(Request $request)
     {
