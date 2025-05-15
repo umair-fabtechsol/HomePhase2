@@ -352,7 +352,7 @@ class SaleRapController extends Controller
             if (!$getProvider || $getProvider->role != 2) {
                 return response()->json(['message' => 'Invalid User Id'], 401);
             }
-            if (!empty($request->personal_image)) {
+            if (!empty($request->personal_image && $request->personal_image != $getProvider->personal_image)) {
                 if (!empty($getProvider->personal_image) && Storage::disk('s3')->exists('uploads/' . $getProvider->personal_image)) {
                     Storage::disk('s3')->delete('uploads/' . $getProvider->personal_image);
                 }
