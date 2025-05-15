@@ -267,7 +267,7 @@ class CommonController extends Controller
     public function searchBusiness(Request $request)
     {
         $request->validate([
-            'search_address' => 'required|string|max:1000',
+            'search_address' => 'nullable|string|max:1000',
             'service' => 'nullable|string',
         ]);
 
