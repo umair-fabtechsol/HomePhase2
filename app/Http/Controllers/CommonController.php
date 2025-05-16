@@ -261,20 +261,20 @@ class CommonController extends Controller
         $locationQuery->where(function ($q) use ($country, $province, $city, $zip) {
             if ($zip) {
                 $q->where('business_location', 'LIKE', "%$zip%")
-                ->orWhere('primary_location', 'LIKE', "%$zip%")
-                ->orWhere('service_location', 'LIKE', "%$zip%");
+                    ->orWhere('primary_location', 'LIKE', "%$zip%")
+                    ->orWhere('service_location', 'LIKE', "%$zip%");
             } elseif ($city) {
                 $q->where('business_location', 'LIKE', "%$city%")
-                ->orWhere('primary_location', 'LIKE', "%$city%")
-                ->orWhere('service_location', 'LIKE', "%$city%");
+                    ->orWhere('primary_location', 'LIKE', "%$city%")
+                    ->orWhere('service_location', 'LIKE', "%$city%");
             } elseif ($province) {
                 $q->where('business_location', 'LIKE', "%$province%")
-                ->orWhere('primary_location', 'LIKE', "%$province%")
-                ->orWhere('service_location', 'LIKE', "%$province%");
+                    ->orWhere('primary_location', 'LIKE', "%$province%")
+                    ->orWhere('service_location', 'LIKE', "%$province%");
             } elseif ($country) {
                 $q->where('business_location', 'LIKE', "%$country%")
-                ->orWhere('primary_location', 'LIKE', "%$country%")
-                ->orWhere('service_location', 'LIKE', "%$country%");
+                    ->orWhere('primary_location', 'LIKE', "%$country%")
+                    ->orWhere('service_location', 'LIKE', "%$country%");
             }
         });
 
