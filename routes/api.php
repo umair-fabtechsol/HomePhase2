@@ -213,8 +213,8 @@ Route::middleware('auth:sanctum')->group(function () {
             ],
         ]);
 
-        $extension = request()->query('extension', 'jpg');
-        $filenameOnly = Str::uuid() . '.' . $extension;
+        $extension = request()->query('fileName', 'jpg');
+        $filenameOnly = $extension;
         $s3Key = 'uploads/' . $filenameOnly;
 
         $mimeTypes = [
