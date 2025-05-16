@@ -38,8 +38,8 @@ class CustomerController extends Controller
         if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
             $data['phone'] = '+' . $data['phone'];
         }
-        if (!empty($request->personal_image)) {
-            if (!empty($user->personal_image)) {
+        if (!empty($request->personal_image )) {
+            if (!empty($user->personal_image  && $request->personal_image != $user->personal_image)) {
                 $oldPath = 'uploads/' . $user->personal_image;
                 if (Storage::disk('s3')->exists($oldPath)) {
                     Storage::disk('s3')->delete($oldPath);
