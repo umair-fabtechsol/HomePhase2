@@ -382,7 +382,7 @@ class SaleRapController extends Controller
                 $data = $request->all();
 
                 if (!empty($request->personal_image)) {
-                    if (!empty($user->personal_image) && Storage::disk('s3')->exists('uploads/' . $user->personal_image)) {
+                    if (!empty($user->personal_image && $request->personal_image != $user->personal_image) && Storage::disk('s3')->exists('uploads/' . $user->personal_image)) {
                         Storage::disk('s3')->delete('uploads/' . $user->personal_image);
                     }
                     $data['personal_image'] = $request->personal_image;
@@ -486,7 +486,7 @@ class SaleRapController extends Controller
 
             $data = $request->all();
             if ($request->hasFile('files')) {
-                if (!empty($task->files) && Storage::disk('s3')->exists('uploads/' . $task->files)) {
+                if (!empty($task->files && $request->files != $task->files) && Storage::disk('s3')->exists('uploads/' . $task->files)) {
                     Storage::disk('s3')->delete('uploads/' . $task->files);
                 }
 
@@ -523,7 +523,7 @@ class SaleRapController extends Controller
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
-        if (!empty($task->files)) {
+        if (!empty($task->files )) {
             $filePath = 'uploads/' . $task->files;
             if (Storage::disk('s3')->exists($filePath)) {
                 Storage::disk('s3')->delete($filePath);
@@ -622,7 +622,7 @@ class SaleRapController extends Controller
         $data = $request->except('personal_image');
 
         if ($request->hasFile('personal_image')) {
-            if (!empty($GetSaleRep->personal_image)) {
+            if (!empty($GetSaleRep->personal_image && $request->personal_image != $GetSaleRep->personal_image)) {
                 $existingPath = 'uploads/' . $GetSaleRep->personal_image;
                 if (Storage::disk('s3')->exists($existingPath)) {
                     Storage::disk('s3')->delete($existingPath);
