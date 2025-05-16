@@ -228,7 +228,7 @@ class SuperAdminController extends Controller
             }
 
             if (!empty($request->personal_image)) {
-                if (!empty($getProvider->personal_image) && Storage::disk('s3')->exists('uploads/' . $getProvider->personal_image)) {
+                if (!empty($getProvider->personal_image && $request->personal_image != $getProvider->personal_image) && Storage::disk('s3')->exists('uploads/' . $getProvider->personal_image)) {
                     Storage::disk('s3')->delete('uploads/' . $getProvider->personal_image);
                 }
 
@@ -300,7 +300,7 @@ class SuperAdminController extends Controller
             }
 
             if (!empty($request->personal_image)) {
-                if (!empty($getCustomer->personal_image) && Storage::disk('s3')->exists('uploads/' . $getCustomer->personal_image)) {
+                if (!empty($getCustomer->personal_image && $request->personal_image != $getCustomer->personal_image) && Storage::disk('s3')->exists('uploads/' . $getCustomer->personal_image)) {
                     Storage::disk('s3')->delete('uploads/' . $getCustomer->personal_image);
                 }
 
@@ -329,7 +329,7 @@ class SuperAdminController extends Controller
                 return response()->json(['message' => 'Invalid User Id'], 404);
             }
 
-            if (!empty($getCustomer->personal_image)) {
+            if (!empty($getCustomer->personal_image )) {
                 $imagePath = 'uploads/' . $getCustomer->personal_image;
                 if (Storage::disk('s3')->exists($imagePath)) {
                     Storage::disk('s3')->delete($imagePath);
@@ -399,7 +399,7 @@ class SuperAdminController extends Controller
 
             if (!empty($request->personal_image)) {
 
-                if (!empty($GetSaleRep->personal_image)) {
+                if (!empty($GetSaleRep->personal_image && $request->personal_image != $GetSaleRep->personal_image)) {
                     $oldPath = 'uploads/' . $GetSaleRep->personal_image;
                     if (Storage::disk('s3')->exists($oldPath)) {
                         Storage::disk('s3')->delete($oldPath);
@@ -494,7 +494,7 @@ class SuperAdminController extends Controller
             $data = $request->all();
 
             if (!empty($request->personal_image)) {
-                if (!empty($user->personal_image)) {
+                if (!empty($user->personal_image && $request->personal_image != $user->personal_image)) {
                     $oldPath = 'uploads/' . $user->personal_image;
                     if (Storage::disk('s3')->exists($oldPath)) {
                         Storage::disk('s3')->delete($oldPath);
