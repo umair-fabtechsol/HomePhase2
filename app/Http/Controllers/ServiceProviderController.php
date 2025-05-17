@@ -1001,13 +1001,17 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'Invalid User'], 403);
         }
 
-        $deleteOldS3Files = function ($oldJson) {
+        $deleteRemovedS3Files = function ($oldJson, $newArray) {
             $oldUrls = json_decode($oldJson, true) ?? [];
-            foreach ($oldUrls as $url) {
+            $removedImages = array_diff($oldUrls, $newArray);
+            foreach ($removedImages as $url) {
                 $parsed = parse_url($url);
                 if (isset($parsed['path'])) {
-                    $key = ltrim($parsed['path'], '/');
-                    Storage::disk('s3')->delete($key);
+                    $relativePath = ltrim($parsed['path'], '/');
+                    $key = 'uploads/' . basename($relativePath);
+                    if (Storage::disk('s3')->exists($key)) {
+                        Storage::disk('s3')->delete($key);
+                    }
                 }
             }
         };
@@ -1020,18 +1024,21 @@ class ServiceProviderController extends Controller
 
         if ($updateCertificateHours) {
             if ($request->has('insurance_certificate')) {
-                $deleteOldS3Files($updateCertificateHours->insurance_certificate);
-                $data['insurance_certificate'] = json_encode($getNewUrls('insurance_certificate'));
+                $newInsurance = $getNewUrls('insurance_certificate');
+                $deleteRemovedS3Files($updateCertificateHours->insurance_certificate, $newInsurance);
+                $data['insurance_certificate'] = json_encode($newInsurance);
             }
 
             if ($request->has('license_certificate')) {
-                $deleteOldS3Files($updateCertificateHours->license_certificate);
-                $data['license_certificate'] = json_encode($getNewUrls('license_certificate'));
+                $newLicense = $getNewUrls('license_certificate');
+                $deleteRemovedS3Files($updateCertificateHours->license_certificate, $newLicense);
+                $data['license_certificate'] = json_encode($newLicense);
             }
 
             if ($request->has('award_certificate')) {
-                $deleteOldS3Files($updateCertificateHours->award_certificate);
-                $data['award_certificate'] = json_encode($getNewUrls('award_certificate'));
+                $newAward = $getNewUrls('award_certificate');
+                $deleteRemovedS3Files($updateCertificateHours->award_certificate, $newAward);
+                $data['award_certificate'] = json_encode($newAward);
             }
 
             $data['user_id'] = $targetUserId;
@@ -1051,6 +1058,7 @@ class ServiceProviderController extends Controller
             ], 200);
         }
 
+        // For create, just store all new arrays
         $data['insurance_certificate'] = json_encode($getNewUrls('insurance_certificate'));
         $data['license_certificate'] = json_encode($getNewUrls('license_certificate'));
         $data['award_certificate'] = json_encode($getNewUrls('award_certificate'));
@@ -1071,6 +1079,7 @@ class ServiceProviderController extends Controller
             'certificate' => $certificate
         ], 200);
     }
+
 
     public function AddConversation(Request $request, $id = null)
     {
