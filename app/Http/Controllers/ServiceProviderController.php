@@ -688,48 +688,47 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-        if ($id != null) {
-            $user = User::find($id);
-        } else {
-            $user = User::find($userId);
-        }
 
+        $user = $id ? User::find($id) : User::find($userId);
 
-        if ($user) {
-            $data = $request->all();
-            if ($request->hasFile('personal_image')) {
-                $imagePath = public_path('uploads/' . $user->personal_image);
-                if (!empty($user->personal_image) && file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-                $photo1 = $request->file('personal_image');
-                $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                $photo_destination = public_path('uploads');
-                $photo1->move($photo_destination, $photo_name1);
-                $data['personal_image'] = $photo_name1;
-            } else {
-
-                $data['personal_image'] = null;
-            }
-            if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
-                $data['phone'] = '+' . $data['phone'];
-            }
-
-            $validator = Validator::make($data, [
-                'phone' => ['required', 'phone:AUTO'],
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['phone' => 'Invalid phone number'], 400);
-            }
-
-            $user->update($data);
-
-            return response()->json(['message' => 'User Personal details updated successfully', 'user' => $user], 200);
-        } else {
+        if (!$user) {
             return response()->json(['message' => 'No user found'], 401);
         }
+
+        $data = $request->all();
+        if (!empty($request->personal_image)) {
+            if (!empty($user->personal_image) && $request->personal_image !== $user->personal_image) {
+                $oldPath = 'uploads/' . $user->personal_image;
+                if (Storage::disk('s3')->exists($oldPath)) {
+                    Storage::disk('s3')->delete($oldPath);
+                }
+            }
+
+            $data['personal_image'] = $request->personal_image;
+        } else {
+            $data['personal_image'] = null;
+        }
+
+        if (!empty($data['phone']) && !str_starts_with($data['phone'], '+')) {
+            $data['phone'] = '+' . $data['phone'];
+        }
+
+        $validator = Validator::make($data, [
+            'phone' => ['required', 'phone:AUTO'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['phone' => 'Invalid phone number'], 400);
+        }
+
+        $user->update($data);
+
+        return response()->json([
+            'message' => 'User personal details updated successfully',
+            'user' => $user
+        ], 200);
     }
+
 
     public function UpdatePassword(Request $request, $id = null)
     {
