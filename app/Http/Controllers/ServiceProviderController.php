@@ -376,6 +376,7 @@ class ServiceProviderController extends Controller
             return response()->json(['message' => 'You are not authorized'], 401);
         }
     }
+
     public function MediaUpload(Request $request)
     {
         $userId = Auth::id();
@@ -484,7 +485,6 @@ class ServiceProviderController extends Controller
         ], 200);
     }
 
-
     public function PublishMediaUpload(Request $request)
     {
         $role = Auth::user()->role;
@@ -519,7 +519,34 @@ class ServiceProviderController extends Controller
             'deal' => $deal,
         ], 200);
     }
-
+    public function UpdateMediaUpload(Request $request)
+    {
+        $role = Auth::user()->role;
+        if ($role == 2) {
+            $deal = Deal::find($request->id);
+            if ($deal) {
+                $data = [];
+                if ($request->hasFile('image')) {
+                    $imagePath = public_path('uploads/' . $deal->image);
+                    if (!empty($deal->image) && file_exists($imagePath)) {
+                        unlink($imagePath);
+                    }
+                    $photo1 = $request->file('image');
+                    $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
+                    $photo_destination = public_path('uploads');
+                    $photo1->move($photo_destination, $photo_name1);
+                    $data['image'] = $photo_name1;
+                    $data['id'] = $request->id;
+                    $deal->update($data);
+                }
+                return response()->json(['deal' => $deal], 200);
+            } else {
+                return response()->json(['message' => 'No deals found'], 401);
+            }
+        } else {
+            return response()->json(['message' => 'You are not authorized'], 401);
+        }
+    }
 
     public function UpdateBasicInfo(Request $request)
     {
@@ -615,34 +642,7 @@ class ServiceProviderController extends Controller
         }
     }
 
-    public function UpdateMediaUpload(Request $request)
-    {
-        $role = Auth::user()->role;
-        if ($role == 2) {
-            $deal = Deal::find($request->id);
-            if ($deal) {
-                $data = [];
-                if ($request->hasFile('image')) {
-                    $imagePath = public_path('uploads/' . $deal->image);
-                    if (!empty($deal->image) && file_exists($imagePath)) {
-                        unlink($imagePath);
-                    }
-                    $photo1 = $request->file('image');
-                    $photo_name1 = time() . '-' . $photo1->getClientOriginalName();
-                    $photo_destination = public_path('uploads');
-                    $photo1->move($photo_destination, $photo_name1);
-                    $data['image'] = $photo_name1;
-                    $data['id'] = $request->id;
-                    $deal->update($data);
-                }
-                return response()->json(['deal' => $deal], 200);
-            } else {
-                return response()->json(['message' => 'No deals found'], 401);
-            }
-        } else {
-            return response()->json(['message' => 'You are not authorized'], 401);
-        }
-    }
+
     public function DeleteDeal($id)
     {
         $role = Auth::user()->role;
