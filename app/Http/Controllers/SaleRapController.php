@@ -523,7 +523,7 @@ class SaleRapController extends Controller
         if (!$task) {
             return response()->json(['message' => 'Task not found'], 404);
         }
-        if (!empty($task->files )) {
+        if (!empty($task->files)) {
             $filePath = 'uploads/' . $task->files;
             if (Storage::disk('s3')->exists($filePath)) {
                 Storage::disk('s3')->delete($filePath);
@@ -619,19 +619,17 @@ class SaleRapController extends Controller
             return response()->json(['message' => 'Customer not found'], 404);
         }
 
-        $data = $request->except('personal_image');
+        $data = $request->all();
 
-        if ($request->hasFile('personal_image')) {
-            if (!empty($GetSaleRep->personal_image && $request->personal_image != $GetSaleRep->personal_image)) {
-                $existingPath = 'uploads/' . $GetSaleRep->personal_image;
-                if (Storage::disk('s3')->exists($existingPath)) {
-                    Storage::disk('s3')->delete($existingPath);
+        if (!empty($request->personal_image)) {
+            if (!empty($GetSaleRep->personal_image) && $request->personal_image !== $GetSaleRep->personal_image) {
+                $oldPath = 'uploads/' . $GetSaleRep->personal_image;
+                if (Storage::disk('s3')->exists($oldPath)) {
+                    Storage::disk('s3')->delete($oldPath);
                 }
             }
-            $photo = $request->file('personal_image');
-            $photoPath = $photo->store('uploads', 's3');
-            Storage::disk('s3')->setVisibility($photoPath, 'public');
-            $data['personal_image'] = basename($photoPath);
+
+            $data['personal_image'] = $request->personal_image;
         }
 
         $GetSaleRep->update($data);
@@ -641,6 +639,7 @@ class SaleRapController extends Controller
             'GetSaleRep' => $GetSaleRep,
         ], 200);
     }
+
 
 
     public function GetServiceRevenue()
