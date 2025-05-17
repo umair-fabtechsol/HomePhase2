@@ -382,13 +382,9 @@ class ServiceProviderController extends Controller
     {
         $userId = Auth::id();
         $role = Auth::user()->role;
-
         $newImages = $request->has('images') && is_array($request->images) ? array_filter($request->images) : [];
         $newVideos = $request->has('videos') && is_array($request->videos) ? array_filter($request->videos) : [];
-
         $deal = Deal::find($request->deal_id);
-
-        // Utility function to delete removed S3 media
         $deleteRemovedMediaFromS3 = function ($oldJson, $newArray) {
             $oldUrls = json_decode($oldJson, true) ?? [];
             $removed = array_diff($oldUrls, $newArray);
@@ -396,7 +392,7 @@ class ServiceProviderController extends Controller
                 $parsed = parse_url($url);
                 if (isset($parsed['path'])) {
                     $relativePath = ltrim($parsed['path'], '/');
-                    $key = 'uploads/' . basename($relativePath); // Adjust this if your S3 prefix differs
+                    $key = 'uploads/' . basename($relativePath);
                     if (Storage::disk('s3')->exists($key)) {
                         Storage::disk('s3')->delete($key);
                     }
@@ -408,12 +404,8 @@ class ServiceProviderController extends Controller
             if ($role == 2 && $deal->user_id != $userId) {
                 return response()->json(['message' => 'You are not authorized to update this deal.'], 401);
             }
-
-            // Delete removed media from S3
             $deleteRemovedMediaFromS3($deal->images, $newImages);
             $deleteRemovedMediaFromS3($deal->videos, $newVideos);
-
-            // Update deal with new media
             $deal->update([
                 'images' => json_encode($newImages),
                 'videos' => json_encode($newVideos),
@@ -427,7 +419,6 @@ class ServiceProviderController extends Controller
             ], 200);
         }
 
-        // Prevent Admin from creating a deal
         if ($role == 0) {
             return response()->json(['message' => 'Admin is not authorized to create a new deal.'], 401);
         }
