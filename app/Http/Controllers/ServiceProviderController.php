@@ -904,7 +904,6 @@ class ServiceProviderController extends Controller
     {
         $role = Auth::user()->role;
         $userId = Auth::id();
-
         $targetUserId = $id ?? $userId;
 
         if ($id !== null && $role != 0) {
@@ -914,30 +913,26 @@ class ServiceProviderController extends Controller
         if ($id === null && $role == 0) {
             return response()->json(['message' => 'Unauthorized! Incorrect token. Please use provider token'], 403);
         }
-
         $businessProfile = BusinessProfile::where('user_id', $targetUserId)->first();
         $data = $request->all();
-
         $fields = ['about_video', 'technician_photo', 'vehicle_photo', 'facility_photo', 'project_photo'];
-
-        // Helper to delete old S3 files
-        $deleteOldS3Files = function ($oldJson) {
-            $oldFiles = json_decode($oldJson, true) ?? [];
-            foreach ($oldFiles as $url) {
-                $parsed = parse_url($url);
-                if (isset($parsed['path'])) {
-                    $key = ltrim($parsed['path'], '/');
-                    Storage::disk('s3')->delete($key);
-                }
-            }
-        };
-
         if ($businessProfile) {
             foreach ($fields as $field) {
                 if ($request->has($field) && is_array($request[$field])) {
-                    // Delete previous images if replacing
-                    $deleteOldS3Files($businessProfile->$field);
-                    $data[$field] = json_encode(array_filter($request[$field]));
+                    $oldArray = json_decode($businessProfile->$field, true) ?? [];
+                    $newArray = array_filter($request[$field]);
+                    $removedImages = array_diff($oldArray, $newArray);
+                    foreach ($removedImages as $url) {
+                        $parsed = parse_url($url);
+                        if (isset($parsed['path'])) {
+                            $relativePath = ltrim($parsed['path'], '/');
+                            $key = 'uploads/' . basename($relativePath);
+                            if (Storage::disk('s3')->exists($key)) {
+                                Storage::disk('s3')->delete($key);
+                            }
+                        }
+                    }
+                    $data[$field] = json_encode($newArray);
                 }
             }
 
@@ -956,8 +951,6 @@ class ServiceProviderController extends Controller
                 'BusinessProfile' => $businessProfile
             ], 200);
         }
-
-        // Create new business profile
         foreach ($fields as $field) {
             if ($request->has($field) && is_array($request[$field])) {
                 $data[$field] = json_encode(array_filter($request[$field]));
@@ -980,6 +973,7 @@ class ServiceProviderController extends Controller
             'BusinessProfile' => $businessProfile
         ], 200);
     }
+
 
 
     public function AddCertificateHours(Request $request, $id = null)
