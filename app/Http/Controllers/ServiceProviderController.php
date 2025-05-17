@@ -377,62 +377,76 @@ class ServiceProviderController extends Controller
         }
     }
 
+
     public function MediaUpload(Request $request)
     {
         $userId = Auth::id();
         $role = Auth::user()->role;
 
-        $DealImages = [];
-        $DealVideos = [];
-
-        // These should be keys or full URLs uploaded via frontend using pre-signed URLs
-        if ($request->has('images') && is_array($request->input('images'))) {
-            $DealImages = $request->input('images');
-        }
-
-        if ($request->has('videos') && is_array($request->input('videos'))) {
-            $DealVideos = $request->input('videos');
-        }
+        $newImages = $request->has('images') && is_array($request->images) ? array_filter($request->images) : [];
+        $newVideos = $request->has('videos') && is_array($request->videos) ? array_filter($request->videos) : [];
 
         $deal = Deal::find($request->deal_id);
+
+        // Utility function to delete removed S3 media
+        $deleteRemovedMediaFromS3 = function ($oldJson, $newArray) {
+            $oldUrls = json_decode($oldJson, true) ?? [];
+            $removed = array_diff($oldUrls, $newArray);
+            foreach ($removed as $url) {
+                $parsed = parse_url($url);
+                if (isset($parsed['path'])) {
+                    $relativePath = ltrim($parsed['path'], '/');
+                    $key = 'uploads/' . basename($relativePath); // Adjust this if your S3 prefix differs
+                    if (Storage::disk('s3')->exists($key)) {
+                        Storage::disk('s3')->delete($key);
+                    }
+                }
+            }
+        };
 
         if ($deal) {
             if ($role == 2 && $deal->user_id != $userId) {
                 return response()->json(['message' => 'You are not authorized to update this deal.'], 401);
             }
 
+            // Delete removed media from S3
+            $deleteRemovedMediaFromS3($deal->images, $newImages);
+            $deleteRemovedMediaFromS3($deal->videos, $newVideos);
+
+            // Update deal with new media
             $deal->update([
-                'images' => json_encode($DealImages),
-                'videos' => json_encode($DealVideos),
+                'images' => json_encode($newImages),
+                'videos' => json_encode($newVideos),
             ]);
 
             return response()->json([
                 'message' => 'Deal media updated successfully.',
                 'deal' => $deal,
-                'uploaded_images' => $DealImages,
-                'uploaded_videos' => $DealVideos,
-            ], 200);
-        } else {
-            // Prevent Admin from creating deal
-            if ($role == 0) {
-                return response()->json(['message' => 'Admin is not authorized to create a new deal.'], 401);
-            }
-
-            $data = $request->all();
-            $data['user_id'] = $userId;
-            $data['images'] = json_encode($DealImages);
-            $data['videos'] = json_encode($DealVideos);
-
-            $deal = Deal::create($data);
-
-            return response()->json([
-                'message' => 'New deal created with media successfully.',
-                'deal' => $deal,
-                'uploaded_images' => $DealImages,
-                'uploaded_videos' => $DealVideos,
+                'uploaded_images' => $newImages,
+                'uploaded_videos' => $newVideos,
             ], 200);
         }
+
+        // Prevent Admin from creating a deal
+        if ($role == 0) {
+            return response()->json(['message' => 'Admin is not authorized to create a new deal.'], 401);
+        }
+
+        $data = $request->all();
+        $data['user_id'] = $userId;
+        $data['images'] = json_encode($newImages);
+        $data['videos'] = json_encode($newVideos);
+
+        $deal = Deal::create($data);
+
+        return response()->json([
+            'message' => 'New deal created with media successfully.',
+            'deal' => $deal,
+            'uploaded_images' => $newImages,
+            'uploaded_videos' => $newVideos,
+        ], 200);
     }
+
 
     public function DeleteMediaUpload(Request $request)
     {
